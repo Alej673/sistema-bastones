@@ -14,11 +14,12 @@ return new class extends Migration
     {
         Schema::create('insumos', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre'); // Ingresar Nombre del material
-            $table->string('unidad_medida'); // Ingresar el tipo de unidad o medida
-            $table->decimal('costo_unitario', 8, 2); 
-            $table->decimal('stock_actual', 8, 2);
-            $table->decimal('stock_minimo', 8, 2); // LLamar alertas en el dashboard
+            $table->string('nombre');
+            $table->string('categoria'); // NUEVO: lana, base, cinta, cortina_fiesta, aplique
+            $table->string('unidad_medida'); // Gramos, Metros, Unidades
+            $table->decimal('costo_unitario', 8, 4); // 4 decimales para costos exactos (ej. 0.0127)
+            $table->decimal('stock_actual', 8, 2)->default(0); // 2 decimales para gramos/metros
+            $table->decimal('stock_minimo', 8, 2)->default(10); // 2 decimales
             $table->timestamps();
         });
     }
