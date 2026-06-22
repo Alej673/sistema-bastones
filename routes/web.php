@@ -4,12 +4,14 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InsumoController;
 
+// Si alguien entra a la raíz, lo mandamos directo al inventario
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('insumos.index');
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    // En lugar de cargar la vista vacía del dashboard, redireccionamos al Kardex
+    return redirect()->route('insumos.index');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -22,6 +24,14 @@ Route::middleware('auth')->group(function () {
     
     // 2. Agregamos nuestra ruta personalizada usando la sintaxis correcta
     Route::patch('/insumos/{id}/ajustar', [InsumoController::class, 'ajustarStock'])->name('insumos.ajustar');
+
+    // Rutas del Cotizador
+    Route::get('/cotizador', [\App\Http\Controllers\CotizadorController::class, 'create'])->name('cotizador.create');
+    Route::post('/cotizador', [\App\Http\Controllers\CotizadorController::class, 'store'])->name('cotizador.store');
+    // Ruta para la búsqueda en tiempo real de lanas mediante Select2
+    Route::get('/buscar-lanas', [App\Http\Controllers\CotizadorController::class, 'buscarLanas'])->name('lanas.buscar');
+    // Ruta para la búsqueda asíncrona de Cortinas de Fiesta
+    Route::get('/buscar-cortinas', [App\Http\Controllers\CotizadorController::class, 'buscarCortinas'])->name('cortinas.buscar');
 });
 
 
