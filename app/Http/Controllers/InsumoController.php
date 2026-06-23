@@ -62,6 +62,10 @@ class InsumoController extends Controller
                 $multiplicador = 18.28; 
                 $unidad = 'Metros';
                 break;
+            case 'cinta_gross':
+                $multiplicador = 22.86; 
+                $unidad = 'Metros';
+                break;
             case 'cortina_fiesta':
                 $multiplicador = 4; 
                 $unidad = 'Unidades';
@@ -168,6 +172,7 @@ class InsumoController extends Controller
                 case 'lana': $multiplicador = 90; break; 
                 case 'cinta_garza': $multiplicador = 45.72; break; 
                 case 'cinta_satin': $multiplicador = 18.28; break; 
+                case 'cinta_gross': $multiplicador = 22.86; break;
                 case 'cortina_fiesta': $multiplicador = 4; break; 
                 case 'elastico': $multiplicador = 10; break; 
                 case 'cinchos': $multiplicador = 100; break; // 1 Paquete ingresado = 100 Cinchos en BD
@@ -180,6 +185,7 @@ class InsumoController extends Controller
                 case 'lana': $multiplicador = 1; break; // gramos sueltos
                 case 'cinta_garza': $multiplicador = 1; break; // metros sueltos
                 case 'cinta_satin': $multiplicador = 1; break; // metros sueltos
+                case 'cinta_gross': $multiplicador = 1; break; // metros sueltos
                 case 'cortina_fiesta': $multiplicador = 1; break; // cortinas sueltas
                 case 'elastico': $multiplicador = 1; break; // metros sueltos
                 case 'cinchos': $multiplicador = 1; break; //Descuenta por unidades de cinchos individuales

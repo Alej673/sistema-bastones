@@ -17,8 +17,9 @@ class CotizadorController extends Controller
 
         // 2. Los filtramos en colecciones separadas por categoría para armar los desplegables de la vista
         $lanas = $insumos->where('categoria', 'lana')->values();
-        $cintasGarza = $insumos->where('categoria', 'cinta_garza')->values();
         $cintasSatin = $insumos->where('categoria', 'cinta_satin')->values();
+        $cintasGarza = $insumos->where('categoria', 'cinta_garza')->values();
+        $cintasGross = $insumos->where('categoria', 'cinta_gross')->values();
         $cortinas = $insumos->where('categoria', 'cortina_fiesta')->values();
         $elasticos = $insumos->where('categoria', 'elastico')->values();
         $cinchos = $insumos->where('categoria', 'cinchos')->values();
@@ -37,7 +38,8 @@ class CotizadorController extends Controller
         return view('cotizador.create', compact(
             'lanas', 
             'cintasGarza', 
-            'cintasSatin', 
+            'cintasSatin',
+            'cintasGross', 
             'cortinas', 
             'elasticos', 
             'cinchos', 
@@ -93,5 +95,33 @@ class CotizadorController extends Controller
             });
 
         return response()->json($cortinas);
+    }
+
+    // Función para llamar a la base de datos de cintas
+    public function buscarCintas(Request $request)
+    {
+        $term = $request->input('q');
+
+        // 1. Definimos las 3 categorías donde el sistema tiene permiso para buscar
+        $categorias = ['cinta_satin', 'cinta_garza', 'cinta_gross'];
+
+        // 2. Buscamos usando whereIn para abarcar todas esas familias
+        $cintas = Insumo::whereIn('categoria', $categorias)
+            ->where('nombre', 'LIKE', '%' . $term . '%')
+            ->get()
+            ->map(function ($cinta) {
+                
+                // Truco UX: Limpiamos la palabra "cinta_" para que se vea estético
+                // Ej: "cinta_satin" -> "SATIN"
+                $tipoVisual = strtoupper(str_replace('cinta_', '', $cinta->categoria));
+
+                return [
+                    'id' => $cinta->id,
+                    // Devolverá algo como: "Color azul (SATIN)"
+                    'text' => $cinta->nombre . ' (' . $tipoVisual . ')'
+                ];
+            });
+
+        return response()->json($cintas);
     }
 }

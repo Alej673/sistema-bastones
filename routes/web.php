@@ -32,6 +32,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/buscar-lanas', [App\Http\Controllers\CotizadorController::class, 'buscarLanas'])->name('lanas.buscar');
     // Ruta para la búsqueda asíncrona de Cortinas de Fiesta
     Route::get('/buscar-cortinas', [App\Http\Controllers\CotizadorController::class, 'buscarCortinas'])->name('cortinas.buscar');
+    // Ruta para la búsqueda asíncrona de Cintas (Abarca Satín, Garza y Gross)
+    Route::get('/buscar-cintas', [App\Http\Controllers\CotizadorController::class, 'buscarCintas'])->name('cintas.buscar');
 });
 
 
