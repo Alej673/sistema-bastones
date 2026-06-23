@@ -13,7 +13,7 @@ class CotizadorController extends Controller
     public function create()
     {
         // 1. Recuperamos todos los insumos activos del inventario (no eliminados lógicamente)
-        $insumos = Insumo::all();
+        $insumos = \App\Models\Insumo::all();
 
         // 2. Los filtramos en colecciones separadas por categoría para armar los desplegables de la vista
         $lanas = $insumos->where('categoria', 'lana')->values();
@@ -36,6 +36,7 @@ class CotizadorController extends Controller
 
         // 4. Enviamos los datos empaquetados a la vista del cotizador
         return view('cotizador.create', compact(
+            'insumos',
             'lanas', 
             'cintasGarza', 
             'cintasSatin',

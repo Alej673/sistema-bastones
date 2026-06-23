@@ -54,7 +54,7 @@
                                 <div class="row g-2">
                                     <div class="col-4">
                                         <label class="form-label text-muted small mb-1">Cant. Bastones</label>
-                                        <input type="number" id="inputCantidad" class="form-control" value="10" min="1">
+                                        <input type="number" id="inputCantidad" class="form-control" value="" min="1">
                                     </div>
                                     <div class="col-8">
                                         <label class="form-label text-muted small mb-1">Tamaño Específico</label>
@@ -69,7 +69,7 @@
                                     <div class="col-12 mt-2">
                                         <label class="form-label text-muted small mb-1">Acabado del Bastón</label>
                                         <select id="selectAcabado" class="form-select">
-                                            <option value="plomo" selected>Plata</option>
+                                            <option value="plata" selected>Plata</option>
                                             <option value="dorado">Dorado</option>
                                         </select>
                                     </div>
@@ -85,8 +85,8 @@
                                 <div class="mb-2">
                                     <label class="form-label text-muted small mb-1">Cantidad de Colores</label>
                                     <select id="selectCantidadColores" class="form-select">
-                                        <option value="1">1 Color (Sólido)</option>
-                                        <option value="2" selected>2 Colores (50/50)</option>
+                                        <option value="1" selected>1 Color (Sólido)</option>
+                                        <option value="2">2 Colores (50/50)</option>
                                         <option value="3">3 Colores (33/33/33)</option>
                                     </select>
                                 </div>
@@ -584,5 +584,270 @@
                     cajaDiseno.addClass('d-none');
                 }
             });
+    </script>
+
+    {{-- ==========================================
+            MOTOR DE CÁLCULO — COTIZADOR AUTOMÁTICO, Recalcula todo cada vez que el usuario
+            cambia cualquier campo del formulario.
+        ========================================== --}}
+
+    {{-- Inventario inyectado desde el controlador como JSON --}}
+    <script type="application/json" id="datos-inventario">
+        @json($insumos)
+    </script>
+
+    <script>
+
+        // Leemos el inventario que Laravel dejó en el DOM
+        const INVENTARIO = JSON.parse(document.getElementById('datos-inventario').textContent);
+
+        $(document).ready(function () {
+
+            // -------------------------------------------------------
+            // PRECIOS DE RESPALDO
+            // Se usan cuando el material no está en el inventario
+            // (tags nuevos o insumos sin registro en BD)
+            // -------------------------------------------------------
+            const PRECIOS_FANTASMA = {
+                lana:                 0.0127,  // $1.15 / 90g
+                cinta_garza:          0.11,    // $5.00 / 45.72m
+                cinta_satin:          0.16,    // $3.00 / 18.28m
+                cinta_gross:          0.15,    // $3.50 / 22.86m
+                elastico:             0.09,    // $0.90 / 10m
+                cinchos:              0.02,    // $2.00 / 100u
+                cortina_fiesta_menor: 1.00,    // pedido < 12 bastones
+                cortina_fiesta_mayor: 0.50,    // pedido >= 12 bastones
+            };
+
+            // -------------------------------------------------------
+            // RECETA BASE (insumos fijos por cada bastón)
+            // Siempre se consumen; no dependen de ningún switch.
+            // -------------------------------------------------------
+            const RECETA = {
+                cinchos_por_baston:  3,     // 3 cinchos por unidad
+                elastico_por_baston: 0.40,  // 0.40 m (40 cm) por unidad
+            };
+
+
+            // =======================================================
+            // FUNCIÓN MAESTRA — recalcula toda la tabla y los totales
+            // =======================================================
+            function calcularCotizacion() {
+
+                const tabla = $('#cuerpoTablaImpacto');
+                tabla.empty();
+
+                let costoTotalMateriales = 0;
+                let costoTotalManoObra   = 0;
+
+                const cantidadBastones = parseInt($('#inputCantidad').val()) || 0;
+                const colorBase        = $('#selectAcabado').val();
+                const tamanoBase       = $('#selectTamano').val();
+
+                // Guarda del formulario: si faltan campos obligatorios, mostramos estado vacío
+                if (cantidadBastones <= 0 || !colorBase || !tamanoBase) {
+                    tabla.append(`
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-5">
+                                <i class="fa-solid fa-calculator fa-2x mb-2 text-light"></i><br>
+                                Esperando configuración del pedido...
+                            </td>
+                        </tr>
+                    `);
+                    $('#txtCostoMateriales, #txtCostoManoObra, #txtCostoTotal').text('$ 0.00');
+                    $('#txtCostoUnitario').text('$ 0.00 c/u');
+                    $('#lblResumenBastones').text('0 Bastones');
+                    $('#btnGuardarCotizacion').prop('disabled', true);
+                    return;
+                }
+
+                $('#lblResumenBastones').text(`${cantidadBastones} Bastones`);
+
+
+                // ---------------------------------------------------
+                // FASE 1: BASE DEL BASTÓN
+                // Precio según acabado y escala (mayoreo a partir de 12)
+                // ---------------------------------------------------
+                let precioBaseUnitario = 0;
+                let nombreAcabado = '';
+
+                // 1. Definir precios según mayoreo y color
+                if (colorBase === 'dorado') {
+                    nombreAcabado = 'Dorado';
+                    precioBaseUnitario = (cantidadBastones >= 12) ? 5.00 : 5.50;
+                } else { 
+                    nombreAcabado = 'Plata';
+                    precioBaseUnitario = (cantidadBastones >= 12) ? 4.50 : 5.00;
+                }
+
+                // 2. Sumar el costo al dinero total
+                let costoTotalBases = precioBaseUnitario * cantidadBastones;
+                costoTotalMateriales += costoTotalBases; 
+
+                // 3. Lógica visual del tamaño
+                let esGrande = (tamanoBase === '55' || tamanoBase === '60');
+                let tamanoVisual = esGrande ? '55-60 cm' : '45-50 cm';
+
+                // 4. BÚSQUEDA DE LA BASE EN EL INVENTARIO (Con escudo de seguridad)
+                let baseEnKardex = INVENTARIO.find(item => {
+                    if (item.categoria !== 'base_baston' || !item.nombre) return false;
+                    
+                    let nombreBD = item.nombre.toLowerCase();
+                    let colorBuscado = colorBase.toLowerCase(); // 'plata' o 'dorado'
+                    let tamanoBuscado = tamanoBase + 'cm'; // '45cm', '50cm', etc.
+
+                    // Retorna verdadero SOLO si el nombre en la BD tiene ambas palabras
+                    return nombreBD.includes(colorBuscado) && nombreBD.includes(tamanoBuscado);
+                });
+
+                let alertaBase = '';
+                
+                if (baseEnKardex && baseEnKardex.stock_actual >= cantidadBastones) {
+                    // Sí hay registradas en la base de datos y alcanzan
+                    alertaBase = `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Stock Suficiente</span>`;
+                } else {
+                    // No hay suficientes o no está registrada aún
+                    alertaBase = `<span class="text-danger fw-bold">- ${cantidadBastones} u. (Falta Comprar)</span>`;
+                }
+
+                // 5. Dibujar fila en la tabla
+                tabla.append(`
+                    <tr>
+                        <td class="fw-bold text-dark">Base ${nombreAcabado} (${tamanoVisual})</td>
+                        <td class="text-muted small">${cantidadBastones} u. × $${precioBaseUnitario.toFixed(2)} c/u</td>
+                        <td class="text-end">${alertaBase}</td>
+                    </tr>
+                `);
+
+
+                // ---------------------------------------------------
+                // FASE 2: INSUMOS FIJOS DE ENSAMBLAJE (Cinchos y Elástico)
+                // Van en cada bastón sin excepción; se muestran como
+                // una sola fila agrupada para no saturar la tabla.
+                //
+                const totalCinchos  = RECETA.cinchos_por_baston  * cantidadBastones;
+                const totalElastico = RECETA.elastico_por_baston * cantidadBastones;
+
+                const costoCinchos  = totalCinchos  * PRECIOS_FANTASMA.cinchos;
+                const costoElastico = totalElastico * PRECIOS_FANTASMA.elastico;
+
+                costoTotalMateriales += costoCinchos + costoElastico;
+
+                // Fila agrupada (opción activa por defecto)
+                tabla.append(`
+                    <tr>
+                        <td class="fw-bold text-dark">Insumos de Ensamblaje</td>
+                        <td class="text-muted small">
+                            ${totalCinchos} cinchos · ${totalElastico.toFixed(2)}m elástico
+                        </td>
+                        <td class="text-end fw-bold text-muted">
+                            $${(costoCinchos + costoElastico).toFixed(2)}
+                        </td>
+                    </tr>
+                `);
+
+                tabla.append(`
+                    <tr>
+                        <td class="text-dark">Cinchos</td>
+                        <td class="text-muted small">${totalCinchos} u. × $${PRECIOS_FANTASMA.cinchos.toFixed(2)}</td>
+                        <td class="text-end text-muted small">$${costoCinchos.toFixed(2)}</td>
+                    </tr>
+                `);
+                tabla.append(`
+                    <tr>
+                        <td class="text-dark">Elástico</td>
+                        <td class="text-muted small">${totalElastico.toFixed(2)}m × $${PRECIOS_FANTASMA.elastico.toFixed(2)}</td>
+                        <td class="text-end text-muted small">$${costoElastico.toFixed(2)}</td>
+                    </tr>
+                `);
+
+                // ---------------------------------------------------
+                // FASE 3: CUERPO (LANA)
+                // Consumo total dividido entre los colores activos.
+                // Solo procesa selects que tengan una selección real.
+                // ---------------------------------------------------
+                const consumoLana_g = esGrande ? 150 : 135;
+
+                // Contamos cuántos selects tienen algo elegido
+                let coloresActivos = 0;
+                $('#contenedorColoresLana .select2-ajax').each(function () {
+                    const data = $(this).select2('data');
+                    if (data && data.length > 0 && data[0].id !== '') coloresActivos++;
+                });
+                if (coloresActivos === 0) coloresActivos = 1; // Evita división por cero
+
+                const gramosPorColorTotal = (consumoLana_g / coloresActivos) * cantidadBastones;
+
+                $('#contenedorColoresLana .select2-ajax').each(function () {
+                    const dataSelect = $(this).select2('data');
+                    if (!dataSelect || dataSelect.length === 0) return;
+
+                    const seleccion  = dataSelect[0];
+                    if (!seleccion.id) return;
+
+                    let nombreLana   = seleccion.text;
+                    const esTagNuevo = seleccion.newTag || isNaN(seleccion.id);
+                    let costoLana    = 0;
+                    let stockActual  = 0;
+
+                    if (!esTagNuevo) {
+                        // Material existente: tomamos precio y stock desde la BD
+                        const insumoBD = INVENTARIO.find(item => item.id == seleccion.id);
+                        if (insumoBD) {
+                            costoLana   = gramosPorColorTotal * insumoBD.costo_unitario;
+                            stockActual = insumoBD.stock_actual;
+                        }
+                    } else {
+                        // Tag nuevo: usamos precio fantasma y limpiamos el texto del select
+                        costoLana  = gramosPorColorTotal * PRECIOS_FANTASMA.lana;
+                        nombreLana = nombreLana.replace(' (Cotizar nuevo material)', '');
+                    }
+
+                    costoTotalMateriales += costoLana;
+
+                    // Alerta visual de stock: verde si alcanza, rojo con madejas si no
+                    const madejasNecesarias = Math.ceil(gramosPorColorTotal / 90);
+                    const stockSuficiente   = !esTagNuevo && stockActual >= gramosPorColorTotal;
+                    const textoStock        = stockSuficiente
+                        ? `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Stock Suficiente</span>`
+                        : `<span class="text-danger fw-bold">- ${gramosPorColorTotal.toFixed(1)}g (${madejasNecesarias} Madejas)</span>`;
+
+                    tabla.append(`
+                        <tr>
+                            <td class="fw-bold text-dark">Cuerpo: ${nombreLana}</td>
+                            <td class="text-muted small">${gramosPorColorTotal.toFixed(1)}g calculados</td>
+                            <td class="text-end">${textoStock}</td>
+                        </tr>
+                    `);
+                });
+
+                // ---------------------------------------------------
+                // TOTALES — actualiza el panel financiero de la derecha
+                // ---------------------------------------------------
+                const granTotal     = costoTotalMateriales + costoTotalManoObra;
+                const costoUnitario = granTotal / cantidadBastones;
+
+                $('#txtCostoMateriales').text(`$ ${costoTotalMateriales.toFixed(2)}`);
+                $('#txtCostoManoObra').text(`$ ${costoTotalManoObra.toFixed(2)}`);
+                $('#txtCostoTotal').text(`$ ${granTotal.toFixed(2)}`);
+                $('#txtCostoUnitario').text(`$ ${costoUnitario.toFixed(2)} c/u`);
+                $('#btnGuardarCotizacion').prop('disabled', false);
+
+            } 
+
+            // =======================================================
+            // TRIGGERS — cualquier cambio en el formulario recalcula
+            // =======================================================
+
+            // Campos directos del formulario
+            $('#inputCantidad, #selectAcabado, #selectTamano, #selectCantidadColores')
+                .on('input change', calcularCotizacion);
+
+            // Selects de lana (creados dinámicamente, delegamos al body)
+            $('body').on('change', '.select2-ajax', calcularCotizacion);
+
+            // Carga inicial al abrir la página
+            calcularCotizacion();
+        });
     </script>
 @endsection
