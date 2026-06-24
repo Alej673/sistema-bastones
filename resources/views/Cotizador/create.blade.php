@@ -48,10 +48,8 @@
             #tablaImpacto td:nth-child(4) { width: 25%; }
 
             /* Módulo 1 — fila de Cant/Tamaño: apilar verticalmente */
-            .row.g-2 .col-4,
-            .row.g-2 .col-8 {
-                width: 100%;
-            }
+            #formCotizador .row.g-2 .col-sm-4,
+            #formCotizador .row.g-2 .col-sm-8 { width: 100%; }
 
             /* Textos de estados (Stock/Falta) más compactos */
             #cuerpoTablaImpacto span {
@@ -76,36 +74,38 @@
            En móvil/tablet la tabla NO es sticky para
            evitar que tape la tarjeta de totales.
            ============================================ */
+        .card-vista-previa {
+            /* Por defecto (móvil): posición normal en el flujo */
+            position: static;
+        }
 
         @media (min-width: 992px) {
-            /* 1. Hacemos que el contenedor PADRE sea el que se pega a la pantalla */
-            .contenedor-derecho-sticky {
+            /* Solo en desktop aplicamos el sticky al contenedor envolvente */
+            .vista-previa-container {
                 position: sticky;
                 top: 20px;
-                height: calc(100vh - 40px); /* Ocupa exactamente la altura de la ventana */
-                display: flex;
-                flex-direction: column;
+                z-index: 100;
             }
 
-            /* 2. La tabla de arriba toma todo el espacio disponible */
+            /* La tarjeta de vista previa se comporta normalmente dentro del contenedor sticky */
             .card-vista-previa {
-                flex: 1 1 auto;
+                position: relative;
                 display: flex;
                 flex-direction: column;
-                min-height: 0; /* Fundamental para que funcione el scroll interno en flexbox */
-                margin-bottom: 1rem !important; /* Mantiene la separación visual */
             }
 
-            /* 3. Activamos el scroll interno solo para las filas de la tabla */
+            /* El body de la tabla crece con scroll interno */
             .card-vista-previa .card-body {
                 overflow-y: auto;
-                flex: 1 1 auto;
+                flex: 1;
+                min-height: 0;
+                max-height: calc(100vh - 200px);
             }
 
-            /* 4. La tarjeta de totales se queda intacta al fondo */
-            .card-totales {
-                flex: 0 0 auto;
-                margin-top: 0 !important; /* Reseteamos el margen top que tenía la clase original */
+            /* Tarjeta de costos dentro del contenedor sticky */
+            .card-costos-totales {
+                position: relative;
+                background: white;
             }
         }
     </style>
@@ -236,58 +236,56 @@
                             <div class="card-body p-3">
                                 <h6 class="text-secondary fw-bold mb-3 small">4. DECORACIÓN Y APLIQUES</h6>
 
-                                {{-- Lazos (usan inventario de cintas) --}}
                                 <p class="text-muted small fw-bold border-bottom pb-1 mb-2">Lazos (Inventario)</p>
 
+                                {{-- Lazo Simple --}}
                                 <div class="border rounded p-2 mb-2 bg-light">
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" type="checkbox" id="swLazoSimple">
                                         <label class="form-check-label fw-bold text-dark" for="swLazoSimple">Lazo Simple (1.5m)</label>
                                     </div>
                                     <div id="cajaLazoSimple" class="mt-2 d-none">
-                                        {{-- Buscador AJAX de cintas --}}
                                         <select class="form-select select2-ajax-cintas" name="cinta_lazo_simple">
                                             <option value="" selected disabled>Buscar color de cinta...</option>
                                         </select>
                                     </div>
-                                </div>
+                                </div>  
 
+                                {{-- Flores --}}
                                 <div class="border rounded p-2 mb-2 bg-light">
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" type="checkbox" id="swLazoFlor">
                                         <label class="form-check-label fw-bold text-dark" for="swLazoFlor">Flores (1.0m c/u)</label>
                                     </div>
-                                    <div id="cajaLazoFlor" class="mt-2 d-none row g-2">
-                                        <div class="col-sm-4 col-12">
-                                            <label class="form-label text-muted small mb-0">Cant. (1 a 5)</label>
-                                            <input type="number" class="form-control form-control-sm" id="cantFlores" value="1" min="1" max="5">
-                                        </div>
-                                        <div class="col-sm-8 col-12">
-                                            <label class="form-label text-muted small mb-0">Color de Cinta</label>
-                                            {{-- Buscador AJAX de cintas --}}
-                                            <select class="form-select select2-ajax-cintas" name="cinta_lazo_flor">
-                                                <option value="" selected disabled>Buscar color...</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
+                                    <div id="cajaLazoFlor" class="mt-2 d-none">
+                                        <label class="form-label text-muted small mb-1">Cantidad de Flores</label>
+                                        <select id="selectCantFlores" class="form-select form-select-sm mb-2">
+                                            <option value="1" selected>1 Flor</option>
+                                            <option value="2">2 Flores</option>
+                                            <option value="3">3 Flores</option>
+                                            <option value="4">4 Flores</option>
+                                            <option value="5">5 Flores</option>
+                                        </select>
+                                        <div id="contenedorFlores" class="d-flex flex-column gap-2 mt-2"></div>
+                                    </div> 
+                                </div> 
 
+                                {{-- Lazo con Nombre --}}
                                 <div class="border rounded p-2 mb-2 bg-light">
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" type="checkbox" id="swLazoNombre">
                                         <label class="form-check-label fw-bold text-dark" for="swLazoNombre">Lazo c/ Nombre (1.0m + $0.70)</label>
                                     </div>
                                     <div id="cajaLazoNombre" class="mt-2 d-none">
-                                        {{-- Buscador AJAX de cintas --}}
                                         <select class="form-select select2-ajax-cintas" name="cinta_lazo_nombre">
                                             <option value="" selected disabled>Buscar color de cinta...</option>
                                         </select>
                                     </div>
-                                </div>
+                                </div> 
 
-                                {{-- Apliques manuales (solo cotizan, no afectan inventario) --}}
                                 <p class="text-muted small fw-bold border-bottom pb-1 mb-2 mt-3">Detalles Manuales (Solo Cotización)</p>
 
+                                {{-- Apliques --}}
                                 <div class="border rounded p-2 mb-2 bg-white">
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" type="checkbox" id="swApliques">
@@ -295,12 +293,12 @@
                                     </div>
                                     <div id="cajaApliques" class="mt-2 d-none">
                                         <label class="form-label text-muted small mb-0">Cantidad de apliques por bastón</label>
-                                        <input type="number" class="form-control form-control-sm w-50" id="cantApliques" value="1" min="1">
+                                        <input type="number" class="form-control form-control-sm w-50" id="cantApliques" value="0" min="1">
                                     </div>
-                                </div>
+                                </div>  
 
-                            </div>
-                        </div>
+                            </div>  
+                        </div>  
 
                         {{-- MÓDULO 5: DISEÑOS PERSONALIZADOS --}}
                         <div class="card mb-3 border-0 shadow-sm border-warning border-opacity-25">
@@ -338,13 +336,17 @@
 
         {{-- ======================================
              COLUMNA DERECHA — VISTA PREVIA
+             NOTA: sticky-top solo aplica en desktop
+             (via CSS .card-vista-previa). En móvil
+             la tarjeta fluye normalmente para que
+             la tarjeta de totales quede visible.
         ====================================== --}}
         <div class="col-lg-7">
             
-            {{-- NUEVO CONTENEDOR WRAPPER: Agrupa tabla + totales para el scroll sticky --}}
-            <div class="contenedor-derecho-sticky">
-
-                <div class="card shadow-sm border-dark card-vista-previa">
+            {{-- Contenedor envolvente que mantiene ambas tarjetas juntas y sticky en desktop --}}
+            <div class="vista-previa-container">
+                {{-- Se removió sticky-top del HTML y se movió al CSS con media query >= lg --}}
+                <div class="card shadow-sm border-dark mb-3 card-vista-previa">
                     <div class="card-header bg-dark text-warning fw-bold py-3 d-flex justify-content-between align-items-center">
                         <span><i class="fa-solid fa-boxes-stacked"></i> Vista Previa: Impacto en Inventario</span>
                         <span id="lblResumenBastones" class="badge bg-warning text-dark">0 Bastones</span>
@@ -374,35 +376,35 @@
                     </div>
                 </div>
 
-                {{-- La tarjeta de totales ya no se sobrepondrá --}}
-                <div class="card shadow-sm border-success border-opacity-25 card-totales">
+                <div class="card shadow-sm border-success border-opacity-25 card-costos-totales">
                     <div class="card-body bg-light">
                         <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
                             <span class="text-muted fw-bold">Costo Base Materiales:</span>
-                            <span class="fs-5 fw-bold text-dark" id="txtCostoMateriales">$ 0.00</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
-                            <span class="text-muted fw-bold">Mano de Obra / Extras:</span>
-                            <span class="fs-5 fw-bold text-dark" id="txtCostoManoObra">$ 0.00</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <span class="text-success fw-bold fs-5">COSTO TOTAL PRODUCCIÓN:</span>
-                            <span class="fs-3 fw-bold text-success" id="txtCostoTotal">$ 0.00</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mt-1">
-                            <span class="text-muted small">Costo sugerido por unidad:</span>
-                            <span class="fw-bold text-secondary" id="txtCostoUnitario">$ 0.00 c/u</span>
-                        </div>
-                        
-                        <button type="button" class="btn btn-success w-100 fw-bold mt-4 py-2 shadow-sm" id="btnGuardarCotizacion" disabled>
-                            <i class="fa-solid fa-floppy-disk"></i> Confirmar y Guardar Pedido
-                        </button>
+                        <span class="fs-5 fw-bold text-dark" id="txtCostoMateriales">$ 0.00</span>
                     </div>
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                        <span class="text-muted fw-bold">Mano de Obra / Extras:</span>
+                        <span class="fs-5 fw-bold text-dark" id="txtCostoManoObra">$ 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="text-success fw-bold fs-5">COSTO TOTAL PRODUCCIÓN:</span>
+                        <span class="fs-3 fw-bold text-success" id="txtCostoTotal">$ 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                        <span class="text-muted small">Costo sugerido por unidad:</span>
+                        <span class="fw-bold text-secondary" id="txtCostoUnitario">$ 0.00 c/u</span>
+                    </div>
+                    
+                    <button type="button" class="btn btn-success w-100 fw-bold mt-4 py-2 shadow-sm" id="btnGuardarCotizacion" disabled>
+                        <i class="fa-solid fa-floppy-disk"></i> Confirmar y Guardar Pedido
+                    </button>
                 </div>
+            </div>
 
-            </div> {{-- FIN DEL CONTENEDOR WRAPPER --}}
+            </div>{{-- /vista-previa-container --}}
 
         </div>
+
 
     </div>{{-- /row --}}
 
@@ -617,7 +619,7 @@
 
 
     {{-- ==========================================
-         MÓDULO 4 — SWITCHES Y CINTAS
+        MÓDULO 4 — SWITCHES Y CINTAS
     ========================================== --}}
     <script>
         $(document).ready(function () {
@@ -637,7 +639,6 @@
             });
 
             // --- Motor AJAX para buscadores de cintas --- //
-            // Se llama cada vez que se abre un select de cinta para inicializarlo
             function inicializarCintas() {
                 $('.select2-ajax-cintas').not('[data-select2-id]').select2({
                     theme: 'bootstrap-5',
@@ -666,23 +667,51 @@
                 });
             });
 
+            // --- Generador dinámico de flores --- //
+            $('#selectCantFlores').on('change', function () {
+                let cantidad = parseInt($(this).val());
+                let contenedor = $('#contenedorFlores');
+
+                contenedor.empty();
+
+                for (let i = 1; i <= cantidad; i++) {
+                    contenedor.append(`
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light text-muted">Flor ${i}</span>
+                            <select class="form-select select2-ajax-cintas" name="cinta_flor_${i}">
+                                <option value="" selected disabled>Buscar color...</option>
+                            </select>
+                        </div>
+                    `);
+                }
+
+                // Inicializa los nuevos selects recién creados
+                inicializarCintas();
+
+                if (typeof calcularCotizacion === 'function') {
+                    calcularCotizacion();
+                }
+            });
+
+            // Dibuja "Flor 1" al cargar la página
+            $('#selectCantFlores').trigger('change');
+
         });
     </script>
 
     {{-- ==========================================
     MÓDULO 5 — SWITCHES PARA DISEÑOS PERSONALIZADOS
     ========================================== --}}
+
     <script>
-            const swDiseno = $('#swDisenoPersonalizado');
+        $(document).ready(function() {  
+            const swDiseno  = $('#swDisenoPersonalizado');
             const cajaDiseno = $('#cajaDisenoPersonalizado');
 
             swDiseno.on('change', function() {
-                if ($(this).is(':checked')) {
-                    cajaDiseno.removeClass('d-none');
-                } else {
-                    cajaDiseno.addClass('d-none');
-                }
+                cajaDiseno.toggleClass('d-none', !$(this).is(':checked'));
             });
+        });   
     </script>
 
     {{-- ==========================================
@@ -1013,9 +1042,138 @@
                     }
                 }
 
+                // ===================================================
+                // --- FASE 5: DECORACIÓN Y APLIQUES ---
+                // ===================================================
+
+                // Función interna para no repetir código en las 3 cintas
+                function procesarCinta(idSelect, nombreFila, metrosPorUnidad, recargoFijo = 0) {
+                    let dataSelect = $(idSelect).select2('data');
+                    if (dataSelect && dataSelect.length > 0 && dataSelect[0].id !== '') {
+                        let seleccion = dataSelect[0];
+                        let nombreMaterial = seleccion.text.replace(' (Cotizar nuevo material)', '');
+                        let idMaterial = seleccion.id;
+                        let esTagNuevo = seleccion.newTag || isNaN(idMaterial);
+                        
+                        let metrosTotales = metrosPorUnidad * cantidadBastones;
+                        let costoCalculado = 0;
+                        let stockDisponible = 0;
+                        let textoAlerta = '';
+
+                        if (!esTagNuevo) {
+                            // Si existe en BD, usamos su precio real
+                            let insumoBD = INVENTARIO.find(item => item.id == idMaterial);
+                            if (insumoBD) {
+                                costoCalculado = metrosTotales * insumoBD.costo_unitario;
+                                stockDisponible = insumoBD.stock_actual; // Está en metros
+                            }
+                        } else {
+                            // Si es nuevo, intentamos adivinar el tipo de cinta por el texto
+                            let precioFantasma = PRECIOS_FANTASMA.cinta_gross; // Default
+                            let textoMinuscula = nombreMaterial.toLowerCase();
+                            
+                            if (textoMinuscula.includes('garza')) precioFantasma = PRECIOS_FANTASMA.cinta_garza;
+                            else if (textoMinuscula.includes('satin') || textoMinuscula.includes('satín')) precioFantasma = PRECIOS_FANTASMA.cinta_satin;
+                            
+                            costoCalculado = metrosTotales * precioFantasma;
+                        }
+
+                        // Sumamos a los totales
+                        costoTotalMateriales += costoCalculado;
+                        
+                        // Si hay recargo fijo (Ej: Lazo con nombre), va a la Mano de Obra
+                        let totalRecargo = recargoFijo * cantidadBastones;
+                        if (totalRecargo > 0) {
+                            costoTotalManoObra += totalRecargo;
+                        }
+
+                        // Alertas de Stock (en metros)
+                        if (esTagNuevo || stockDisponible < metrosTotales) {
+                            textoAlerta = `<span class="text-danger fw-bold">- ${metrosTotales.toFixed(2)}m (Falta Comprar)</span>`;
+                        } else {
+                            textoAlerta = `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Stock Suficiente</span>`;
+                        }
+
+                        // Agregamos la fila (Con el formato de 4 columnas)
+                        let subtotalVisual = (costoCalculado + totalRecargo).toFixed(2);
+                        let detalleRecargo = totalRecargo > 0 ? ` <br><small class="text-muted">(Incluye $${totalRecargo.toFixed(2)} extra)</small>` : '';
+
+                        tabla.append(`
+                            <tr>
+                                <td class="fw-bold text-dark">${nombreFila}: ${nombreMaterial}</td>
+                                <td class="text-muted small">${metrosTotales.toFixed(2)}m calculados</td>
+                                <td class="fw-bold text-muted">$${subtotalVisual}${detalleRecargo}</td>
+                                <td class="text-end">${textoAlerta}</td>
+                            </tr>
+                        `);
+                    }
+                }
+
+                // 5.1 Lazo Simple (1.5m fijos)
+                if ($('#swLazoSimple').is(':checked')) {
+                    procesarCinta('select[name="cinta_lazo_simple"]', 'Lazo Simple', 1.5, 0);
+                }
+
+                // 5.2 Flores Dinámicas (1.0m por cada flor individual)
+                if ($('#swLazoFlor').is(':checked')) {
+                    let numeroFlor = 1;
+                    $('#contenedorFlores select').each(function() {
+                        procesarCinta(this, `Flor ${numeroFlor}`, 1.0, 0);
+                        numeroFlor++;
+                    });
+                }
+
+                // 5.3 Lazo con Nombre (1.0m fijos + $0.70 de extra)
+                if ($('#swLazoNombre').is(':checked')) {
+                    procesarCinta('select[name="cinta_lazo_nombre"]', 'Lazo c/ Nombre', 1.0, 0.70);
+                }
+
+                // 5.4 Apliques Manuales ($0.50 cada uno)
+                if ($('#swApliques').is(':checked')) {
+                    let cantApliques = parseInt($('#cantApliques').val()) || 1;
+                    let totalApliques = cantApliques * cantidadBastones;
+                    let costoApliques = totalApliques * 0.50; // $0.50 fijos por unidad
+
+                    costoTotalManoObra += costoApliques; // Lo sumamos a Extras/Mano de obra
+
+                    tabla.append(`
+                        <tr>
+                            <td class="fw-bold text-dark">Detalles: Apliques</td>
+                            <td class="text-muted small">${totalApliques} u. totales × $0.50</td>
+                            <td class="fw-bold text-muted">$${costoApliques.toFixed(2)}</td>
+                            <td class="text-end"><span class="text-muted">Extra Fijo</span></td>
+                        </tr>
+                    `);
+                }
+
+                // =======================================================
+                // --- FASE 6: DISEÑOS PERSONALIZADOS (MANO DE OBRA) ---
+                // =======================================================
+                if ($('#swDisenoPersonalizado').is(':checked')) {
+                    // Extraer el número del select (1.50, 2.00 o 3.00)
+                    let tarifaDisenoUnidad = parseFloat($('#selectNivelDiseno').val()) || 0;
+                    
+                    // Multiplicarlo por la cantidad de bastones
+                    let costoTotalDiseno = tarifaDisenoUnidad * cantidadBastones;
+
+                    // Sumarlo directo a la MANO DE OBRA (no a los materiales)
+                    costoTotalManoObra += costoTotalDiseno;
+
+                    // Sacar el texto bonito para la tabla (Ej: "Básico", "Premium")
+                    let nombreNivel = $('#selectNivelDiseno option:selected').text().split(' ')[0];
+
+                    tabla.append(`
+                        <tr class="bg-warning bg-opacity-10">
+                            <td class="fw-bold text-dark"><i class="fa-solid fa-star text-warning"></i> Diseño Especial: ${nombreNivel}</td>
+                            <td class="text-muted small">${cantidadBastones} u. × $${tarifaDisenoUnidad.toFixed(2)}</td>
+                            <td class="fw-bold text-dark">$${costoTotalDiseno.toFixed(2)}</td>
+                            <td class="text-end"><span class="text-muted">Mano de Obra</span></td>
+                        </tr>
+                    `);
+                }
 
             // ---------------------------------------------------
-            // FASE 5: TOTALES (Actualiza el panel financiero)
+            // FASE 7: TOTALES (Actualiza el panel financiero)
             // ---------------------------------------------------
             const granTotal     = costoTotalMateriales + costoTotalManoObra;
             const costoUnitario = granTotal / cantidadBastones;
@@ -1041,7 +1199,15 @@
                 '#swCortinaLana', 
                 '#selectCantCortinaLana', 
                 '#swCortinaFiesta', 
-                '#selectCantCortinaFiesta'
+                '#selectCantCortinaFiesta',
+                '#swLazoSimple',
+                '#swLazoFlor',
+                '#selectCantFlores',
+                '#swLazoNombre',
+                '#swApliques',
+                '#cantApliques',
+                '#swDisenoPersonalizado',
+                '#selectNivelDiseno'
             ].join(', ');
 
             $(selectoresFormulario).on('input change', function (e) {
