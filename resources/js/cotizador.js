@@ -210,7 +210,6 @@ $(document).ready(function () {
     // 1. CONSTANTES Y CONFIGURACIÓN BASE
     // =======================================================
 
-    // PRECIOS DE RESPALDO: Se usan cuando el material no está en el inventario
     const PRECIOS_FANTASMA = {
         lana:                 0.0127,  // $1.15 / 90g
         cinta_garza:          0.11,    // $5.00 / 45.72m
@@ -222,7 +221,6 @@ $(document).ready(function () {
         cortina_fiesta_mayor: 0.50,    // pedido >= 12 bastones
     };
 
-    // RECETA BASE: Insumos fijos por cada bastón (siempre se consumen)
     const RECETA = {
         cinchos_por_baston:  3,     // 3 cinchos por unidad
         elastico_por_baston: 0.40,  // 0.40 m (40 cm) por unidad
@@ -243,9 +241,7 @@ $(document).ready(function () {
 
     function calcularCotizacion() {
 
-        // ---Inicializar o vaciar el carrito global de insumos ---
         window.carritoInsumos = [];
-
         const tabla = $('#cuerpoTablaImpacto');
         tabla.empty();
 
@@ -257,7 +253,6 @@ $(document).ready(function () {
         const tamanoBase       = $('#selectTamano').val();
 
         // --- GUARDA DEL FORMULARIO ---
-        // Si faltan campos obligatorios, mostramos el estado vacío
         if (cantidadBastones <= 0 || !colorBase || !tamanoBase) {
             tabla.append(`
                 <tr>
@@ -276,7 +271,6 @@ $(document).ready(function () {
 
         $('#lblResumenBastones').text(`${cantidadBastones} Bastones`);
 
-
         // ---------------------------------------------------
         // FASE 1: BASE DEL BASTÓN
         // ---------------------------------------------------
@@ -294,7 +288,7 @@ $(document).ready(function () {
         let costoTotalBases = precioBaseUnitario * cantidadBastones;
         costoTotalMateriales += costoTotalBases;
 
-        let esGrande    = (tamanoBase === '55' || tamanoBase === '60');
+        let esGrande     = (tamanoBase === '55' || tamanoBase === '60');
         let tamanoVisual = esGrande ? '55-60 cm' : '45-50 cm';
 
         let baseEnKardex = INVENTARIO.find(item => {
@@ -324,7 +318,6 @@ $(document).ready(function () {
             cantidad_requerida: cantidadBastones,
             subtotal_calculado: costoTotalBases,
         });
-
 
         // ---------------------------------------------------
         // FASE 2: INSUMOS FIJOS DE ENSAMBLAJE
@@ -358,23 +351,12 @@ $(document).ready(function () {
             </tr>
         `);
 
-        agregarAlCarrito({
-            insumo_id: null,
-            nombre_material: 'Cinchos',
-            cantidad_requerida: totalCinchos,
-            subtotal_calculado: costoCinchos,
-        });
-
-        agregarAlCarrito({
-            insumo_id: null,
-            nombre_material: 'Elástico',
-            cantidad_requerida: totalElastico,
-            subtotal_calculado: costoElastico,
-        });
+        agregarAlCarrito({ insumo_id: null, nombre_material: 'Cinchos', cantidad_requerida: totalCinchos, subtotal_calculado: costoCinchos });
+        agregarAlCarrito({ insumo_id: null, nombre_material: 'Elástico', cantidad_requerida: totalElastico, subtotal_calculado: costoElastico });
 
 
         // ---------------------------------------------------
-        // FASE 3: CUERPO (LANA)
+        // FASE 3: CUERPO (LANA) - ✅ CORREGIDO Y OPTIMIZADO
         // ---------------------------------------------------
         const consumoLana_g = esGrande ? 150 : 135;
         let coloresActivos  = 0;
@@ -385,7 +367,6 @@ $(document).ready(function () {
         });
 
         if (coloresActivos === 0) coloresActivos = 1;
-
         const gramosPorColorTotal = (consumoLana_g / coloresActivos) * cantidadBastones;
 
         $('#contenedorColoresLana .select2-ajax').each(function () {
@@ -399,9 +380,12 @@ $(document).ready(function () {
             const esTagNuevo = seleccion.newTag || isNaN(seleccion.id);
             let costoLana    = 0;
             let stockActual  = 0;
+            
+            // ✅ Declaramos insumoBD en el scope correcto
+            let insumoBD = null; 
 
             if (!esTagNuevo) {
-                const insumoBD = INVENTARIO.find(item => item.id == seleccion.id);
+                insumoBD = INVENTARIO.find(item => item.id == seleccion.id);
                 if (insumoBD) {
                     costoLana   = gramosPorColorTotal * insumoBD.costo_unitario;
                     stockActual = insumoBD.stock_actual;
@@ -412,7 +396,6 @@ $(document).ready(function () {
             }
 
             costoTotalMateriales += costoLana;
-
             const madejasNecesarias = Math.ceil(gramosPorColorTotal / 90);
             const stockSuficiente   = !esTagNuevo && stockActual >= gramosPorColorTotal;
 
@@ -430,7 +413,8 @@ $(document).ready(function () {
             `);
 
             agregarAlCarrito({
-                insumo_id: !esTagNuevo ? insumoBD?.id ?? null : null,
+                // ✅ Ahora insumoBD existe en este scope y el ternario evaluará correctamente
+                insumo_id: insumoBD?.id ?? null, 
                 nombre_material: nombreLana,
                 cantidad_requerida: gramosPorColorTotal,
                 subtotal_calculado: costoLana,
@@ -439,14 +423,12 @@ $(document).ready(function () {
 
 
         // ---------------------------------------------------
-        // FASE 4: CORTINAS (LANA Y FIESTA)
+        // FASE 4: CORTINAS (LANA Y FIESTA) - ✅ OPTIMIZADO
         // ---------------------------------------------------
 
         // 4.1 Cortinas de Lana
         if ($('#swCortinaLana').is(':checked')) {
             let gramosPorCortinaLana = 30 * cantidadBastones;
-
-            console.log(`[FASE 4A] Encontré ${$('#contenedorCortinasLana .select2-ajax').length} selectores de Cortina Lana`);
 
             $('#contenedorCortinasLana select').each(function () {
                 let dataSelect = $(this).select2('data');
@@ -460,9 +442,10 @@ $(document).ready(function () {
                     let costoCalculado  = 0;
                     let stockDisponible = 0;
                     let textoAlerta     = '';
+                    let insumoBD        = null; // ✅ Optimizando scope
 
                     if (!esTagNuevo) {
-                        let insumoBD = INVENTARIO.find(item => item.id == idMaterial);
+                        insumoBD = INVENTARIO.find(item => item.id == idMaterial);
                         if (insumoBD) {
                             costoCalculado  = gramosPorCortinaLana * insumoBD.costo_unitario;
                             stockDisponible = insumoBD.stock_actual;
@@ -472,7 +455,6 @@ $(document).ready(function () {
                     }
 
                     costoTotalMateriales += costoCalculado;
-
                     let madejasNecesarias = Math.ceil(gramosPorCortinaLana / 90);
 
                     if (esTagNuevo || stockDisponible < gramosPorCortinaLana) {
@@ -491,7 +473,7 @@ $(document).ready(function () {
                     `);
 
                     agregarAlCarrito({
-                        insumo_id: !esTagNuevo ? INVENTARIO.find(item => item.id == idMaterial)?.id ?? null : null,
+                        insumo_id: insumoBD?.id ?? null, // ✅ Ya no itera todo el arreglo de nuevo
                         nombre_material: nombreMaterial,
                         cantidad_requerida: gramosPorCortinaLana,
                         subtotal_calculado: costoCalculado,
@@ -528,9 +510,10 @@ $(document).ready(function () {
                         let costoCalculado = 0;
                         let faltaStock     = false;
                         let textoAlerta    = '';
+                        let insumoBD       = null; // ✅ Optimizando scope
 
                         if (!esTagNuevo) {
-                            let insumoBD = INVENTARIO.find(item => item.id == idMaterial);
+                            insumoBD = INVENTARIO.find(item => item.id == idMaterial);
                             if (insumoBD) {
                                 costoCalculado = cortinasPorColor * insumoBD.costo_unitario;
                                 let stockEnUnidades = insumoBD.stock_actual;
@@ -562,7 +545,7 @@ $(document).ready(function () {
                         `);
 
                         agregarAlCarrito({
-                            insumo_id: !esTagNuevo ? INVENTARIO.find(item => item.id == idMaterial)?.id ?? null : null,
+                            insumo_id: insumoBD?.id ?? null, // ✅ Más limpio
                             nombre_material: nombreMaterial,
                             cantidad_requerida: cortinasPorColor,
                             subtotal_calculado: costoCalculado,
@@ -574,10 +557,9 @@ $(document).ready(function () {
 
 
         // =======================================================
-        // FASE 5: DECORACIÓN Y APLIQUES
+        // FASE 5: DECORACIÓN Y APLIQUES - ✅ OPTIMIZADO
         // =======================================================
 
-        // Función interna para no repetir código en las 3 cintas
         function procesarCinta(idSelect, nombreFila, metrosPorUnidad, recargoFijo = 0) {
             let dataSelect = $(idSelect).select2('data');
             if (dataSelect && dataSelect.length > 0 && dataSelect[0].id !== '') {
@@ -590,15 +572,15 @@ $(document).ready(function () {
                 let costoCalculado  = 0;
                 let stockDisponible = 0;
                 let textoAlerta     = '';
+                let insumoBD        = null; // ✅ Optimizando scope
 
                 if (!esTagNuevo) {
-                    let insumoBD = INVENTARIO.find(item => item.id == idMaterial);
+                    insumoBD = INVENTARIO.find(item => item.id == idMaterial);
                     if (insumoBD) {
                         costoCalculado  = metrosTotales * insumoBD.costo_unitario;
                         stockDisponible = insumoBD.stock_actual; // en metros
                     }
                 } else {
-                    // Adivinar el tipo de cinta por el texto para usar precio fantasma adecuado
                     let precioFantasma  = PRECIOS_FANTASMA.cinta_gross; // Default
                     let textoMinuscula  = nombreMaterial.toLowerCase();
 
@@ -611,13 +593,11 @@ $(document).ready(function () {
 
                 costoTotalMateriales += costoCalculado;
 
-                // Si hay recargo fijo (Ej: Lazo con nombre) → va a Mano de Obra
                 let totalRecargo = recargoFijo * cantidadBastones;
                 if (totalRecargo > 0) {
                     costoTotalManoObra += totalRecargo;
                 }
 
-                // Alertas de Stock (en metros)
                 if (esTagNuevo || stockDisponible < metrosTotales) {
                     textoAlerta = `<span class="text-danger fw-bold">- ${metrosTotales.toFixed(2)}m (Falta Comprar)</span>`;
                 } else {
@@ -639,7 +619,7 @@ $(document).ready(function () {
                 `);
 
                 agregarAlCarrito({
-                    insumo_id: !esTagNuevo ? INVENTARIO.find(item => item.id == idMaterial)?.id ?? null : null,
+                    insumo_id: insumoBD?.id ?? null, // ✅ Evita la doble búsqueda
                     nombre_material: `${nombreFila}: ${nombreMaterial}`,
                     cantidad_requerida: metrosTotales,
                     subtotal_calculado: costoCalculado + totalRecargo,
@@ -647,12 +627,10 @@ $(document).ready(function () {
             }
         }
 
-        // 5.1 Lazo Simple (1.5m fijos)
-        if ($('#swLazoSimple').is(':checked')) {
-            procesarCinta('select[name="cinta_lazo_simple"]', 'Lazo Simple', 1.5, 0);
-        }
+        // 5.1 Lazo Simple
+        if ($('#swLazoSimple').is(':checked')) procesarCinta('select[name="cinta_lazo_simple"]', 'Lazo Simple', 1.5, 0);
 
-        // 5.2 Flores Dinámicas (1.0m por cada flor individual)
+        // 5.2 Flores Dinámicas
         if ($('#swLazoFlor').is(':checked')) {
             let numeroFlor = 1;
             $('#contenedorFlores select').each(function () {
@@ -661,12 +639,10 @@ $(document).ready(function () {
             });
         }
 
-        // 5.3 Lazo con Nombre (1.0m fijos + $0.70 de extra)
-        if ($('#swLazoNombre').is(':checked')) {
-            procesarCinta('select[name="cinta_lazo_nombre"]', 'Lazo c/ Nombre', 1.0, 0.70);
-        }
+        // 5.3 Lazo con Nombre
+        if ($('#swLazoNombre').is(':checked')) procesarCinta('select[name="cinta_lazo_nombre"]', 'Lazo c/ Nombre', 1.0, 0.70);
 
-        // 5.4 Apliques Manuales ($0.50 cada uno)
+        // 5.4 Apliques Manuales
         if ($('#swApliques').is(':checked')) {
             let cantApliques  = parseInt($('#cantApliques').val()) || 1;
             let totalApliques = cantApliques * cantidadBastones;
@@ -725,26 +701,22 @@ $(document).ready(function () {
         // ACTUALIZACIÓN DEL PANEL FINANCIERO VISUAL
         // =======================================================
 
-        // 1. Ganancia Base / Mano de Obra Fija
         let tarifaManoObraFija = 3.00;
         let totalGananciaFija  = tarifaManoObraFija * cantidadBastones;
 
-        // 2. Gran Total
-        let granTotal    = costoTotalMateriales + costoTotalManoObra + totalGananciaFija;
+        let granTotal     = costoTotalMateriales + costoTotalManoObra + totalGananciaFija;
         let costoUnitario = granTotal / cantidadBastones;
 
-        // 3. Imprimir valores en pantalla
         $('#txtCostoMateriales').text(`$ ${costoTotalMateriales.toFixed(2)}`);
-        $('#txtCostoManoObra').text(`$ ${costoTotalManoObra.toFixed(2)}`);   // solo EXTRAS
+        $('#txtCostoManoObra').text(`$ ${costoTotalManoObra.toFixed(2)}`); 
         $('#txtGananciaFija').text(`$ ${totalGananciaFija.toFixed(2)}`);
 
         $('#txtCostoTotal').text(`$ ${granTotal.toFixed(2)}`);
         $('#txtCostoUnitario').text(`$ ${costoUnitario.toFixed(2)} c/u`);
 
-        // Habilitar el botón de guardar
         $('#btnGuardarCotizacion').prop('disabled', false);
 
-    } // ← FIN calcularCotizacion()
+    } 
 
 
     // =======================================================
@@ -752,28 +724,13 @@ $(document).ready(function () {
     // =======================================================
 
     const selectoresFormulario = [
-        '#inputCantidad',
-        '#selectAcabado',
-        '#selectTamano',
-        '#selectCantColores',
-        '#swCortinaLana',
-        '#selectCantCortinaLana',
-        '#swCortinaFiesta',
-        '#selectCantCortinaFiesta',
-        '#swLazoSimple',
-        '#swLazoFlor',
-        '#selectCantFlores',
-        '#swLazoNombre',
-        '#swApliques',
-        '#cantApliques',
-        '#swDisenoPersonalizado',
-        '#selectNivelDiseno',
+        '#inputCantidad', '#selectAcabado', '#selectTamano', '#selectCantColores',
+        '#swCortinaLana', '#selectCantCortinaLana', '#swCortinaFiesta', '#selectCantCortinaFiesta',
+        '#swLazoSimple', '#swLazoFlor', '#selectCantFlores', '#swLazoNombre',
+        '#swApliques', '#cantApliques', '#swDisenoPersonalizado', '#selectNivelDiseno',
     ].join(', ');
 
     $(selectoresFormulario).on('input change', function (e) {
-        console.log(`[TRIGGER] Cambio detectado en:`, e.target.id);
-        console.log(`[ESTADO] Switch Lana:`,   $('#swCortinaLana').is(':checked'));
-        console.log(`[ESTADO] Switch Fiesta:`, $('#swCortinaFiesta').is(':checked'));
         calcularCotizacion();
     });
 
@@ -781,7 +738,6 @@ $(document).ready(function () {
         calcularCotizacion();
     });
 
-    // Carga inicial al abrir la página
     calcularCotizacion();
 
 
@@ -791,7 +747,6 @@ $(document).ready(function () {
     $('#btnGuardarCotizacion').on('click', function (e) {
         e.preventDefault();
 
-        // 1. Validación de campos obligatorios
         const cantidad = parseInt($('#inputCantidad').val()) || 0;
         const tamano   = $('#selectTamano').val();
         const acabado  = $('#selectAcabado').val();
@@ -810,16 +765,14 @@ $(document).ready(function () {
 
         if (faltantes.length > 0) {
             mostrarAlerta(faltantes);
-            return; // NO bloquear el botón
+            return; 
         }
 
-        // 2. Estado cargando
         const btnGuardar    = $(this);
         const textoOriginal = btnGuardar.html();
         btnGuardar.prop('disabled', true)
                   .html('<i class="fa-solid fa-spinner fa-spin"></i> Guardando Pedido...');
 
-        // 3. Empaquetar datos
         let datosFormulario = $('#formCotizador').serializeArray();
         datosFormulario.push({ name: 'costo_materiales', value: $('#txtCostoMateriales').text().replace('$', '').trim() });
         datosFormulario.push({ name: 'costo_extras',     value: $('#txtCostoManoObra').text().replace('$', '').trim() });
@@ -828,18 +781,13 @@ $(document).ready(function () {
         datosFormulario.push({ name: 'costo_unitario',   value: $('#txtCostoUnitario').text().replace('$', '').replace('c/u', '').trim() });
 
         const csrfToken = $('meta[name="csrf-token"]').attr('content');
-
-        datosFormulario.push({ name: 'costo_total', value: $('#txtCostoTotal').text().replace('$', '').trim() });
-        // ---Convertir el carrito a texto e inyectarlo al formulario ---
         datosFormulario.push({ name: 'materiales', value: JSON.stringify(window.carritoInsumos) });
 
-        // 4. Petición AJAX
         $.ajax({
             url:  '/cotizaciones/guardar',
             type: 'POST',
             headers: { 'X-CSRF-TOKEN': csrfToken },
             data: datosFormulario,
-
             success: function (response) {
                 $('#modalNumCotizacion').text(response.id);
                 $('#modalExito').modal('show');
@@ -852,7 +800,6 @@ $(document).ready(function () {
                     resetearFormulario();
                 }, 2000);
             },
-
             error: function (xhr) {
                 console.error('Fallo al guardar:', xhr.responseText);
                 mostrarAlerta(
@@ -868,48 +815,39 @@ $(document).ready(function () {
 
     // =======================================================
     // FUNCIÓN DE RESETEO
-    // Limpia todos los campos del formulario y reinicia el
-    // motor de cálculo al estado vacío.
     // =======================================================
     function resetearFormulario() {
-        // 1. Resetear campos simples
         $('#inputCantidad').val('');
         $('#selectTamano').val('').trigger('change');
-
-        // 2. Resetear el select de cantidad de colores
         $('#selectCantColores').val('1').trigger('change');
 
-        // 3. Limpiar selects de colores de lana (Select2)
         $('#contenedorColoresLana .select2-ajax').each(function () {
             $(this).val(null).trigger('change');
         });
 
-        // 4. Apagar todos los switches opcionales
         const switches = [
             '#swCortinaLana', '#swCortinaFiesta',
             '#swLazoSimple',  '#swLazoFlor', '#swLazoNombre',
             '#swApliques',    '#swDisenoPersonalizado',
         ];
+        
         switches.forEach(function (id) {
             if ($(id).is(':checked')) {
                 $(id).prop('checked', false).trigger('change');
             }
         });
 
-        // 5. Limpiar selects dentro de secciones opcionales
         $('#contenedorCortinasLana select, #contenedorCortinasFiesta select, #contenedorFlores select')
             .each(function () {
                 $(this).val(null).trigger('change');
             });
 
-        // 6. Ocultar el panel de exportar
         $('#panelExportar').slideUp(function () {
             $(this).addClass('d-none');
         });
 
-        // 7. Disparar recálculo para limpiar la tabla visualmente
         $('#txtGananciaFija').text('$ 0.00');
         calcularCotizacion();
     }
 
-}); 
+});
