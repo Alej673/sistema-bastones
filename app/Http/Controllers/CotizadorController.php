@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Insumo;
+use Illuminate\Support\Facades\DB;
 
 class CotizadorController extends Controller
 {
@@ -124,5 +125,59 @@ class CotizadorController extends Controller
             });
 
         return response()->json($cintas);
+    }
+
+    public function guardar(Request $request)
+    {
+        $request->validate([
+            'cantidad_total_bastones' => 'required|numeric|min:1',
+            'costo_total' => 'required|numeric',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // 1. Guardar la cabecera del pedido (Maestro)
+            $pedido = new \App\Models\Pedido();
+            $pedido->cliente_nombre = $request->input('cliente_nombre', 'Cliente de Mostrador'); 
+            $pedido->cantidad_total_bastones = $request->input('cantidad_total_bastones');
+            $pedido->total_precio_cliente = $request->input('costo_total');
+            $pedido->estado = 'pendiente'; 
+            $pedido->save();
+
+            // 2. Descifrar el carrito de materiales enviado por JS 
+            $materialesJson = $request->input('materiales');
+            $listaMateriales = json_decode($materialesJson, true); // Lo convertimos en un Array de PHP
+
+            if (!empty($listaMateriales)) {
+                foreach ($listaMateriales as $mat) {
+                    // Insertamos cada fila en la tabla de detalles
+                    DB::table('pedido_materiales')->insert([
+                        'pedido_id' => $pedido->id, // Vinculamos al ID del pedido recién creado
+                        'insumo_id' => $mat['insumo_id'], // Puede ser un número o NULL si es un tag nuevo
+                        'nombre_material' => $mat['nombre_material'],
+                        'cantidad_requerida' => $mat['cantidad_requerida'],
+                        'subtotal_calculado' => $mat['subtotal_calculado'],
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'mensaje' => 'Pedido y lista de materiales guardados con éxito.',
+                'id' => $pedido->id
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'mensaje' => 'Error crítico en el servidor: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

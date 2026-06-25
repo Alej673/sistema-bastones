@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InsumoController;
+use App\Http\Controllers\CotizadorController;
 
 // Si alguien entra a la raíz, lo mandamos directo al inventario
 Route::get('/', function () {
@@ -34,6 +35,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/buscar-cortinas', [App\Http\Controllers\CotizadorController::class, 'buscarCortinas'])->name('cortinas.buscar');
     // Ruta para la búsqueda asíncrona de Cintas (Abarca Satín, Garza y Gross)
     Route::get('/buscar-cintas', [App\Http\Controllers\CotizadorController::class, 'buscarCintas'])->name('cintas.buscar');
+    // Ruta para recibir el secuestro de datos por AJAX
+    Route::post('/cotizaciones/guardar', [CotizadorController::class, 'guardar'])->name('cotizaciones.guardar');
 });
 
 

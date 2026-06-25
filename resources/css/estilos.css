@@ -1,0 +1,97 @@
+/* Limita el dropdown de Select2 para mostrar ~4 opciones */
+.select2-results__options {
+    max-height: 160px !important;
+    overflow-y: auto;
+}
+
+/* ============================================
+RESPONSIVO — 390px (teléfonos pequeños)
+============================================ */
+
+/* La tabla de impacto tiene 4 columnas — en móvil
+reducimos fuentes y colapsamos columna "Cálculo Interno"
+para que no se desborde horizontalmente             */
+@media (max-width: 575.98px) {
+    
+    /* Ocultar columna "Cálculo Interno" en móvil para ganar espacio */
+    #tablaImpacto thead th:nth-child(2),
+    #tablaImpacto tbody td:nth-child(2) {
+        display: none;
+    }
+    
+    /* Texto más compacto en la tabla */
+    #tablaImpacto td,
+    #tablaImpacto th {
+        font-size: 0.72rem;
+        padding: 0.35rem 0.4rem;
+    }
+    
+    /* Ajuste de anchos para las columnas restantes (3 columnas en móvil) */
+    #tablaImpacto th:nth-child(1),
+    #tablaImpacto td:nth-child(1) { width: 50%; }
+    #tablaImpacto th:nth-child(3),
+    #tablaImpacto td:nth-child(3) { width: 25%; }
+    #tablaImpacto th:nth-child(4),
+    #tablaImpacto td:nth-child(4) { width: 25%; }
+    
+    /* Módulo 1 — fila de Cant/Tamaño: apilar verticalmente */
+    #formCotizador .row.g-2 .col-sm-4,
+    #formCotizador .row.g-2 .col-sm-8 { width: 100%; }
+    
+    /* Textos de estados (Stock/Falta) más compactos */
+    #cuerpoTablaImpacto span {
+        font-size: 0.68rem;
+    }
+    
+    /* Panel de exportar: botones full-width ya están, solo reducir padding */
+    #panelExportar .btn {
+        font-size: 0.82rem;
+        padding: 0.45rem 0.6rem;
+    }
+    
+    /* Encabezado de página */
+    .h3 { font-size: 1.1rem; }
+    
+    /* Separación entre columna formulario y columna resultado */
+    .col-lg-5 { margin-bottom: 1rem; }
+}
+
+/* ============================================
+STICKY-TOP — Solo activo en pantallas >= lg
+En móvil/tablet la tabla NO es sticky para
+evitar que tape la tarjeta de totales.
+============================================ */
+.card-vista-previa {
+    /* Por defecto (móvil): posición normal en el flujo */
+    position: static;
+}
+
+@media (min-width: 992px) {
+    /* Solo en desktop aplicamos el sticky al contenedor envolvente */
+    .vista-previa-container {
+        position: sticky;
+        top: 20px;
+        z-index: 100;
+    }
+    
+    /* La tarjeta de vista previa se comporta normalmente dentro del contenedor sticky */
+    .card-vista-previa {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* El body de la tabla crece con scroll interno */
+    .card-vista-previa .card-body {
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+        max-height: calc(100vh - 200px);
+    }
+    
+    /* Tarjeta de costos dentro del contenedor sticky */
+    .card-costos-totales {
+        position: relative;
+        background: white;
+    }
+}

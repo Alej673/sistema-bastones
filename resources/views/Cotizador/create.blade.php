@@ -7,109 +7,10 @@
     {{-- ==========================================
          DEPENDENCIAS CSS
     ========================================== --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
-
-    <style>
-        /* Limita el dropdown de Select2 para mostrar ~4 opciones */
-        .select2-results__options {
-            max-height: 160px !important;
-            overflow-y: auto;
-        }
-
-        /* ============================================
-           RESPONSIVO — 390px (teléfonos pequeños)
-           ============================================ */
-
-        /* La tabla de impacto tiene 4 columnas — en móvil
-           reducimos fuentes y colapsamos columna "Cálculo Interno"
-           para que no se desborde horizontalmente             */
-        @media (max-width: 575.98px) {
-
-            /* Ocultar columna "Cálculo Interno" en móvil para ganar espacio */
-            #tablaImpacto thead th:nth-child(2),
-            #tablaImpacto tbody td:nth-child(2) {
-                display: none;
-            }
-
-            /* Texto más compacto en la tabla */
-            #tablaImpacto td,
-            #tablaImpacto th {
-                font-size: 0.72rem;
-                padding: 0.35rem 0.4rem;
-            }
-
-            /* Ajuste de anchos para las columnas restantes (3 columnas en móvil) */
-            #tablaImpacto th:nth-child(1),
-            #tablaImpacto td:nth-child(1) { width: 50%; }
-            #tablaImpacto th:nth-child(3),
-            #tablaImpacto td:nth-child(3) { width: 25%; }
-            #tablaImpacto th:nth-child(4),
-            #tablaImpacto td:nth-child(4) { width: 25%; }
-
-            /* Módulo 1 — fila de Cant/Tamaño: apilar verticalmente */
-            #formCotizador .row.g-2 .col-sm-4,
-            #formCotizador .row.g-2 .col-sm-8 { width: 100%; }
-
-            /* Textos de estados (Stock/Falta) más compactos */
-            #cuerpoTablaImpacto span {
-                font-size: 0.68rem;
-            }
-
-            /* Panel de exportar: botones full-width ya están, solo reducir padding */
-            #panelExportar .btn {
-                font-size: 0.82rem;
-                padding: 0.45rem 0.6rem;
-            }
-
-            /* Encabezado de página */
-            .h3 { font-size: 1.1rem; }
-
-            /* Separación entre columna formulario y columna resultado */
-            .col-lg-5 { margin-bottom: 1rem; }
-        }
-
-        /* ============================================
-           STICKY-TOP — Solo activo en pantallas >= lg
-           En móvil/tablet la tabla NO es sticky para
-           evitar que tape la tarjeta de totales.
-           ============================================ */
-        .card-vista-previa {
-            /* Por defecto (móvil): posición normal en el flujo */
-            position: static;
-        }
-
-        @media (min-width: 992px) {
-            /* Solo en desktop aplicamos el sticky al contenedor envolvente */
-            .vista-previa-container {
-                position: sticky;
-                top: 20px;
-                z-index: 100;
-            }
-
-            /* La tarjeta de vista previa se comporta normalmente dentro del contenedor sticky */
-            .card-vista-previa {
-                position: relative;
-                display: flex;
-                flex-direction: column;
-            }
-
-            /* El body de la tabla crece con scroll interno */
-            .card-vista-previa .card-body {
-                overflow-y: auto;
-                flex: 1;
-                min-height: 0;
-                max-height: calc(100vh - 200px);
-            }
-
-            /* Tarjeta de costos dentro del contenedor sticky */
-            .card-costos-totales {
-                position: relative;
-                background: white;
-            }
-        }
-    </style>
-
+    @vite('resources/css/estilos.css')
 
     {{-- ==========================================
          ENCABEZADO DE PÁGINA
@@ -146,7 +47,7 @@
                                 <div class="row g-2">
                                     <div class="col-sm-4 col-12">
                                         <label class="form-label text-muted small mb-1">Cant. Bastones</label>
-                                        <input type="number" id="inputCantidad" class="form-control" value="" min="1">
+                                        <input type="number" id="inputCantidad" name="cantidad_total_bastones" class="form-control" value="" min="1">
                                     </div>
                                     <div class="col-sm-8 col-12">
                                         <label class="form-label text-muted small mb-1">Tamaño Específico</label>
@@ -309,7 +210,7 @@
                                     <div class="form-check form-switch mb-2">
                                         <input class="form-check-input" type="checkbox" id="swDisenoPersonalizado">
                                         <label class="form-check-label fw-bold text-dark" for="swDisenoPersonalizado">
-                                            <i class="fa-solid fa-star text-warning"></i> Incluir Diseño Especial en Lana
+                                            <i class="fa-solid text-warning"></i> Incluir Diseño Especial en Lana
                                         </label>
                                     </div>
 
@@ -336,10 +237,6 @@
 
         {{-- ======================================
              COLUMNA DERECHA — VISTA PREVIA
-             NOTA: sticky-top solo aplica en desktop
-             (via CSS .card-vista-previa). En móvil
-             la tarjeta fluye normalmente para que
-             la tarjeta de totales quede visible.
         ====================================== --}}
         <div class="col-lg-7">
             
@@ -383,8 +280,12 @@
                         <span class="fs-5 fw-bold text-dark" id="txtCostoMateriales">$ 0.00</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
-                        <span class="text-muted fw-bold">Mano de Obra / Extras:</span>
+                        <span class="text-muted fw-bold">Extras:</span>
                         <span class="fs-5 fw-bold text-dark" id="txtCostoManoObra">$ 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-secondary fw-bold">Mano de Obra(Ganancia Base):</span>
+                        <span class="fs-5 fw-bold text-dark" id="txtGananciaFija">$ 0.00</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mt-3">
                         <span class="text-success fw-bold fs-5">COSTO TOTAL PRODUCCIÓN:</span>
@@ -459,771 +360,88 @@
         </div>
     </div>
 
+    {{-- MODAL DE ÉXITO --}}
+    <div class="modal fade" id="modalExito" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 360px;">
+            <div class="modal-content border-0 rounded-4" style="box-shadow: 0 8px 32px rgba(0,0,0,0.10);">
+                <div class="modal-body text-center px-4 py-4">
+                    <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
+                        style="width:40px; height:40px; background:#EAF3DE;">
+                        <i class="fa-solid fa-check" style="color:#3B6D11; font-size:16px;"></i>
+                    </div>
+                    <p class="fw-semibold text-dark mb-1" style="font-size:15px;">Pedido guardado</p>
+                    <p class="text-muted mb-0" style="font-size:13px; line-height:1.6;">
+                        El pedido <strong class="text-dark">#<span id="modalNumCotizacion"></span></strong>
+                        fue registrado exitosamente.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- MODAL DE VALIDACIÓN --}}
+    <div class="modal fade" id="modalValidacion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 360px;">
+            <div class="modal-content border-0 rounded-4" style="box-shadow: 0 8px 32px rgba(0,0,0,0.10);">
+
+                <div class="px-4 pt-4 pb-0">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
+                            style="width:36px; height:36px; min-width:36px; background:#FAEEDA; margin-top:2px;">
+                            <i class="fa-solid fa-triangle-exclamation" style="color:#BA7517; font-size:15px;"></i>
+                        </div>
+                        <div>
+                            <p class="fw-semibold text-dark mb-1" id="modalValidacionTitulo"
+                            style="font-size:15px; line-height:1.3;">Faltan campos obligatorios</p>
+                            <p class="text-muted mb-0" style="font-size:13px;">
+                                Completa lo siguiente antes de guardar
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-4 pt-3 pb-0">
+                    <ul id="listaValidacion" class="list-unstyled mb-0 d-flex flex-column gap-2"></ul>
+                </div>
+
+                <div class="px-4 pt-3 pb-4">
+                    <button type="button"
+                            class="btn w-100 rounded-3"
+                            data-bs-dismiss="modal"
+                            style="font-size:13px; font-weight:500; padding:9px;
+                                background:#FAEEDA; color:#854F0B; border:none;">
+                        <i class="fa-solid fa-pen-to-square me-2" style="font-size:12px;"></i>
+                        Entendido, llenar los campos.
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
     {{-- ==========================================
-         DEPENDENCIAS JS
+         DEPENDENCIAS JS Y PUENTE DE DATOS
     ========================================== --}}
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-
-    {{-- ==========================================
-         MÓDULO 2 — BUSCADORES DE LANA
-    ========================================== --}}
-    <script>
-        $(document).ready(function () {
-
-            const contenedorLanas   = $('#contenedorColoresLana');
-            const selectCantidad    = $('#selectCantidadColores');
-
-            // Genera los selects de color según la cantidad elegida
-            function renderizarBuscadores(cantidad) {
-                contenedorLanas.empty();
-
-                for (let i = 1; i <= cantidad; i++) {
-                    contenedorLanas.append(`
-                        <div class="input-group input-group-sm mb-2 shadow-sm rounded">
-                            <span class="input-group-text bg-white text-secondary border-end-0">
-                                <i class="fa-solid fa-palette"></i> &nbsp;Color ${i}
-                            </span>
-                            <select class="form-select selector-lana select2-ajax" id="lana_${i}" name="lanas[]">
-                                <option value="" selected disabled>Buscar o escribir nuevo color...</option>
-                            </select>
-                        </div>
-                    `);
-                }
-
-                // Conecta los selects recién creados al motor AJAX de lanas
-                $('.select2-ajax').select2({
-                    theme: 'bootstrap-5',
-                    width: 'resolve',
-                    placeholder: 'Buscar o escribir nuevo color...',
-                    tags: true,
-                    delay: 250,
-                    ajax: {
-                        url: "{{ route('lanas.buscar') }}",
-                        dataType: 'json',
-                        data: params => ({ q: params.term }),
-                        processResults: data => ({ results: data }),
-                        cache: true
-                    },
-                    createTag: function (params) {
-                        var term = $.trim(params.term);
-                        if (term === '') return null;
-                        return { id: term, text: term + ' (Cotizar nuevo material)', newTag: true };
-                    }
-                });
-            }
-
-            selectCantidad.on('change', function () {
-                renderizarBuscadores($(this).val());
-            });
-
-            // Carga inicial al abrir la página
-            renderizarBuscadores(selectCantidad.val());
-        });
-    </script>
-
-
-    {{-- ==========================================
-         MÓDULO 3 — CORTINAS (LANA Y FIESTA)
-    ========================================== --}}
-    <script>
-        $(document).ready(function () {
-
-            // Referencias a los elementos de la UI
-            const swCortinaLana             = $('#swCortinaLana');
-            const cajaCortinaLana           = $('#cajaCortinaLana');
-            const selectCantCortinaLana     = $('#selectCantCortinaLana');
-            const contenedorCortinasLana    = $('#contenedorCortinasLana');
-
-            const swCortinaFiesta           = $('#swCortinaFiesta');
-            const cajaCortinaFiesta         = $('#cajaCortinaFiesta');
-            const selectCantCortinaFiesta   = $('#selectCantCortinaFiesta');
-            const contenedorCortinasFiesta  = $('#contenedorCortinasFiesta');
-
-            // Genera selects de color para cualquier tipo de cortina
-            function renderizarBuscadoresCortina(cantidad, contenedor, claseSelect) {
-                contenedor.empty();
-
-                for (let i = 1; i <= cantidad; i++) {
-                    contenedor.append(`
-                        <div class="input-group input-group-sm mb-1 shadow-sm rounded">
-                            <span class="input-group-text bg-white text-secondary border-end-0">
-                                <i class="fa-solid fa-palette"></i> &nbsp;Color ${i}
-                            </span>
-                            <select class="form-select ${claseSelect}" name="cortinas_${claseSelect}[]">
-                                <option value="" selected disabled>Buscar o escribir nuevo color...</option>
-                            </select>
-                        </div>
-                    `);
-                }
-
-                // Motor AJAX para cortinas de lana
-                $('.select2-ajax-cortinalana').select2({
-                    theme: 'bootstrap-5', width: 'resolve', placeholder: 'Buscar o escribir nuevo color...', tags: true,
-                    ajax: {
-                        url: "{{ route('lanas.buscar') }}",
-                        dataType: 'json', delay: 250,
-                        data: params => ({ q: params.term }),
-                        processResults: data => ({ results: data })
-                    },
-                    createTag: params => ($.trim(params.term) === '' ? null : { id: params.term, text: params.term + ' (Cotizar nuevo material)', newTag: true })
-                });
-
-                // Motor AJAX para cortinas de fiesta (ruta separada)
-                $('.select2-ajax-cortinafiesta').select2({
-                    theme: 'bootstrap-5', width: 'resolve', placeholder: 'Buscar cortina de fiesta...', tags: true,
-                    ajax: {
-                        url: "{{ route('cortinas.buscar') }}",
-                        dataType: 'json', delay: 250,
-                        data: params => ({ q: params.term }),
-                        processResults: data => ({ results: data })
-                    },
-                    createTag: params => ($.trim(params.term) === '' ? null : { id: params.term, text: params.term + ' (Cotizar nuevo material)', newTag: true })
-                });
-            }
-
-            // Switch de cortina de lana
-            swCortinaLana.on('change', function () {
-                if ($(this).is(':checked')) {
-                    cajaCortinaLana.removeClass('d-none');
-                    renderizarBuscadoresCortina(selectCantCortinaLana.val(), contenedorCortinasLana, 'select2-ajax-cortinalana');
-                } else {
-                    cajaCortinaLana.addClass('d-none');
-                    contenedorCortinasLana.empty();
-                }
-            });
-
-            selectCantCortinaLana.on('change', function () {
-                renderizarBuscadoresCortina($(this).val(), contenedorCortinasLana, 'select2-ajax-cortinalana');
-            });
-
-            // Switch de cortina de fiesta
-            swCortinaFiesta.on('change', function () {
-                if ($(this).is(':checked')) {
-                    cajaCortinaFiesta.removeClass('d-none');
-                    renderizarBuscadoresCortina(selectCantCortinaFiesta.val(), contenedorCortinasFiesta, 'select2-ajax-cortinafiesta');
-                } else {
-                    cajaCortinaFiesta.addClass('d-none');
-                    contenedorCortinasFiesta.empty();
-                }
-            });
-
-            selectCantCortinaFiesta.on('change', function () {
-                renderizarBuscadoresCortina($(this).val(), contenedorCortinasFiesta, 'select2-ajax-cortinafiesta');
-            });
-
-        });
-    </script>
-
-
-    {{-- ==========================================
-        MÓDULO 4 — SWITCHES Y CINTAS
-    ========================================== --}}
-    <script>
-        $(document).ready(function () {
-
-            // --- Switches de mostrar/ocultar cajas --- //
-            const togglesModulo4 = [
-                { switch: $('#swLazoSimple'), caja: $('#cajaLazoSimple') },
-                { switch: $('#swLazoFlor'),   caja: $('#cajaLazoFlor')   },
-                { switch: $('#swLazoNombre'), caja: $('#cajaLazoNombre') },
-                { switch: $('#swApliques'),   caja: $('#cajaApliques')   }
-            ];
-
-            togglesModulo4.forEach(item => {
-                item.switch.on('change', function () {
-                    item.caja.toggleClass('d-none', !$(this).is(':checked'));
-                });
-            });
-
-            // --- Motor AJAX para buscadores de cintas --- //
-            function inicializarCintas() {
-                $('.select2-ajax-cintas').not('[data-select2-id]').select2({
-                    theme: 'bootstrap-5',
-                    width: 'resolve',
-                    placeholder: 'Buscar color de cinta...',
-                    tags: true,
-                    delay: 250,
-                    ajax: {
-                        url: "{{ route('cintas.buscar') }}",
-                        dataType: 'json',
-                        data: params => ({ q: params.term }),
-                        processResults: data => ({ results: data })
-                    },
-                    createTag: function (params) {
-                        var term = $.trim(params.term);
-                        if (term === '') return null;
-                        return { id: term, text: term + ' (Cotizar nuevo material)', newTag: true };
-                    }
-                });
-            }
-
-            // Reinicia cintas cada vez que un switch del módulo se activa
-            togglesModulo4.forEach(item => {
-                item.switch.on('change', function () {
-                    if ($(this).is(':checked')) inicializarCintas();
-                });
-            });
-
-            // --- Generador dinámico de flores --- //
-            $('#selectCantFlores').on('change', function () {
-                let cantidad = parseInt($(this).val());
-                let contenedor = $('#contenedorFlores');
-
-                contenedor.empty();
-
-                for (let i = 1; i <= cantidad; i++) {
-                    contenedor.append(`
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-light text-muted">Flor ${i}</span>
-                            <select class="form-select select2-ajax-cintas" name="cinta_flor_${i}">
-                                <option value="" selected disabled>Buscar color...</option>
-                            </select>
-                        </div>
-                    `);
-                }
-
-                // Inicializa los nuevos selects recién creados
-                inicializarCintas();
-
-                if (typeof calcularCotizacion === 'function') {
-                    calcularCotizacion();
-                }
-            });
-
-            // Dibuja "Flor 1" al cargar la página
-            $('#selectCantFlores').trigger('change');
-
-        });
-    </script>
-
-    {{-- ==========================================
-    MÓDULO 5 — SWITCHES PARA DISEÑOS PERSONALIZADOS
-    ========================================== --}}
-
-    <script>
-        $(document).ready(function() {  
-            const swDiseno  = $('#swDisenoPersonalizado');
-            const cajaDiseno = $('#cajaDisenoPersonalizado');
-
-            swDiseno.on('change', function() {
-                cajaDiseno.toggleClass('d-none', !$(this).is(':checked'));
-            });
-        });   
-    </script>
-
-    {{-- ==========================================
-         MOTOR DE CÁLCULO — COTIZADOR AUTOMÁTICO
-         Recalcula todo cada vez que el usuario cambia cualquier campo del formulario.
-    ========================================== --}}
-
-    {{-- Inventario inyectado desde el controlador como JSON --}}
+    {{-- 1. Inventario inyectado de forma silenciosa (Tu solución) --}}
     <script type="application/json" id="datos-inventario">
         @json($insumos)
     </script>
 
+    {{-- 2. El "Puente" solo para las rutas --}}
     <script>
-        // Leemos el inventario que Laravel dejó en el DOM
-        const INVENTARIO = JSON.parse(document.getElementById('datos-inventario').textContent);
-
-        $(document).ready(function () {
-
-            // =======================================================
-            // 1. CONSTANTES Y CONFIGURACIÓN BASE
-            // =======================================================
-            
-            // PRECIOS DE RESPALDO: Se usan cuando el material no está en el inventario
-            const PRECIOS_FANTASMA = {
-                lana:                 0.0127,  // $1.15 / 90g
-                cinta_garza:          0.11,    // $5.00 / 45.72m
-                cinta_satin:          0.16,    // $3.00 / 18.28m
-                cinta_gross:          0.15,    // $3.50 / 22.86m
-                elastico:             0.09,    // $0.90 / 10m
-                cinchos:              0.02,    // $2.00 / 100u
-                cortina_fiesta_menor: 1.00,    // pedido < 12 bastones
-                cortina_fiesta_mayor: 0.50,    // pedido >= 12 bastones
-            };
-
-            // RECETA BASE: Insumos fijos por cada bastón (siempre se consumen)
-            const RECETA = {
-                cinchos_por_baston:  3,     // 3 cinchos por unidad
-                elastico_por_baston: 0.40,  // 0.40 m (40 cm) por unidad
-            };
-
-
-            // =======================================================
-            // 2. FUNCIÓN MAESTRA — Recalcula la tabla y los totales
-            // =======================================================
-            function calcularCotizacion() {
-
-                const tabla = $('#cuerpoTablaImpacto');
-                tabla.empty();
-
-                let costoTotalMateriales = 0;
-                let costoTotalManoObra   = 0;
-
-                const cantidadBastones = parseInt($('#inputCantidad').val()) || 0;
-                const colorBase        = $('#selectAcabado').val();
-                const tamanoBase       = $('#selectTamano').val();
-
-                // --- GUARDA DEL FORMULARIO ---
-                // Si faltan campos obligatorios, mostramos el estado vacío
-                if (cantidadBastones <= 0 || !colorBase || !tamanoBase) {
-                    tabla.append(`
-                        <tr>
-                            <td colspan="4" class="text-center text-muted py-5">
-                                <i class="fa-solid fa-calculator fa-2x mb-2 text-light"></i><br>
-                                Esperando configuración del pedido...
-                            </td>
-                        </tr>
-                    `);
-                    $('#txtCostoMateriales, #txtCostoManoObra, #txtCostoTotal').text('$ 0.00');
-                    $('#txtCostoUnitario').text('$ 0.00 c/u');
-                    $('#lblResumenBastones').text('0 Bastones');
-                    $('#btnGuardarCotizacion').prop('disabled', true);
-                    return;
-                }
-
-                $('#lblResumenBastones').text(`${cantidadBastones} Bastones`);
-
-
-                // ---------------------------------------------------
-                // FASE 1: BASE DEL BASTÓN
-                // ---------------------------------------------------
-                let precioBaseUnitario = 0;
-                let nombreAcabado      = '';
-
-                if (colorBase === 'dorado') {
-                    nombreAcabado = 'Dorado';
-                    precioBaseUnitario = (cantidadBastones >= 12) ? 5.00 : 5.50;
-                } else { 
-                    nombreAcabado = 'Plata';
-                    precioBaseUnitario = (cantidadBastones >= 12) ? 4.50 : 5.00;
-                }
-
-                let costoTotalBases = precioBaseUnitario * cantidadBastones;
-                costoTotalMateriales += costoTotalBases; 
-
-                let esGrande = (tamanoBase === '55' || tamanoBase === '60');
-                let tamanoVisual = esGrande ? '55-60 cm' : '45-50 cm';
-
-                let baseEnKardex = INVENTARIO.find(item => {
-                    if (item.categoria !== 'base_baston' || !item.nombre) return false;
-                    
-                    let nombreBD = item.nombre.toLowerCase();
-                    let colorBuscado = colorBase.toLowerCase();
-                    let tamanoBuscado = tamanoBase + 'cm';
-
-                    return nombreBD.includes(colorBuscado) && nombreBD.includes(tamanoBuscado);
-                });
-
-                let alertaBase = (baseEnKardex && baseEnKardex.stock_actual >= cantidadBastones)
-                    ? `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Stock Suficiente</span>`
-                    : `<span class="text-danger fw-bold">- ${cantidadBastones} u. (Falta Comprar)</span>`;
-
-                tabla.append(`
-                    <tr>
-                        <td class="fw-bold text-dark">Base ${nombreAcabado} (${tamanoVisual})</td>
-                        <td class="text-muted small">${cantidadBastones} u. &times; $${precioBaseUnitario.toFixed(2)} c/u</td>
-                        <td class="fw-bold text-muted">$${costoTotalBases.toFixed(2)}</td>
-                        <td class="text-end">${alertaBase}</td>
-                    </tr>
-                `);
-
-
-                // ---------------------------------------------------
-                // FASE 2: INSUMOS FIJOS DE ENSAMBLAJE
-                // ---------------------------------------------------
-                const totalCinchos  = RECETA.cinchos_por_baston  * cantidadBastones;
-                const totalElastico = RECETA.elastico_por_baston * cantidadBastones;
-
-                const costoCinchos  = totalCinchos  * PRECIOS_FANTASMA.cinchos;
-                const costoElastico = totalElastico * PRECIOS_FANTASMA.elastico;
-
-                costoTotalMateriales += costoCinchos + costoElastico;
-
-                tabla.append(`
-                    <tr>
-                        <td class="fw-bold text-dark">Insumos de Ensamblaje</td>
-                        <td class="text-muted small">${totalCinchos} cinchos &middot; ${totalElastico.toFixed(2)}m elástico</td>
-                        <td class="fw-bold text-muted">$${(costoCinchos + costoElastico).toFixed(2)}</td>
-                        <td class="text-end text-muted">&mdash;</td>
-                    </tr>
-                    <tr>
-                        <td class="text-dark ps-3">&#x21B3; Cinchos</td>
-                        <td class="text-muted small">${totalCinchos} u. &times; $${PRECIOS_FANTASMA.cinchos.toFixed(2)}/u</td>
-                        <td class="text-muted small">$${costoCinchos.toFixed(2)}</td>
-                        <td class="text-end text-muted">&mdash;</td>
-                    </tr>
-                    <tr>
-                        <td class="text-dark ps-3">&#x21B3; Elástico</td>
-                        <td class="text-muted small">${totalElastico.toFixed(2)}m &times; $${PRECIOS_FANTASMA.elastico.toFixed(2)}/m</td>
-                        <td class="text-muted small">$${costoElastico.toFixed(2)}</td>
-                        <td class="text-end text-muted">&mdash;</td>
-                    </tr>
-                `);
-
-
-                // ---------------------------------------------------
-                // FASE 3: CUERPO (LANA)
-                // ---------------------------------------------------
-                const consumoLana_g = esGrande ? 150 : 135;
-                let coloresActivos = 0;
-
-                $('#contenedorColoresLana .select2-ajax').each(function () {
-                    const data = $(this).select2('data');
-                    if (data && data.length > 0 && data[0].id !== '') coloresActivos++;
-                });
-
-                if (coloresActivos === 0) coloresActivos = 1;
-
-                const gramosPorColorTotal = (consumoLana_g / coloresActivos) * cantidadBastones;
-
-                $('#contenedorColoresLana .select2-ajax').each(function () {
-                    const dataSelect = $(this).select2('data');
-                    if (!dataSelect || dataSelect.length === 0) return;
-
-                    const seleccion = dataSelect[0];
-                    if (!seleccion.id) return;
-
-                    let nombreLana   = seleccion.text;
-                    const esTagNuevo = seleccion.newTag || isNaN(seleccion.id);
-                    let costoLana    = 0;
-                    let stockActual  = 0;
-
-                    if (!esTagNuevo) {
-                        const insumoBD = INVENTARIO.find(item => item.id == seleccion.id);
-                        if (insumoBD) {
-                            costoLana   = gramosPorColorTotal * insumoBD.costo_unitario;
-                            stockActual = insumoBD.stock_actual;
-                        }
-                    } else {
-                        costoLana  = gramosPorColorTotal * PRECIOS_FANTASMA.lana;
-                        nombreLana = nombreLana.replace(' (Cotizar nuevo material)', '');
-                    }
-
-                    costoTotalMateriales += costoLana;
-
-                    const madejasNecesarias = Math.ceil(gramosPorColorTotal / 90);
-                    const stockSuficiente   = !esTagNuevo && stockActual >= gramosPorColorTotal;
-                    
-                    const textoStock = stockSuficiente
-                        ? `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Stock Suficiente</span>`
-                        : `<span class="text-danger fw-bold">- ${gramosPorColorTotal.toFixed(1)}g (${madejasNecesarias} Madejas)</span>`;
-
-                    tabla.append(`
-                        <tr>
-                            <td class="fw-bold text-dark">Cuerpo: ${nombreLana}</td>
-                            <td class="text-muted small">${gramosPorColorTotal.toFixed(1)}g calculados</td>
-                            <td class="text-muted fw-bold">$${costoLana.toFixed(2)}</td>
-                            <td class="text-end">${textoStock}</td>
-                        </tr>
-                    `);
-                });
-
-
-                // ---------------------------------------------------
-                // FASE 4: CORTINAS (LANA Y FIESTA)
-                // ---------------------------------------------------
-                
-                // 4.1 Cortinas de Lana
-                if ($('#swCortinaLana').is(':checked')) {
-                    let gramosPorCortinaLana = 30 * cantidadBastones; 
-
-                    console.log(`[FASE 4A] Encontré ${$('#contenedorCortinasLana .select2-ajax').length} selectores de Cortina Lana`);
-
-                    $('#contenedorCortinasLana select').each(function() {
-                        let dataSelect = $(this).select2('data');
-                        
-                        if (dataSelect && dataSelect.length > 0 && dataSelect[0].id !== '') {
-                            let seleccion      = dataSelect[0];
-                            let nombreMaterial = seleccion.text.replace(' (Cotizar nuevo material)', '');
-                            let idMaterial     = seleccion.id;
-                            let esTagNuevo     = seleccion.newTag || isNaN(idMaterial);
-                            
-                            let costoCalculado  = 0;
-                            let stockDisponible = 0;
-                            let textoAlerta     = '';
-
-                            if (!esTagNuevo) {
-                                let insumoBD = INVENTARIO.find(item => item.id == idMaterial);
-                                if (insumoBD) {
-                                    costoCalculado  = gramosPorCortinaLana * insumoBD.costo_unitario;
-                                    stockDisponible = insumoBD.stock_actual;
-                                }
-                            } else {
-                                costoCalculado = gramosPorCortinaLana * PRECIOS_FANTASMA.lana;
-                            }
-
-                            costoTotalMateriales += costoCalculado;
-
-                            let madejasNecesarias = Math.ceil(gramosPorCortinaLana / 90);
-
-                            if (esTagNuevo || stockDisponible < gramosPorCortinaLana) {
-                                textoAlerta = `<span class="text-danger fw-bold">- ${gramosPorCortinaLana.toFixed(1)}g (${madejasNecesarias} Madejas)</span>`;
-                            } else {
-                                textoAlerta = `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Stock Suficiente</span>`;
-                            }
-
-                            tabla.append(`
-                                <tr>
-                                    <td class="fw-bold text-dark">Cortina Lana: ${nombreMaterial}</td>
-                                    <td class="text-muted small">${gramosPorCortinaLana.toFixed(1)}g calculados</td>
-                                    <td class="text-muted fw-bold">$${costoCalculado.toFixed(2)}</td>
-                                    <td class="text-end">${textoAlerta}</td>
-                                </tr>
-                            `);
-                        }
-                    });
-                }
-
-                // 4.2 Cortinas de Fiesta
-                if ($('#swCortinaFiesta').is(':checked')) {
-                    let coloresFiesta = 0;
-                    $('#contenedorCortinasFiesta select').each(function() {
-                        let data = $(this).select2('data');
-                        if (data && data.length > 0 && data[0].id !== '') coloresFiesta++;
-                    });
-
-                    if (coloresFiesta > 0) {
-                        let totalCortinasFisicas = cantidadBastones * coloresFiesta;
-                        let precioFantasmaFiesta = (totalCortinasFisicas >= 12) ? PRECIOS_FANTASMA.cortina_fiesta_mayor : PRECIOS_FANTASMA.cortina_fiesta_menor;
-
-                        let cortinasPorColor = cantidadBastones;
-                        let paquetesPorColor = cortinasPorColor / 4;
-
-                        $('#contenedorCortinasFiesta select').each(function() {
-                            let dataSelect = $(this).select2('data');
-                            if (dataSelect && dataSelect.length > 0 && dataSelect[0].id !== '') {
-                                let seleccion = dataSelect[0];
-                                let nombreMaterial = seleccion.text.replace(' (Cotizar nuevo material)', '');
-                                let idMaterial = seleccion.id;
-                                let esTagNuevo = seleccion.newTag || isNaN(idMaterial);
-                                
-                                let costoCalculado = 0;
-                                let faltaStock = false;
-                                let textoAlerta = '';
-
-                                if (!esTagNuevo) {
-                                    let insumoBD = INVENTARIO.find(item => item.id == idMaterial);
-                                    if (insumoBD) {
-                                        costoCalculado = cortinasPorColor * insumoBD.costo_unitario;
-                                        let stockEnUnidades = insumoBD.stock_actual; 
-                                        if (stockEnUnidades < cortinasPorColor) {
-                                            faltaStock = true;
-                                        }
-                                    }
-                                } else {
-                                    costoCalculado = paquetesPorColor * precioFantasmaFiesta;
-                                    faltaStock = true;
-                                }
-
-                                costoTotalMateriales += costoCalculado;
-
-                                if (faltaStock) {
-                                    let paquetesFisicosComprar = Math.ceil(paquetesPorColor);
-                                    textoAlerta = `<span class="text-danger fw-bold">- ${cortinasPorColor} cortinas (Comprar ${paquetesFisicosComprar} paq.)</span>`;
-                                } else {
-                                    textoAlerta = `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Stock Suficiente</span>`;
-                                }
-
-                                tabla.append(`
-                                    <tr>
-                                        <td class="fw-bold text-dark">Cortina Fiesta: ${nombreMaterial}</td>
-                                        <td class="text-muted small">${cortinasPorColor} cortinas calculadas</td>
-                                        <td class="text-muted fw-bold">$${costoCalculado.toFixed(2)}</td>
-                                        <td class="text-end">${textoAlerta}</td>
-                                    </tr>
-                                `);
-                            }
-                        });
-                    }
-                }
-
-                // ===================================================
-                // --- FASE 5: DECORACIÓN Y APLIQUES ---
-                // ===================================================
-
-                // Función interna para no repetir código en las 3 cintas
-                function procesarCinta(idSelect, nombreFila, metrosPorUnidad, recargoFijo = 0) {
-                    let dataSelect = $(idSelect).select2('data');
-                    if (dataSelect && dataSelect.length > 0 && dataSelect[0].id !== '') {
-                        let seleccion = dataSelect[0];
-                        let nombreMaterial = seleccion.text.replace(' (Cotizar nuevo material)', '');
-                        let idMaterial = seleccion.id;
-                        let esTagNuevo = seleccion.newTag || isNaN(idMaterial);
-                        
-                        let metrosTotales = metrosPorUnidad * cantidadBastones;
-                        let costoCalculado = 0;
-                        let stockDisponible = 0;
-                        let textoAlerta = '';
-
-                        if (!esTagNuevo) {
-                            // Si existe en BD, usamos su precio real
-                            let insumoBD = INVENTARIO.find(item => item.id == idMaterial);
-                            if (insumoBD) {
-                                costoCalculado = metrosTotales * insumoBD.costo_unitario;
-                                stockDisponible = insumoBD.stock_actual; // Está en metros
-                            }
-                        } else {
-                            // Si es nuevo, intentamos adivinar el tipo de cinta por el texto
-                            let precioFantasma = PRECIOS_FANTASMA.cinta_gross; // Default
-                            let textoMinuscula = nombreMaterial.toLowerCase();
-                            
-                            if (textoMinuscula.includes('garza')) precioFantasma = PRECIOS_FANTASMA.cinta_garza;
-                            else if (textoMinuscula.includes('satin') || textoMinuscula.includes('satín')) precioFantasma = PRECIOS_FANTASMA.cinta_satin;
-                            
-                            costoCalculado = metrosTotales * precioFantasma;
-                        }
-
-                        // Sumamos a los totales
-                        costoTotalMateriales += costoCalculado;
-                        
-                        // Si hay recargo fijo (Ej: Lazo con nombre), va a la Mano de Obra
-                        let totalRecargo = recargoFijo * cantidadBastones;
-                        if (totalRecargo > 0) {
-                            costoTotalManoObra += totalRecargo;
-                        }
-
-                        // Alertas de Stock (en metros)
-                        if (esTagNuevo || stockDisponible < metrosTotales) {
-                            textoAlerta = `<span class="text-danger fw-bold">- ${metrosTotales.toFixed(2)}m (Falta Comprar)</span>`;
-                        } else {
-                            textoAlerta = `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Stock Suficiente</span>`;
-                        }
-
-                        // Agregamos la fila (Con el formato de 4 columnas)
-                        let subtotalVisual = (costoCalculado + totalRecargo).toFixed(2);
-                        let detalleRecargo = totalRecargo > 0 ? ` <br><small class="text-muted">(Incluye $${totalRecargo.toFixed(2)} extra)</small>` : '';
-
-                        tabla.append(`
-                            <tr>
-                                <td class="fw-bold text-dark">${nombreFila}: ${nombreMaterial}</td>
-                                <td class="text-muted small">${metrosTotales.toFixed(2)}m calculados</td>
-                                <td class="fw-bold text-muted">$${subtotalVisual}${detalleRecargo}</td>
-                                <td class="text-end">${textoAlerta}</td>
-                            </tr>
-                        `);
-                    }
-                }
-
-                // 5.1 Lazo Simple (1.5m fijos)
-                if ($('#swLazoSimple').is(':checked')) {
-                    procesarCinta('select[name="cinta_lazo_simple"]', 'Lazo Simple', 1.5, 0);
-                }
-
-                // 5.2 Flores Dinámicas (1.0m por cada flor individual)
-                if ($('#swLazoFlor').is(':checked')) {
-                    let numeroFlor = 1;
-                    $('#contenedorFlores select').each(function() {
-                        procesarCinta(this, `Flor ${numeroFlor}`, 1.0, 0);
-                        numeroFlor++;
-                    });
-                }
-
-                // 5.3 Lazo con Nombre (1.0m fijos + $0.70 de extra)
-                if ($('#swLazoNombre').is(':checked')) {
-                    procesarCinta('select[name="cinta_lazo_nombre"]', 'Lazo c/ Nombre', 1.0, 0.70);
-                }
-
-                // 5.4 Apliques Manuales ($0.50 cada uno)
-                if ($('#swApliques').is(':checked')) {
-                    let cantApliques = parseInt($('#cantApliques').val()) || 1;
-                    let totalApliques = cantApliques * cantidadBastones;
-                    let costoApliques = totalApliques * 0.50; // $0.50 fijos por unidad
-
-                    costoTotalManoObra += costoApliques; // Lo sumamos a Extras/Mano de obra
-
-                    tabla.append(`
-                        <tr>
-                            <td class="fw-bold text-dark">Detalles: Apliques</td>
-                            <td class="text-muted small">${totalApliques} u. totales × $0.50</td>
-                            <td class="fw-bold text-muted">$${costoApliques.toFixed(2)}</td>
-                            <td class="text-end"><span class="text-muted">Extra Fijo</span></td>
-                        </tr>
-                    `);
-                }
-
-                // =======================================================
-                // --- FASE 6: DISEÑOS PERSONALIZADOS (MANO DE OBRA) ---
-                // =======================================================
-                if ($('#swDisenoPersonalizado').is(':checked')) {
-                    // Extraer el número del select (1.50, 2.00 o 3.00)
-                    let tarifaDisenoUnidad = parseFloat($('#selectNivelDiseno').val()) || 0;
-                    
-                    // Multiplicarlo por la cantidad de bastones
-                    let costoTotalDiseno = tarifaDisenoUnidad * cantidadBastones;
-
-                    // Sumarlo directo a la MANO DE OBRA (no a los materiales)
-                    costoTotalManoObra += costoTotalDiseno;
-
-                    // Sacar el texto bonito para la tabla (Ej: "Básico", "Premium")
-                    let nombreNivel = $('#selectNivelDiseno option:selected').text().split(' ')[0];
-
-                    tabla.append(`
-                        <tr class="bg-warning bg-opacity-10">
-                            <td class="fw-bold text-dark"><i class="fa-solid fa-star text-warning"></i> Diseño Especial: ${nombreNivel}</td>
-                            <td class="text-muted small">${cantidadBastones} u. × $${tarifaDisenoUnidad.toFixed(2)}</td>
-                            <td class="fw-bold text-dark">$${costoTotalDiseno.toFixed(2)}</td>
-                            <td class="text-end"><span class="text-muted">Mano de Obra</span></td>
-                        </tr>
-                    `);
-                }
-
-            // ---------------------------------------------------
-            // FASE 7: TOTALES (Actualiza el panel financiero)
-            // ---------------------------------------------------
-            const granTotal     = costoTotalMateriales + costoTotalManoObra;
-            const costoUnitario = granTotal / cantidadBastones;
-
-            $('#txtCostoMateriales').text(`$ ${costoTotalMateriales.toFixed(2)}`);
-            $('#txtCostoManoObra').text(`$ ${costoTotalManoObra.toFixed(2)}`);
-            $('#txtCostoTotal').text(`$ ${granTotal.toFixed(2)}`);
-            $('#txtCostoUnitario').text(`$ ${costoUnitario.toFixed(2)} c/u`);
-            $('#btnGuardarCotizacion').prop('disabled', false);
-
-            } // <--- Fin de la función calcularCotizacion()
-
-
-            // =======================================================
-            // 3. TRIGGERS — Eventos que disparan el recálculo
-            // =======================================================
-            
-            const selectoresFormulario = [
-                '#inputCantidad', 
-                '#selectAcabado', 
-                '#selectTamano', 
-                '#selectCantColores', 
-                '#swCortinaLana', 
-                '#selectCantCortinaLana', 
-                '#swCortinaFiesta', 
-                '#selectCantCortinaFiesta',
-                '#swLazoSimple',
-                '#swLazoFlor',
-                '#selectCantFlores',
-                '#swLazoNombre',
-                '#swApliques',
-                '#cantApliques',
-                '#swDisenoPersonalizado',
-                '#selectNivelDiseno'
-            ].join(', ');
-
-            $(selectoresFormulario).on('input change', function (e) {
-                console.log(`[TRIGGER] Se detectó un cambio en:`, e.target.id);
-                console.log(`[ESTADO] Switch Lana:`, $('#swCortinaLana').is(':checked'));
-                console.log(`[ESTADO] Switch Fiesta:`, $('#swCortinaFiesta').is(':checked'));
-                calcularCotizacion();
-            });
-
-            $('body').on('change', 'select', function() {
-                calcularCotizacion();
-            });
-
-            // Carga inicial al abrir la página
-            calcularCotizacion();
-            
-        });
+        window.KardexConfig = {
+            rutas: {
+                buscarLanas: "{{ route('lanas.buscar') }}",
+                buscarCortinas: "{{ route('cortinas.buscar') }}",
+                buscarCintas: "{{ route('cintas.buscar') }}"
+            }
+        };
     </script>
+
+    {{-- 3. Llamamos a tu JS principal usando Vite --}}
+    @vite(['resources/js/cotizador.js'])
+
 @endsection

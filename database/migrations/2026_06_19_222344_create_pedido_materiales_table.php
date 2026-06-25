@@ -13,16 +13,16 @@ return new class extends Migration
     {
         Schema::create('pedido_materiales', function (Blueprint $table) {
             $table->id();
-            
-            // Relación con la tabla pedidos (Si se elimina el pedido, se borra su receta)
             $table->foreignId('pedido_id')->constrained('pedidos')->onDelete('cascade');
             
-            // Relación con la tabla insumos (Evita borrar lanas/bases si están amarradas a un pedido)
-            $table->foreignId('insumo_id')->constrained('insumos')->onRestrict();
+            // El ID puede ser nulo si es un material fantasma
+            $table->foreignId('insumo_id')->nullable()->constrained('insumos');
             
-            // Cantidad exacta calculada que consumirá este pedido (en gramos, metros o unidades)
-            $table->decimal('cantidad_estimada', 8, 2); 
+            // Guardamos el nombre tal cual (Ej: "Lana Azul" o el inventado "Satin Rosa")
+            $table->string('nombre_material'); 
             
+            $table->decimal('cantidad_requerida', 8, 2);
+            $table->decimal('subtotal_calculado', 8, 2);
             $table->timestamps();
         });
     }
