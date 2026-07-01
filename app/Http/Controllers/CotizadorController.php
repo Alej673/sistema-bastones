@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Insumo;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Pedido;
 
 class CotizadorController extends Controller
 {
@@ -129,9 +131,11 @@ class CotizadorController extends Controller
 
     public function guardar(Request $request)
     {
+        // 1. Validación adaptada (el correo es opcional, pero si viene, que sea formato email)
         $request->validate([
             'cantidad_total_bastones' => 'required|numeric|min:1',
-            'costo_total' => 'required|numeric',
+            'costo_total'             => 'required|numeric',
+            'correo_cliente'          => 'nullable|email'
         ]);
 
         try {
@@ -139,37 +143,49 @@ class CotizadorController extends Controller
 
             // 1. Guardar la cabecera del pedido (Maestro)
             $pedido = new \App\Models\Pedido();
-            $pedido->cliente_nombre = $request->input('cliente_nombre', 'Cliente de Mostrador'); 
+            
+            // Datos del cliente mapeados exactamente a como los envía tu AJAX
+            $pedido->cliente_nombre = $request->input('nombre_cliente', 'Cliente de Mostrador'); 
+            $pedido->correo_cliente = $request->input('correo_cliente'); 
+            
             $pedido->cantidad_total_bastones = $request->input('cantidad_total_bastones');
-            $pedido->total_precio_cliente = $request->input('costo_total');
+            
+            // Desglose financiero
+            $pedido->costo_materiales = (float) $request->input('costo_materiales');
+            $pedido->costo_extras     = (float) $request->input('costo_extras');
+            $pedido->ganancia_fija    = (float) $request->input('ganancia_fija');
+            $pedido->costo_total      = (float) $request->input('costo_total');
+            $pedido->costo_unitario   = (float) $request->input('costo_unitario');
+            
             $pedido->estado = 'pendiente'; 
             $pedido->save();
 
             // 2. Descifrar el carrito de materiales enviado por JS 
             $materialesJson = $request->input('materiales');
-            $listaMateriales = json_decode($materialesJson, true); // Lo convertimos en un Array de PHP
+            $listaMateriales = json_decode($materialesJson, true); 
 
             if (!empty($listaMateriales)) {
                 foreach ($listaMateriales as $mat) {
                     // Insertamos cada fila en la tabla de detalles
                     DB::table('pedido_materiales')->insert([
-                        'pedido_id' => $pedido->id, // Vinculamos al ID del pedido recién creado
-                        'insumo_id' => $mat['insumo_id'], // Puede ser un número o NULL si es un tag nuevo
-                        'nombre_material' => $mat['nombre_material'],
+                        'pedido_id'          => $pedido->id, 
+                        'insumo_id'          => $mat['insumo_id'], 
+                        'nombre_material'    => $mat['nombre_material'],
                         'cantidad_requerida' => $mat['cantidad_requerida'],
                         'subtotal_calculado' => $mat['subtotal_calculado'],
-                        'created_at' => now(),
-                        'updated_at' => now(),
+                        'created_at'         => now(),
+                        'updated_at'         => now(),
                     ]);
                 }
             }
 
             DB::commit();
 
+            // El Frontend espera response.id para inyectarlo en los botones PDF
             return response()->json([
                 'success' => true,
                 'mensaje' => 'Pedido y lista de materiales guardados con éxito.',
-                'id' => $pedido->id
+                'id'      => $pedido->id
             ]);
 
         } catch (\Exception $e) {
@@ -179,5 +195,33 @@ class CotizadorController extends Controller
                 'mensaje' => 'Error crítico en el servidor: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    // =======================================================
+    // GENERACIÓN DE REPORTES PDF (On-the-Fly)
+    // =======================================================
+
+    public function generarPdfReceta($id)
+    {
+        // 1. Buscamos el pedido y "cargamos" todos sus materiales asociados
+        $pedido = Pedido::with('materiales')->findOrFail($id);
+
+        // 2. Cargamos la vista de Blade y le pasamos los datos
+        $pdf = Pdf::loadView('reportes.receta', compact('pedido'));
+
+        // 3. stream() abre el PDF en el navegador (no guarda nada en el disco duro)
+        return $pdf->stream('Receta_Bodega_Pedido_' . $pedido->id . '.pdf');
+    }
+
+    public function generarPdfNota($id)
+    {
+        // 1. Buscamos el pedido
+        $pedido = Pedido::with('materiales')->findOrFail($id);
+
+        // 2. Cargamos la vista de la nota de venta (diseño comercial)
+        $pdf = Pdf::loadView('reportes.nota', compact('pedido'));
+
+        // 3. Renderizamos y mostramos
+        return $pdf->stream('Nota_Venta_Pedido_' . $pedido->id . '.pdf');
     }
 }

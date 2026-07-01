@@ -9,16 +9,26 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up(): void  
     {
         Schema::create('pedidos', function (Blueprint $table) {
             $table->id();
-            $table->string('cliente_nombre');
-            $table->integer('cantidad_total_bastones'); // Cantidad de bastones del pedido (ej. 12)
-            $table->decimal('total_precio_cliente', 8, 2); // Precio final cobrado al cliente
             
-            // Estado de producción usando ENUM para evitar textos libres erróneos
-            $table->enum('estado', ['pendiente', 'realizado', 'cancelado'])->default('pendiente');
+            // Datos del cliente
+            $table->string('cliente_nombre')->default('Cliente de Mostrador');
+            $table->string('correo_cliente')->nullable(); 
+            
+            $table->integer('cantidad_total_bastones'); 
+            
+            // Desglose Financiero 
+            $table->decimal('costo_materiales', 8, 2)->default(0);
+            $table->decimal('costo_extras', 8, 2)->default(0);
+            $table->decimal('ganancia_fija', 8, 2)->default(0);
+            $table->decimal('costo_total', 8, 2); 
+            $table->decimal('costo_unitario', 8, 2)->default(0); 
+            
+            // Tu ENUM actualizado según el Documento Técnico (RF-05)
+            $table->enum('estado', ['pendiente', 'en_produccion', 'realizado', 'cancelado'])->default('pendiente');
             
             $table->timestamps();
         });

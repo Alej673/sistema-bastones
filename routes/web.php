@@ -37,6 +37,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/buscar-cintas', [App\Http\Controllers\CotizadorController::class, 'buscarCintas'])->name('cintas.buscar');
     // Ruta para recibir el secuestro de datos por AJAX
     Route::post('/cotizaciones/guardar', [CotizadorController::class, 'guardar'])->name('cotizaciones.guardar');
+    // Rutas para generar PDFs On-the-Fly
+    Route::get('/pedidos/{id}/pdf-receta', [\App\Http\Controllers\CotizadorController::class, 'generarPdfReceta']);
+    Route::get('/pedidos/{id}/pdf-nota', [\App\Http\Controllers\CotizadorController::class, 'generarPdfNota']);
 });
 
 

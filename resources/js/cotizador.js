@@ -13,6 +13,15 @@ const nodoInventario = document.getElementById('datos-inventario');
 const INVENTARIO     = nodoInventario ? JSON.parse(nodoInventario.textContent) : [];
 const RUTAS          = window.KardexConfig.rutas;
 
+// ✅ Índice de inventario por ID para búsquedas O(1). Antes cada
+// INVENTARIO.find(item => item.id == X) recorría todo el arreglo,
+// y esto se repetía dentro de cada .each() de colores/cortinas/cintas.
+const INVENTARIO_POR_ID = new Map(INVENTARIO.map(item => [String(item.id), item]));
+
+function buscarInsumoPorId(id) {
+    return INVENTARIO_POR_ID.get(String(id)) || null;
+}
+
 
 function mostrarAlerta(contenido, titulo = 'Faltan campos obligatorios', tipo = 'warning') {
 
@@ -243,7 +252,11 @@ $(document).ready(function () {
 
         window.carritoInsumos = [];
         const tabla = $('#cuerpoTablaImpacto');
-        tabla.empty();
+
+        // ✅ Acumulamos el HTML de todas las filas y lo pintamos una sola
+        // vez al final con tabla.html(...). Antes cada tabla.append(...)
+        // forzaba un reflow individual del navegador.
+        const filasHtml = [];
 
         let costoTotalMateriales = 0;
         let costoTotalManoObra   = 0;
@@ -254,7 +267,7 @@ $(document).ready(function () {
 
         // --- GUARDA DEL FORMULARIO ---
         if (cantidadBastones <= 0 || !colorBase || !tamanoBase) {
-            tabla.append(`
+            tabla.html(`
                 <tr>
                     <td colspan="4" class="text-center text-muted py-5">
                         <i class="fa-solid fa-calculator fa-2x mb-2 text-light"></i><br>
@@ -303,7 +316,7 @@ $(document).ready(function () {
             ? `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Stock Suficiente</span>`
             : `<span class="text-danger fw-bold">- ${cantidadBastones} u. (Falta Comprar)</span>`;
 
-        tabla.append(`
+        filasHtml.push(`
             <tr>
                 <td class="fw-bold text-dark">Base ${nombreAcabado} (${tamanoVisual})</td>
                 <td class="text-muted small">${cantidadBastones} u. &times; $${precioBaseUnitario.toFixed(2)} c/u</td>
@@ -330,7 +343,7 @@ $(document).ready(function () {
 
         costoTotalMateriales += costoCinchos + costoElastico;
 
-        tabla.append(`
+        filasHtml.push(`
             <tr>
                 <td class="fw-bold text-dark">Insumos de Ensamblaje</td>
                 <td class="text-muted small">${totalCinchos} cinchos &middot; ${totalElastico.toFixed(2)}m elástico</td>
@@ -356,36 +369,31 @@ $(document).ready(function () {
 
 
         // ---------------------------------------------------
-        // FASE 3: CUERPO (LANA) - ✅ CORREGIDO Y OPTIMIZADO
+        // FASE 3: CUERPO (LANA)
         // ---------------------------------------------------
         const consumoLana_g = esGrande ? 150 : 135;
-        let coloresActivos  = 0;
 
+        // ✅ Una sola pasada por los selects: recogemos las selecciones
+        // válidas y de una vez sabemos cuántas hay (antes se recorría
+        // el mismo .each() dos veces: una para contar, otra para calcular).
+        const seleccionesLana = [];
         $('#contenedorColoresLana .select2-ajax').each(function () {
             const data = $(this).select2('data');
-            if (data && data.length > 0 && data[0].id !== '') coloresActivos++;
+            if (data && data.length > 0 && data[0].id !== '') seleccionesLana.push(data[0]);
         });
 
-        if (coloresActivos === 0) coloresActivos = 1;
+        const coloresActivos = seleccionesLana.length || 1;
         const gramosPorColorTotal = (consumoLana_g / coloresActivos) * cantidadBastones;
 
-        $('#contenedorColoresLana .select2-ajax').each(function () {
-            const dataSelect = $(this).select2('data');
-            if (!dataSelect || dataSelect.length === 0) return;
-
-            const seleccion  = dataSelect[0];
-            if (!seleccion.id) return;
-
+        seleccionesLana.forEach(function (seleccion) {
             let nombreLana   = seleccion.text;
             const esTagNuevo = seleccion.newTag || isNaN(seleccion.id);
             let costoLana    = 0;
             let stockActual  = 0;
-            
-            // ✅ Declaramos insumoBD en el scope correcto
-            let insumoBD = null; 
+            let insumoBD     = null;
 
             if (!esTagNuevo) {
-                insumoBD = INVENTARIO.find(item => item.id == seleccion.id);
+                insumoBD = buscarInsumoPorId(seleccion.id);
                 if (insumoBD) {
                     costoLana   = gramosPorColorTotal * insumoBD.costo_unitario;
                     stockActual = insumoBD.stock_actual;
@@ -403,7 +411,7 @@ $(document).ready(function () {
                 ? `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Stock Suficiente</span>`
                 : `<span class="text-danger fw-bold">- ${gramosPorColorTotal.toFixed(1)}g (${madejasNecesarias} Madejas)</span>`;
 
-            tabla.append(`
+            filasHtml.push(`
                 <tr>
                     <td class="fw-bold text-dark">Cuerpo: ${nombreLana}</td>
                     <td class="text-muted small">${gramosPorColorTotal.toFixed(1)}g calculados</td>
@@ -413,8 +421,7 @@ $(document).ready(function () {
             `);
 
             agregarAlCarrito({
-                // ✅ Ahora insumoBD existe en este scope y el ternario evaluará correctamente
-                insumo_id: insumoBD?.id ?? null, 
+                insumo_id: insumoBD?.id ?? null,
                 nombre_material: nombreLana,
                 cantidad_requerida: gramosPorColorTotal,
                 subtotal_calculado: costoLana,
@@ -423,7 +430,7 @@ $(document).ready(function () {
 
 
         // ---------------------------------------------------
-        // FASE 4: CORTINAS (LANA Y FIESTA) - ✅ OPTIMIZADO
+        // FASE 4: CORTINAS (LANA Y FIESTA)
         // ---------------------------------------------------
 
         // 4.1 Cortinas de Lana
@@ -442,10 +449,10 @@ $(document).ready(function () {
                     let costoCalculado  = 0;
                     let stockDisponible = 0;
                     let textoAlerta     = '';
-                    let insumoBD        = null; // ✅ Optimizando scope
+                    let insumoBD        = null;
 
                     if (!esTagNuevo) {
-                        insumoBD = INVENTARIO.find(item => item.id == idMaterial);
+                        insumoBD = buscarInsumoPorId(idMaterial);
                         if (insumoBD) {
                             costoCalculado  = gramosPorCortinaLana * insumoBD.costo_unitario;
                             stockDisponible = insumoBD.stock_actual;
@@ -463,7 +470,7 @@ $(document).ready(function () {
                         textoAlerta = `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Stock Suficiente</span>`;
                     }
 
-                    tabla.append(`
+                    filasHtml.push(`
                         <tr>
                             <td class="fw-bold text-dark">Cortina Lana: ${nombreMaterial}</td>
                             <td class="text-muted small">${gramosPorCortinaLana.toFixed(1)}g calculados</td>
@@ -473,7 +480,7 @@ $(document).ready(function () {
                     `);
 
                     agregarAlCarrito({
-                        insumo_id: insumoBD?.id ?? null, // ✅ Ya no itera todo el arreglo de nuevo
+                        insumo_id: insumoBD?.id ?? null,
                         nombre_material: nombreMaterial,
                         cantidad_requerida: gramosPorCortinaLana,
                         subtotal_calculado: costoCalculado,
@@ -484,14 +491,17 @@ $(document).ready(function () {
 
         // 4.2 Cortinas de Fiesta
         if ($('#swCortinaFiesta').is(':checked')) {
-            let coloresFiesta = 0;
+
+            // ✅ Igual que en lana: una sola pasada para recoger las
+            // selecciones válidas, en vez de recorrer el select dos veces.
+            const seleccionesFiesta = [];
             $('#contenedorCortinasFiesta select').each(function () {
-                let data = $(this).select2('data');
-                if (data && data.length > 0 && data[0].id !== '') coloresFiesta++;
+                const data = $(this).select2('data');
+                if (data && data.length > 0 && data[0].id !== '') seleccionesFiesta.push(data[0]);
             });
 
-            if (coloresFiesta > 0) {
-                let totalCortinasFisicas = cantidadBastones * coloresFiesta;
+            if (seleccionesFiesta.length > 0) {
+                let totalCortinasFisicas = cantidadBastones * seleccionesFiesta.length;
                 let precioFantasmaFiesta = (totalCortinasFisicas >= 12)
                     ? PRECIOS_FANTASMA.cortina_fiesta_mayor
                     : PRECIOS_FANTASMA.cortina_fiesta_menor;
@@ -499,65 +509,61 @@ $(document).ready(function () {
                 let cortinasPorColor = cantidadBastones;
                 let paquetesPorColor = cortinasPorColor / 4;
 
-                $('#contenedorCortinasFiesta select').each(function () {
-                    let dataSelect = $(this).select2('data');
-                    if (dataSelect && dataSelect.length > 0 && dataSelect[0].id !== '') {
-                        let seleccion      = dataSelect[0];
-                        let nombreMaterial = seleccion.text.replace(' (Cotizar nuevo material)', '');
-                        let idMaterial     = seleccion.id;
-                        let esTagNuevo     = seleccion.newTag || isNaN(idMaterial);
+                seleccionesFiesta.forEach(function (seleccion) {
+                    let nombreMaterial = seleccion.text.replace(' (Cotizar nuevo material)', '');
+                    let idMaterial     = seleccion.id;
+                    let esTagNuevo     = seleccion.newTag || isNaN(idMaterial);
 
-                        let costoCalculado = 0;
-                        let faltaStock     = false;
-                        let textoAlerta    = '';
-                        let insumoBD       = null; // ✅ Optimizando scope
+                    let costoCalculado = 0;
+                    let faltaStock     = false;
+                    let textoAlerta    = '';
+                    let insumoBD       = null;
 
-                        if (!esTagNuevo) {
-                            insumoBD = INVENTARIO.find(item => item.id == idMaterial);
-                            if (insumoBD) {
-                                costoCalculado = cortinasPorColor * insumoBD.costo_unitario;
-                                let stockEnUnidades = insumoBD.stock_actual;
-                                if (stockEnUnidades < cortinasPorColor) {
-                                    faltaStock = true;
-                                }
+                    if (!esTagNuevo) {
+                        insumoBD = buscarInsumoPorId(idMaterial);
+                        if (insumoBD) {
+                            costoCalculado = cortinasPorColor * insumoBD.costo_unitario;
+                            let stockEnUnidades = insumoBD.stock_actual;
+                            if (stockEnUnidades < cortinasPorColor) {
+                                faltaStock = true;
                             }
-                        } else {
-                            costoCalculado = paquetesPorColor * precioFantasmaFiesta;
-                            faltaStock     = true;
                         }
-
-                        costoTotalMateriales += costoCalculado;
-
-                        if (faltaStock) {
-                            let paquetesFisicosComprar = Math.ceil(paquetesPorColor);
-                            textoAlerta = `<span class="text-danger fw-bold">- ${cortinasPorColor} cortinas (Comprar ${paquetesFisicosComprar} paq.)</span>`;
-                        } else {
-                            textoAlerta = `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Stock Suficiente</span>`;
-                        }
-
-                        tabla.append(`
-                            <tr>
-                                <td class="fw-bold text-dark">Cortina Fiesta: ${nombreMaterial}</td>
-                                <td class="text-muted small">${cortinasPorColor} cortinas calculadas</td>
-                                <td class="text-muted fw-bold">$${costoCalculado.toFixed(2)}</td>
-                                <td class="text-end">${textoAlerta}</td>
-                            </tr>
-                        `);
-
-                        agregarAlCarrito({
-                            insumo_id: insumoBD?.id ?? null, // ✅ Más limpio
-                            nombre_material: nombreMaterial,
-                            cantidad_requerida: cortinasPorColor,
-                            subtotal_calculado: costoCalculado,
-                        });
+                    } else {
+                        costoCalculado = paquetesPorColor * precioFantasmaFiesta;
+                        faltaStock     = true;
                     }
+
+                    costoTotalMateriales += costoCalculado;
+
+                    if (faltaStock) {
+                        let paquetesFisicosComprar = Math.ceil(paquetesPorColor);
+                        textoAlerta = `<span class="text-danger fw-bold">- ${cortinasPorColor} cortinas (Comprar ${paquetesFisicosComprar} paq.)</span>`;
+                    } else {
+                        textoAlerta = `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Stock Suficiente</span>`;
+                    }
+
+                    filasHtml.push(`
+                        <tr>
+                            <td class="fw-bold text-dark">Cortina Fiesta: ${nombreMaterial}</td>
+                            <td class="text-muted small">${cortinasPorColor} cortinas calculadas</td>
+                            <td class="text-muted fw-bold">$${costoCalculado.toFixed(2)}</td>
+                            <td class="text-end">${textoAlerta}</td>
+                        </tr>
+                    `);
+
+                    agregarAlCarrito({
+                        insumo_id: insumoBD?.id ?? null,
+                        nombre_material: nombreMaterial,
+                        cantidad_requerida: cortinasPorColor,
+                        subtotal_calculado: costoCalculado,
+                    });
                 });
             }
         }
 
 
         // =======================================================
-        // FASE 5: DECORACIÓN Y APLIQUES - ✅ OPTIMIZADO
+        // FASE 5: DECORACIÓN Y APLIQUES
         // =======================================================
 
         function procesarCinta(idSelect, nombreFila, metrosPorUnidad, recargoFijo = 0) {
@@ -572,10 +578,10 @@ $(document).ready(function () {
                 let costoCalculado  = 0;
                 let stockDisponible = 0;
                 let textoAlerta     = '';
-                let insumoBD        = null; // ✅ Optimizando scope
+                let insumoBD        = null;
 
                 if (!esTagNuevo) {
-                    insumoBD = INVENTARIO.find(item => item.id == idMaterial);
+                    insumoBD = buscarInsumoPorId(idMaterial);
                     if (insumoBD) {
                         costoCalculado  = metrosTotales * insumoBD.costo_unitario;
                         stockDisponible = insumoBD.stock_actual; // en metros
@@ -609,7 +615,7 @@ $(document).ready(function () {
                     ? ` <br><small class="text-muted">(Incluye $${totalRecargo.toFixed(2)} extra)</small>`
                     : '';
 
-                tabla.append(`
+                filasHtml.push(`
                     <tr>
                         <td class="fw-bold text-dark">${nombreFila}: ${nombreMaterial}</td>
                         <td class="text-muted small">${metrosTotales.toFixed(2)}m calculados</td>
@@ -619,7 +625,7 @@ $(document).ready(function () {
                 `);
 
                 agregarAlCarrito({
-                    insumo_id: insumoBD?.id ?? null, // ✅ Evita la doble búsqueda
+                    insumo_id: insumoBD?.id ?? null,
                     nombre_material: `${nombreFila}: ${nombreMaterial}`,
                     cantidad_requerida: metrosTotales,
                     subtotal_calculado: costoCalculado + totalRecargo,
@@ -650,7 +656,7 @@ $(document).ready(function () {
 
             costoTotalManoObra += costoApliques;
 
-            tabla.append(`
+            filasHtml.push(`
                 <tr>
                     <td class="fw-bold text-dark">Detalles: Apliques</td>
                     <td class="text-muted small">${totalApliques} u. totales × $0.50</td>
@@ -679,7 +685,7 @@ $(document).ready(function () {
 
             let nombreNivel = $('#selectNivelDiseno option:selected').text().split(' ')[0];
 
-            tabla.append(`
+            filasHtml.push(`
                 <tr class="bg-warning bg-opacity-10">
                     <td class="fw-bold text-dark"><i class="fa-solid fa-star text-warning"></i> Diseño Especial: ${nombreNivel}</td>
                     <td class="text-muted small">${cantidadBastones} u. × $${tarifaDisenoUnidad.toFixed(2)}</td>
@@ -695,6 +701,10 @@ $(document).ready(function () {
                 subtotal_calculado: costoTotalDiseno,
             });
         }
+
+
+        // ✅ Una sola escritura al DOM con todas las filas acumuladas.
+        tabla.html(filasHtml.join(''));
 
 
         // =======================================================
@@ -723,26 +733,44 @@ $(document).ready(function () {
     // 3. TRIGGERS — Eventos que disparan el recálculo
     // =======================================================
 
-    const selectoresFormulario = [
-        '#inputCantidad', '#selectAcabado', '#selectTamano', '#selectCantColores',
-        '#swCortinaLana', '#selectCantCortinaLana', '#swCortinaFiesta', '#selectCantCortinaFiesta',
-        '#swLazoSimple', '#swLazoFlor', '#selectCantFlores', '#swLazoNombre',
-        '#swApliques', '#cantApliques', '#swDisenoPersonalizado', '#selectNivelDiseno',
+    // ✅ Debounce corto: agrupa cambios que llegan casi al mismo tiempo
+    // (por ejemplo, Select2 puede disparar varios 'change' en cadena),
+    // así calcularCotizacion() no se ejecuta 3-4 veces por un solo clic.
+    let temporizadorRecalculo = null;
+    function recalcularConDebounce() {
+        clearTimeout(temporizadorRecalculo);
+        temporizadorRecalculo = setTimeout(calcularCotizacion, 80);
+    }
+
+    // Controles simples que NO son <select> (inputs de texto/número y switches).
+    // Los <select> se manejan aparte, en un único listener delegado más abajo.
+    const controlesSimples = [
+        '#inputCantidad',
+        '#swCortinaLana', '#swCortinaFiesta',
+        '#swLazoSimple', '#swLazoFlor', '#swLazoNombre',
+        '#swApliques', '#cantApliques', '#swDisenoPersonalizado',
     ].join(', ');
 
-    $(selectoresFormulario).on('input change', function (e) {
-        calcularCotizacion();
-    });
+    $(controlesSimples).on('input change', recalcularConDebounce);
 
-    $('body').on('change', 'select', function () {
-        calcularCotizacion();
-    });
+    // ✅ ÚNICO listener delegado para todos los <select> del formulario
+    // (nativos como #selectAcabado/#selectTamano/#selectNivelDiseno, y los
+    // que maneja Select2 por debajo en colores/cortinas/flores). Antes
+    // existía este mismo listener delegado EN body PARA TODOS los selects,
+    // y además un listener individual repetido para varios de esos mismos
+    // selects (#selectAcabado, #selectTamano, #selectCantColores, etc.),
+    // así que cada cambio en esos selects disparaba el recálculo pesado
+    // dos veces seguidas. Ahora se dispara una sola vez.
+    $('body').on('change', 'select', recalcularConDebounce);
 
-    calcularCotizacion();
+    calcularCotizacion(); // Primer pintado, sin debounce, al cargar la página
 
 
     // =======================================================
     // GUARDAR COTIZACIÓN — AJAX + modal de validación
+    // =======================================================
+    // =======================================================
+    // PASO 1: VALIDACIÓN (Botón verde de la pantalla principal)
     // =======================================================
     $('#btnGuardarCotizacion').on('click', function (e) {
         e.preventDefault();
@@ -764,54 +792,101 @@ $(document).ready(function () {
         if (!tieneColorLana) faltantes.push('Al menos un color de lana (Módulo 2)');
 
         if (faltantes.length > 0) {
-            mostrarAlerta(faltantes);
+            mostrarAlerta(faltantes, 'Faltan campos obligatorios', 'warning');
             return; 
+        }
+
+        // Todo bien: Mostramos el modal para pedir los datos del cliente
+        const modalCliente = new bootstrap.Modal(document.getElementById('modalDatosCliente'));
+        modalCliente.show();
+    });
+
+    // =======================================================
+    // PASO 2: GUARDAR COTIZACIÓN (Botón dentro del Modal Cliente)
+    // =======================================================
+    $('#btnConfirmarPedidoModal').on('click', function (e) {
+        e.preventDefault();
+
+        const nombreCliente = $('#inputNombreCliente').val();
+        const correoCliente = $('#inputCorreoCliente').val();
+
+        if(nombreCliente.trim() === '') {
+            mostrarAlerta('Por favor ingresa el nombre del cliente.', 'Falta información', 'warning');
+            return;
         }
 
         const btnGuardar    = $(this);
         const textoOriginal = btnGuardar.html();
-        btnGuardar.prop('disabled', true)
-                  .html('<i class="fa-solid fa-spinner fa-spin"></i> Guardando Pedido...');
+        btnGuardar.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Guardando Pedido...');
 
         let datosFormulario = $('#formCotizador').serializeArray();
+        datosFormulario.push({ name: 'nombre_cliente', value: nombreCliente });
+        datosFormulario.push({ name: 'correo_cliente', value: correoCliente });
         datosFormulario.push({ name: 'costo_materiales', value: $('#txtCostoMateriales').text().replace('$', '').trim() });
         datosFormulario.push({ name: 'costo_extras',     value: $('#txtCostoManoObra').text().replace('$', '').trim() });
         datosFormulario.push({ name: 'ganancia_fija',    value: $('#txtGananciaFija').text().replace('$', '').trim() });
         datosFormulario.push({ name: 'costo_total',      value: $('#txtCostoTotal').text().replace('$', '').trim() });
         datosFormulario.push({ name: 'costo_unitario',   value: $('#txtCostoUnitario').text().replace('$', '').replace('c/u', '').trim() });
+        datosFormulario.push({ name: 'materiales', value: JSON.stringify(window.carritoInsumos) });
 
         const csrfToken = $('meta[name="csrf-token"]').attr('content');
-        datosFormulario.push({ name: 'materiales', value: JSON.stringify(window.carritoInsumos) });
 
         $.ajax({
             url:  '/cotizaciones/guardar',
             type: 'POST',
             headers: { 'X-CSRF-TOKEN': csrfToken },
             data: datosFormulario,
-            success: function (response) {
-                $('#modalNumCotizacion').text(response.id);
-                $('#modalExito').modal('show');
+        success: function (response) {
+                    // A. Ocultamos el modal de captura de cliente (usando jQuery clásico)
+                    $('#modalDatosCliente').modal('hide');
 
-                setTimeout(function () {
-                    $('#modalExito').modal('hide');
-                    $('#panelExportar').removeClass('d-none').hide().slideDown();
-                    btnGuardar.prop('disabled', false)
-                              .html('<i class="fa-solid fa-floppy-disk"></i> Confirmar y Guardar Pedido');
-                    resetearFormulario();
-                }, 2000);
-            },
+                    // B. Imprimimos el ID en los modales de éxito
+                    $('#modalNumCotizacion').text(response.id);
+                    $('#txtNumeroCotizacionExport').text(response.id);
+                    
+                    // C. Inyectamos el ID en los botones PDF
+                    $('#btnPdfReceta').attr('href', '/pedidos/' + response.id + '/pdf-receta');
+                    $('#btnPdfNota').attr('href', '/pedidos/' + response.id + '/pdf-nota');
+                    
+                    // D. Mostramos el éxito usando jQuery clásico
+                    $('#modalExito').modal('show');
+
+                    setTimeout(function () {
+                        // Quitamos foco para evitar la alerta amarilla
+                        if (document.activeElement) {
+                            document.activeElement.blur();
+                        }
+                        
+                        // Ocultamos el éxito
+                        $('#modalExito').modal('hide');
+                        
+                        // Mostramos el panel (AQUÍ ES DONDE DEBE APARECER)
+                        $('#panelExportar').removeClass('d-none').hide().slideDown();
+                        
+                        btnGuardar.prop('disabled', false).html(textoOriginal);
+                    }, 1800);
+                },
             error: function (xhr) {
                 console.error('Fallo al guardar:', xhr.responseText);
-                mostrarAlerta(
-                    'No se pudo conectar con el servidor. Revisa tu conexión o avisa a soporte técnico.',
-                    'Error al guardar el pedido',
-                    'danger'
-                );
+                mostrarAlerta('No se pudo conectar con el servidor. Revisa tu conexión.', 'Error al guardar el pedido', 'danger');
                 btnGuardar.prop('disabled', false).html(textoOriginal);
             }
         });
     });
 
+    // =======================================================
+    // PASO 3: CERRAR FLUJO Y LIMPIAR PANTALLA (Delegación)
+    // =======================================================
+    $(document).on('click', '#btnCerrarFlujoExportacion', function(e) {
+        e.preventDefault(); 
+        
+        // 1. Limpiamos el modal del cliente
+        $('#inputNombreCliente').val('');
+        $('#inputCorreoCliente').val('');
+        
+        // 2. Ejecutamos tu función de reseteo original
+        resetearFormulario();
+    });
 
     // =======================================================
     // FUNCIÓN DE RESETEO

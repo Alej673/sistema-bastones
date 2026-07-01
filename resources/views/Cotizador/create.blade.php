@@ -302,36 +302,111 @@
                 </div>
             </div>
 
+            {{-- ==========================================
+                 PANEL DE EXPORTACIÓN
+                 ✅ Restilizado con el mismo lenguaje visual que
+                 modalValidacion: icono circular sobre fondo suave,
+                 tarjeta rounded-4, sombra sutil y tipografía 13-15px.
+                 Antes usaba un badge genérico de Bootstrap y bordes
+                 más "de librería"; ahora es consistente con el resto
+                 del cotizador.
+            ========================================== --}}
+            <div id="panelExportar" class="panel-exportar mt-4 d-none">
+                <div class="card border-0 rounded-4" style="box-shadow: 0 8px 32px rgba(0,0,0,0.08); background: #ffffff;">
+                    <div class="card-body p-4">
+
+                        {{-- Encabezado: icono circular + texto, igual patrón que modalValidacion --}}
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
+                                 style="width:44px; height:44px; min-width:44px; background:#EAF3DE;">
+                                <i class="fa-solid fa-check" style="color:#3B6D11; font-size:17px;"></i>
+                            </div>
+                            <div>
+                                <p class="fw-semibold text-dark mb-0" style="font-size:15px;">
+                                    Pedido guardado &mdash; #<span id="txtNumeroCotizacionExport">---</span>
+                                </p>
+                                <p class="text-muted mb-0" style="font-size:13px;">¿Qué deseas hacer ahora?</p>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            {{-- Fila 1: Botones PDF --}}
+                            <div class="row g-2">
+                                <div class="col-12 col-md-6">
+                                    <a href="#" target="_blank" class="btn btn-panel-exportar btn-panel-danger w-100" id="btnPdfReceta">
+                                        <i class="fa-solid fa-clipboard-list me-2"></i> Receta Bodega
+                                    </a>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <a href="#" target="_blank" class="btn btn-panel-exportar btn-panel-primary w-100" id="btnPdfNota">
+                                        <i class="fa-solid fa-file-invoice-dollar me-2"></i> Nota de Venta
+                                    </a>
+                                </div>
+                            </div>
+
+                            {{-- Fila 2: Botón de Correo --}}
+                            <button type="button" class="btn btn-panel-exportar btn-panel-info w-100" data-bs-toggle="modal" data-bs-target="#modalEnviarCorreo">
+                                <i class="fa-solid fa-paper-plane me-2"></i> Enviar Nota por Correo
+                            </button>
+
+                            <hr class="text-muted opacity-25 my-2">
+
+                            {{-- Fila 3: Botón para Reiniciar --}}
+                            <button type="button" class="btn btn-panel-exportar btn-panel-neutral w-100" id="btnCerrarFlujoExportacion">
+                                <i class="fa-solid fa-rotate-right me-2"></i> Cerrar y Crear Nuevo Pedido
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            {{-- ==========================================
+                 ESTILOS DEL PANEL DE EXPORTACIÓN
+                 (mismos colores/tono que ya usas en mostrarAlerta()
+                 del JS: warning #BA7517/#FAEEDA, danger #A32D2D/#FCEBEB,
+                 info #185FA5/#E6F1FB, success #3B6D11/#EAF3DE)
+            ========================================== --}}
+            <style>
+                .btn-panel-exportar {
+                    border: none;
+                    border-radius: 10px;
+                    padding: 11px 14px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    text-align: center;
+                    transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+                    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+                }
+                .btn-panel-exportar:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(0,0,0,.08);
+                }
+                .btn-panel-danger   { background: #FCEBEB; color: #A32D2D; }
+                .btn-panel-danger:hover   { background: #FADCDC; color: #A32D2D; }
+
+                .btn-panel-primary  { background: #E6F1FB; color: #185FA5; }
+                .btn-panel-primary:hover  { background: #D5E8F9; color: #185FA5; }
+
+                .btn-panel-info     { background: #E6F1FB; color: #185FA5; }
+                .btn-panel-info:hover     { background: #D5E8F9; color: #185FA5; }
+
+                .btn-panel-neutral  { background: #F4F4F5; color: #52525B; }
+                .btn-panel-neutral:hover  { background: #E9E9EC; color: #3F3F46; }
+
+                .panel-exportar { animation: panelExportarFadeIn .25s ease; }
+                @keyframes panelExportarFadeIn {
+                    from { opacity: 0; transform: translateY(6px); }
+                    to   { opacity: 1; transform: translateY(0); }
+                }
+            </style>
+
             </div>{{-- /vista-previa-container --}}
 
         </div>
 
 
     </div>{{-- /row --}}
-
-    {{-- ==========================================
-         EXPORTAR COTIZACIÓN
-    ========================================== --}}
-    <div id="panelExportar" class="mt-3 d-none border-top pt-3">
-        <p class="text-muted small fw-bold mb-2 text-center">Exportar Cotización #<span id="txtNumeroCotizacion">---</span></p>
-            <div class="row g-2">
-                <div class="col-12">
-                    <button type="button" class="btn btn-outline-danger w-100 fw-bold shadow-sm text-start" id="btnPdfReceta">
-                        <i class="fa-solid fa-clipboard-list ms-2 me-2"></i> 1. Generar Receta (Bodega)
-                    </button>
-                </div>
-                <div class="col-12">
-                    <button type="button" class="btn btn-outline-primary w-100 fw-bold shadow-sm text-start" id="btnPdfNota">
-                        <i class="fa-solid fa-file-invoice-dollar ms-2 me-2"></i> 2. Generar Nota de Venta
-                    </button>
-                </div>
-                <div class="col-12">
-                    <button type="button" class="btn btn-info text-white w-100 fw-bold shadow-sm text-start" data-bs-toggle="modal" data-bs-target="#modalEnviarCorreo">
-                        <i class="fa-solid fa-paper-plane ms-2 me-2"></i> 3. Enviar Nota por Correo
-                    </button>
-                </div>
-            </div>
-    </div>
 
     {{-- ==========================================
          MODAL: ENVIAR COTIZACIÓN POR CORREO    
@@ -360,7 +435,45 @@
         </div>
     </div>
 
-    {{-- MODAL DE ÉXITO --}}
+
+    {{-- ==========================================
+     MODAL: DATOS DEL CLIENTE (PRE-GUARDADO)    
+    ========================================== --}}
+    <div class="modal fade" id="modalDatosCliente" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+            <div class="modal-content border-0 rounded-4" style="box-shadow: 0 8px 32px rgba(0,0,0,0.10);">
+                <div class="modal-header bg-light border-0 rounded-top-4 pt-4 px-4">
+                    <h6 class="modal-title fw-bold text-dark"><i class="fa-solid fa-user-tag text-info me-2"></i> Finalizar Pedido</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 py-3">
+                    <p class="text-muted small mb-4">Ingresa los datos del cliente para asociarlos a la nota de venta.</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" style="font-size: 14px;">Nombre / Institución</label>
+                        <input type="text" class="form-control" id="inputNombreCliente" placeholder="Ej. Unidad Educativa Sucre" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" style="font-size: 14px;">Correo Electrónico (Opcional)</label>
+                        <input type="email" class="form-control" id="inputCorreoCliente" placeholder="ejemplo@correo.com">
+                    </div>
+
+                    <button type="button" class="btn btn-success w-100 fw-bold rounded-3 py-2 shadow-sm" id="btnConfirmarPedidoModal">
+                        <i class="fa-solid fa-floppy-disk me-2"></i> Confirmar y Guardar Pedido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ==========================================
+         MODAL DE ÉXITO
+         ✅ Antes estaba envuelto en un comentario HTML (<!-- ... -->),
+         así que nunca se renderizaba: $('#modalExito').modal('show')
+         no encontraba nada y el setTimeout de 1.8s corría en el vacío,
+         sintiéndose como una pantalla congelada. Ahora está activo y
+         con el mismo estilo minimalista de modalDatosCliente/modalValidacion.
+    ========================================== --}}
     <div class="modal fade" id="modalExito" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 360px;">
             <div class="modal-content border-0 rounded-4" style="box-shadow: 0 8px 32px rgba(0,0,0,0.10);">
