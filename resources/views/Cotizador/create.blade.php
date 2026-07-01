@@ -468,11 +468,6 @@
 
     {{-- ==========================================
          MODAL DE ÉXITO
-         ✅ Antes estaba envuelto en un comentario HTML (<!-- ... -->),
-         así que nunca se renderizaba: $('#modalExito').modal('show')
-         no encontraba nada y el setTimeout de 1.8s corría en el vacío,
-         sintiéndose como una pantalla congelada. Ahora está activo y
-         con el mismo estilo minimalista de modalDatosCliente/modalValidacion.
     ========================================== --}}
     <div class="modal fade" id="modalExito" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 360px;">
@@ -528,6 +523,34 @@
                     </button>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    {{-- ==========================================
+         MODAL: CORREO ENVIADO CON ÉXITO
+    ========================================== --}}
+    <div class="modal fade" id="modalCorreoExito" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 360px;">
+            <div class="modal-content border-0 rounded-4" style="box-shadow: 0 8px 32px rgba(0,0,0,0.10);">
+                <div class="modal-body text-center px-4 py-4">
+                    <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
+                        style="width:40px; height:40px; background:#E6F1FB;">
+                        <i class="fa-solid fa-paper-plane" style="color:#185FA5; font-size:15px;"></i>
+                    </div>
+                    <p class="fw-semibold text-dark mb-1" style="font-size:15px;">Correo enviado</p>
+                    <p class="text-muted mb-4" style="font-size:13px; line-height:1.6;">
+                        La nota de venta fue despachada correctamente al cliente.
+                    </p>
+                    <button type="button"
+                            class="btn w-100 rounded-3"
+                            data-bs-dismiss="modal"
+                            style="font-size:13px; font-weight:600; padding:9px;
+                                background:#E6F1FB; color:#185FA5; border:none;">
+                        <i class="fa-solid fa-check me-2" style="font-size:12px;"></i>
+                        Entendido
+                    </button>
+                </div>
             </div>
         </div>
     </div>

@@ -703,7 +703,7 @@ $(document).ready(function () {
         }
 
 
-        // ✅ Una sola escritura al DOM con todas las filas acumuladas.
+        // Una sola escritura al DOM con todas las filas acumuladas.
         tabla.html(filasHtml.join(''));
 
 
@@ -733,7 +733,7 @@ $(document).ready(function () {
     // 3. TRIGGERS — Eventos que disparan el recálculo
     // =======================================================
 
-    // ✅ Debounce corto: agrupa cambios que llegan casi al mismo tiempo
+    // Debounce corto: agrupa cambios que llegan casi al mismo tiempo
     // (por ejemplo, Select2 puede disparar varios 'change' en cadena),
     // así calcularCotizacion() no se ejecuta 3-4 veces por un solo clic.
     let temporizadorRecalculo = null;
@@ -752,18 +752,9 @@ $(document).ready(function () {
     ].join(', ');
 
     $(controlesSimples).on('input change', recalcularConDebounce);
-
-    // ✅ ÚNICO listener delegado para todos los <select> del formulario
-    // (nativos como #selectAcabado/#selectTamano/#selectNivelDiseno, y los
-    // que maneja Select2 por debajo en colores/cortinas/flores). Antes
-    // existía este mismo listener delegado EN body PARA TODOS los selects,
-    // y además un listener individual repetido para varios de esos mismos
-    // selects (#selectAcabado, #selectTamano, #selectCantColores, etc.),
-    // así que cada cambio en esos selects disparaba el recálculo pesado
-    // dos veces seguidas. Ahora se dispara una sola vez.
     $('body').on('change', 'select', recalcularConDebounce);
 
-    calcularCotizacion(); // Primer pintado, sin debounce, al cargar la página
+    calcularCotizacion(); 
 
 
     // =======================================================
@@ -924,5 +915,58 @@ $(document).ready(function () {
         $('#txtGananciaFija').text('$ 0.00');
         calcularCotizacion();
     }
+
+    // =======================================================
+    // ENVÍO DE CORREOS
+    // =======================================================
+    $(document).on('click', '#btnConfirmarEnvio', function(e) {
+        e.preventDefault();
+        
+        let btn = $(this);
+        let textoOriginal = btn.html();
+        let emailDestino = $('#emailCliente').val();
+        let pedidoId = $('#txtNumeroCotizacionExport').text(); 
+
+        if(!emailDestino) {
+            alert("Por favor, ingresa un correo electrónico.");
+            return;
+        }
+
+        // Efecto de carga en el botón
+        btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Enviando...');
+
+        $.ajax({
+            url: '/pedidos/enviar-correo',
+            type: 'POST',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                pedido_id: pedidoId,
+                email: emailDestino
+            },
+            success: function(response) {
+                // 1. HERRAMIENTA DE DISEÑO
+                console.log("¡Servidor respondió con éxito!", response);
+                
+                if(response.success) {
+                    // 2. Cerramos el modal de captura de forma limpia
+                    $('#modalEnviarCorreo').modal('hide');
+                    
+                    // 3. Limpiamos el input para futuras cotizaciones
+                    $('#emailCliente').val(''); 
+                    
+                    // 4. Mostramos el nuevo modal estético de éxito
+                    $('#modalCorreoExito').modal('show');
+                }
+            },
+            error: function(xhr) {
+                alert("Hubo un error al enviar el correo. Revisa la consola.");
+                console.error(xhr.responseText);
+            },
+            complete: function() {
+                // Restauramos el botón a su estado original
+                btn.prop('disabled', false).html(textoOriginal);
+            }
+        });
+    });
 
 });

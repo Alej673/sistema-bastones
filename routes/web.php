@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
     // Rutas para generar PDFs On-the-Fly
     Route::get('/pedidos/{id}/pdf-receta', [\App\Http\Controllers\CotizadorController::class, 'generarPdfReceta']);
     Route::get('/pedidos/{id}/pdf-nota', [\App\Http\Controllers\CotizadorController::class, 'generarPdfNota']);
+    Route::post('/pedidos/enviar-correo', [\App\Http\Controllers\CotizadorController::class, 'enviarCorreo'])->name('pedidos.enviar_correo');
 });
 
 

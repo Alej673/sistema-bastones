@@ -7,6 +7,8 @@ use App\Models\Insumo;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Pedido;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\NotaVentaMailable;
 
 class CotizadorController extends Controller
 {
@@ -223,5 +225,38 @@ class CotizadorController extends Controller
 
         // 3. Renderizamos y mostramos
         return $pdf->stream('Nota_Venta_Pedido_' . $pedido->id . '.pdf');
+    }
+
+    // =======================================================
+    // ENVÍO DE CORREOS
+    // =======================================================
+
+    public function enviarCorreo(Request $request)
+    {
+        // 1. Validamos que nos llegue un ID válido y un correo con formato correcto
+        $request->validate([
+            'pedido_id' => 'required|exists:pedidos,id',
+            'email'     => 'required|email'
+        ]);
+
+        try {
+            // 2. Buscamos el pedido con todo su detalle (para el PDF)
+            $pedido = Pedido::with('materiales')->findOrFail($request->pedido_id);
+
+            // 3. ¡La Magia! Enviamos el correo usando nuestra clase Mailable
+            Mail::to($request->email)->send(new NotaVentaMailable($pedido));
+
+            // 4. Respondemos al Frontend que todo salió bien
+            return response()->json([
+                'success' => true,
+                'mensaje' => 'Correo enviado exitosamente a la bandeja de prueba.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'mensaje' => 'Error al enviar el correo: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
