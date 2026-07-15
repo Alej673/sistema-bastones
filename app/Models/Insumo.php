@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes; // <-- NUEVO
+use Illuminate\Database\Eloquent\SoftDeletes; 
 
 class Insumo extends Model
 {
@@ -12,7 +12,7 @@ class Insumo extends Model
 
     protected $fillable = [
         'nombre',
-        'categoria', // ¡No olvides agregar esta línea!
+        'categoria', 
         'unidad_medida',
         'costo_unitario',
         'stock_actual',

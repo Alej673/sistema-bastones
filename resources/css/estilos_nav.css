@@ -1,0 +1,114 @@
+/* ==========================================================================
+   PALETA GLOBAL SYNTHWAVE / DARK NEUMORPHIC
+   ========================================================================== */
+:root {
+    --color-morado: #a855f7;
+    --color-morado-claro: #c084fc;
+    --color-morado-oscuro: #5b21b6;
+    --color-violeta-boton: #7c3aed;
+    --color-fucsia: #e879f9;
+    --color-fucsia-oscuro: #86198f;
+    
+    --color-fondo-medio: #2c1548;
+    --color-fondo-base: #1b0f28;
+    
+    --color-texto: #f5eaff;
+    --color-texto-mutado: #b9a8c9;
+    --color-borde-glass: rgba(192, 132, 252, 0.15);
+}
+
+/* Fondo general de la aplicación */
+body.theme-synthwave {
+    background: linear-gradient(135deg, var(--color-fondo-base) 0%, var(--color-fondo-medio) 100%);
+    background-attachment: fixed;
+    color: var(--color-texto);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+}
+
+/* ==========================================================================
+   MENÚ LATERAL (SIDEBAR)
+   ========================================================================== */
+.sidebar-glass {
+    background: rgba(27, 15, 40, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-right: 1px solid var(--color-borde-glass);
+    color: var(--color-texto);
+}
+
+/* Fijar menú en escritorio */
+@media (min-width: 992px) {
+    .sidebar-glass { 
+        height: 100vh; 
+        position: sticky; 
+        top: 0; 
+        overflow-y: auto; 
+        z-index: 1030;
+    }
+}
+
+/* Fijar menú en escritorio */
+@media (min-width: 992px) {
+    .sidebar-glass { 
+        height: 100vh; 
+        position: sticky; 
+        top: 0; 
+        overflow-y: auto; 
+    }
+}
+
+/* Logo / Título con efecto Neón sutil */
+.brand-glow {
+    color: var(--color-texto);
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
+    letter-spacing: 2px;
+}
+
+/* Enlaces del menú */
+.nav-link-glass {
+    color: var(--color-texto-mutado);
+    text-decoration: none;
+    padding: 12px 20px;
+    display: block;
+    border-radius: 8px;
+    margin: 0 10px 8px 10px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.nav-link-glass:hover {
+    color: var(--color-texto);
+    background: rgba(168, 85, 247, 0.1); /* Fondo morado translúcido */
+    border-color: rgba(168, 85, 247, 0.2);
+    transform: translateX(3px); /* Pequeño salto a la derecha al pasar el mouse */
+}
+
+/* Enlace Activo */
+.nav-link-glass.active {
+    color: #ffffff;
+    background: var(--color-violeta-boton);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+}
+
+/* Botón Cerrar Sesión */
+.btn-logout:hover {
+    background: rgba(248, 113, 113, 0.1);
+    border-color: rgba(248, 113, 113, 0.2);
+    color: #f87171 !important;
+}
+
+/* ==========================================================================
+   CABECERA MÓVIL
+   ========================================================================== */
+.mobile-header {
+    background: var(--color-fondo-base);
+    border-bottom: 1px solid var(--color-borde-glass);
+    z-index: 1040;
+}
+
+.glass-btn-mobile {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}

@@ -131,7 +131,7 @@ class CotizadorController extends Controller
         return response()->json($cintas);
     }
 
-    public function guardar(Request $request)
+public function guardar(Request $request)
     {
         // 1. Validación adaptada (el correo es opcional, pero si viene, que sea formato email)
         $request->validate([
@@ -168,10 +168,36 @@ class CotizadorController extends Controller
 
             if (!empty($listaMateriales)) {
                 foreach ($listaMateriales as $mat) {
+                    
+                    // --- INICIO: LÓGICA DE RECONOCIMIENTO AUTOMÁTICO DE INSUMOS ---
+                    $insumoIdFinal = $mat['insumo_id'];
+                    $nombreMaterialLimpiado = strtolower(trim($mat['nombre_material']));
+
+                    // Solo intentamos autocompletar si el JS no envió un ID
+                    if (is_null($insumoIdFinal) || empty($insumoIdFinal)) {
+                        
+                        // Lógica para interceptar "Cinchos"
+                        if (str_contains($nombreMaterialLimpiado, 'cincho')) {
+                            $insumoDetectado = \App\Models\Insumo::where('categoria', 'cinchos')->whereNull('deleted_at')->first();
+                            if ($insumoDetectado) {
+                                $insumoIdFinal = $insumoDetectado->id;
+                            }
+                        }
+                        
+                        // Lógica para interceptar "Elástico"
+                        if (str_contains($nombreMaterialLimpiado, 'elástico') || str_contains($nombreMaterialLimpiado, 'elastico')) {
+                            $insumoDetectado = \App\Models\Insumo::where('categoria', 'elastico')->whereNull('deleted_at')->first();
+                            if ($insumoDetectado) {
+                                $insumoIdFinal = $insumoDetectado->id;
+                            }
+                        }
+                    }
+                    // --- FIN: LÓGICA DE RECONOCIMIENTO ---
+
                     // Insertamos cada fila en la tabla de detalles
                     DB::table('pedido_materiales')->insert([
                         'pedido_id'          => $pedido->id, 
-                        'insumo_id'          => $mat['insumo_id'], 
+                        'insumo_id'          => $insumoIdFinal, // ¡Usamos nuestra variable validada!
                         'nombre_material'    => $mat['nombre_material'],
                         'cantidad_requerida' => $mat['cantidad_requerida'],
                         'subtotal_calculado' => $mat['subtotal_calculado'],

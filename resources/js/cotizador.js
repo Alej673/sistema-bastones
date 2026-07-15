@@ -1,62 +1,101 @@
 // =======================================================
 // resources/js/cotizador.js
 // =======================================================
+//
+// MAPA DEL ARCHIVO:
+//   1. Importaciones de sub-módulos (lana, cortinas, cintas, diseño)
+//   2. Puente de datos Laravel → JS (inventario + rutas AJAX)
+//   3. Helpers de inventario y carrito (buscarInsumoPorId, agregarAlCarrito)
+//   4. mostrarAlerta()        → pinta el modal de validación reutilizable
+//   5. $(document).ready()
+//      5.1 Constantes de precios/receta
+//      5.2 calcularCotizacion()  → motor principal, recalcula tabla + totales
+//      5.3 Triggers de recálculo (inputs, selects, switches)
+//      5.4 Guardado de cotización (validación → modal cliente → AJAX)
+//      5.5 resetearFormulario()
+//      5.6 Envío de nota de venta por correo
+//
+// REGLA DE ORO: este archivo NO decide precios "a ojo": todo sale de
+// PRECIOS_FANTASMA / RECETA o del inventario real (INVENTARIO_POR_ID).
+// =======================================================
 
-// — IMPORTACIONES DE MÓDULOS —
 import { inicializarModuloLana }       from './cotizador/moduloLana.js';
 import { inicializarModuloCortinas }   from './cotizador/moduloCortinas.js';
 import { inicializarModuloDecoracion } from './cotizador/moduloCintas.js';
 import { inicializarModuloDiseno }     from './cotizador/moduloDiseno.js';
 
-// — ISLA DE DATOS (Laravel → JS) —
+// =======================================================
+// 2. PUENTE DE DATOS (Laravel → JS)
+// =======================================================
+// El Blade imprime el inventario completo dentro de un <script type="application/json">
+// para evitar otra petición HTTP al cargar la pantalla. Aquí solo lo parseamos.
 const nodoInventario = document.getElementById('datos-inventario');
 const INVENTARIO     = nodoInventario ? JSON.parse(nodoInventario.textContent) : [];
 const RUTAS          = window.KardexConfig.rutas;
 
-// ✅ Índice de inventario por ID para búsquedas O(1). Antes cada
-// INVENTARIO.find(item => item.id == X) recorría todo el arreglo,
+// Índice de inventario por ID para búsquedas O(1).
+// Antes cada INVENTARIO.find(item => item.id == X) recorría todo el arreglo,
 // y esto se repetía dentro de cada .each() de colores/cortinas/cintas.
 const INVENTARIO_POR_ID = new Map(INVENTARIO.map(item => [String(item.id), item]));
 
+/**
+ * Busca un insumo del inventario por su ID (como string o número).
+ * @param {string|number} id
+ * @returns {object|null} el insumo encontrado, o null si no existe.
+ */
 function buscarInsumoPorId(id) {
     return INVENTARIO_POR_ID.get(String(id)) || null;
 }
 
-
+// =======================================================
+// 4. MODAL DE ALERTA / VALIDACIÓN (reutilizable)
+// =======================================================
+/**
+ * Pinta y muestra el modal #modalValidacion con estilo Dark Neumorphic Glass.
+ * Se usa tanto para validaciones de formulario como para errores de red.
+ *
+ * @param {string|string[]} contenido  Un mensaje único, o un arreglo de
+ *                                     campos faltantes (se listan uno por uno).
+ * @param {string} titulo              Título del modal.
+ * @param {'warning'|'danger'|'info'}  tipo  Define el color/ícono del modal.
+ */
 function mostrarAlerta(contenido, titulo = 'Faltan campos obligatorios', tipo = 'warning') {
 
+    // Paleta de cada variante del modal (color, ícono, texto del botón).
     const config = {
         warning: {
             icono: 'fa-triangle-exclamation',
-            color: '#BA7517',
-            fondo: '#FAEEDA',
+            color: '#facc15', // Amarillo neón
+            fondo: 'rgba(250, 204, 21, 0.15)',
+            borde: 'rgba(250, 204, 21, 0.3)',
             texto: '<i class="fa-solid fa-pen-to-square me-1"></i> Entendido',
         },
         danger: {
             icono: 'fa-circle-xmark',
-            color: '#A32D2D',
-            fondo: '#FCEBEB',
+            color: '#f87171', // Rojo/Coral neón
+            fondo: 'rgba(248, 113, 113, 0.15)',
+            borde: 'rgba(248, 113, 113, 0.3)',
             texto: '<i class="fa-solid fa-rotate-right me-1"></i> Cerrar e intentar de nuevo',
         },
         info: {
             icono: 'fa-circle-info',
-            color: '#185FA5',
-            fondo: '#E6F1FB',
+            color: '#e879f9', // Fucsia del tema
+            fondo: 'rgba(232, 121, 249, 0.15)',
+            borde: 'rgba(232, 121, 249, 0.3)',
             texto: '<i class="fa-solid fa-check me-1"></i> Entendido',
         }
     };
 
     const c = config[tipo] || config.warning;
 
-    // ==========================
-    // ICONO
-    // ==========================
+    // ---- Ícono circular con resplandor ----
     const iconoEl = $('#modalValidacion .fa-solid').first();
 
     iconoEl.attr('class', `fa-solid ${c.icono}`)
         .css({
             color: c.color,
-            fontSize: '20px'
+            fontSize: '20px',
+            filter: `drop-shadow(0 0 4px ${c.color})` // Leve resplandor
         });
 
     iconoEl.parent()
@@ -69,129 +108,129 @@ function mostrarAlerta(contenido, titulo = 'Faltan campos obligatorios', tipo = 
             height: '48px',
             minWidth: '48px',
             background: c.fondo,
-            boxShadow: '0 4px 12px rgba(0,0,0,.08)',
+            border: `1px solid ${c.borde}`,
+            boxShadow: '0 4px 12px rgba(0,0,0,.2)',
             marginTop: '2px'
         });
 
-    // ==========================
-    // TITULO
-    // ==========================
+    // ---- Título y subtítulo ----
     $('#modalValidacionTitulo')
         .text(titulo)
         .css({
             fontSize: '18px',
             fontWeight: '600',
-            letterSpacing: '-0.2px'
+            letterSpacing: '-0.2px',
+            color: '#f5eaff' // Texto principal claro
         });
 
-    // ==========================
-    // LISTA DE MENSAJES
-    // ==========================
+    $('#modalValidacionTitulo').next('p').css('color', '#b9a8c9');
+
+    // ---- Lista de mensajes (una tarjeta "hundida" por cada mensaje) ----
     const lista = $('#listaValidacion');
     lista.empty();
 
-    if (Array.isArray(contenido)) {
+    const estiloItemLista = `
+        background: rgba(20, 10, 32, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        box-shadow: inset 3px 3px 6px rgba(0,0,0,0.4);
+        color: #f5eaff;
+    `;
 
+    if (Array.isArray(contenido)) {
+        // Caso: lista de campos faltantes (validación de formulario)
         lista.append(`
-            <div class="small text-muted mb-3">
+            <div class="small mb-3" style="color: #b9a8c9;">
                 Se encontraron
-                <strong>${contenido.length}</strong>
+                <strong style="color: ${c.color};">${contenido.length}</strong>
                 campo${contenido.length > 1 ? 's' : ''}
                 pendiente${contenido.length > 1 ? 's' : ''}.
             </div>
         `);
 
         contenido.forEach(function (campo) {
-
             lista.append(`
-                <li class="d-flex align-items-center gap-2 rounded-3 px-3 py-2 mb-2"
-                    style="
-                        background:#fff;
-                        border:1px solid #ececec;
-                        box-shadow:0 2px 8px rgba(0,0,0,.03);
-                    ">
-                    
+                <li class="d-flex align-items-center gap-3 rounded-3 px-3 py-2 mb-2"
+                    style="${estiloItemLista}">
+
                     <div style="
-                        width:7px;
-                        height:7px;
+                        width:8px;
+                        height:8px;
                         border-radius:50%;
                         background:${c.color};
+                        box-shadow: 0 0 6px ${c.color};
                         flex-shrink:0;
                     "></div>
 
-                    <span style="
-                        font-size:13px;
-                        color:#343a40;
-                    ">
+                    <span style="font-size:13px; font-weight: 500;">
                         ${campo}
                     </span>
                 </li>
             `);
-
         });
 
     } else {
-
+        // Caso: mensaje único (ej. error de red)
         lista.append(`
-            <li class="d-flex align-items-start gap-2 rounded-3 px-3 py-3"
-                style="
-                    background:#fff;
-                    border:1px solid #ececec;
-                    box-shadow:0 2px 8px rgba(0,0,0,.03);
-                ">
+            <li class="d-flex align-items-start gap-3 rounded-3 px-3 py-3"
+                style="${estiloItemLista}">
 
                 <i class="fa-solid fa-circle-info"
                    style="
                         color:${c.color};
                         margin-top:3px;
+                        filter: drop-shadow(0 0 3px ${c.color});
                    ">
                 </i>
 
-                <span style="
-                    font-size:13px;
-                    color:#343a40;
-                ">
+                <span style="font-size:13px; line-height: 1.5;">
                     ${contenido}
                 </span>
-
             </li>
         `);
-
     }
 
-    // ==========================
-    // BOTON
-    // ==========================
-    $('#modalValidacion .modal-footer .btn')
+    // ---- Botón de cierre (estilos en línea porque el HTML base no trae clases) ----
+    $('#modalValidacion .modal-footer .btn, #modalValidacion .px-4.pb-4 .btn')
         .attr('class', 'btn w-100 rounded-3')
         .css({
             background: c.fondo,
             color: c.color,
-            border: 'none',
+            border: `1px solid ${c.borde}`,
             fontSize: '13px',
             fontWeight: '600',
             padding: '10px',
-            boxShadow: '0 2px 10px rgba(0,0,0,.05)'
+            boxShadow: '3px 3px 6px rgba(0,0,0,0.3)',
+            transition: 'all 0.2s ease'
         })
-        .html(c.texto);
+        .html(c.texto)
+        // Hover manual porque los estilos se aplicaron en línea (no vía clase CSS)
+        .on('mouseenter', function() {
+            $(this).css({
+                transform: 'translateY(-1px)',
+                boxShadow: '5px 5px 12px rgba(0,0,0,0.4)'
+            });
+        })
+        .on('mouseleave', function() {
+            $(this).css({
+                transform: 'translateY(0)',
+                boxShadow: '3px 3px 6px rgba(0,0,0,0.3)'
+            });
+        });
 
-    // ==========================
-    // MODAL
-    // ==========================
+    // ---- Fondo del modal (glassmorphism), sin pisar la clase .glass-card ----
     $('#modalValidacion .modal-content').css({
-        border: 'none',
-        borderRadius: '18px',
+        background: 'rgba(38, 18, 56, 0.96)',
+        border: '1px solid rgba(232, 121, 249, 0.14)',
+        borderRadius: '16px',
         overflow: 'hidden',
-        boxShadow: '0 20px 40px rgba(0,0,0,.12)'
+        boxShadow: '0 20px 40px rgba(0,0,0,.5)',
+        backdropFilter: 'blur(15px)'
     });
 
-    // ==========================
-    // MOSTRAR
-    // ==========================
+    // ---- Mostrar ----
     const modal = new bootstrap.Modal(
         document.getElementById('modalValidacion')
     );
-
     modal.show();
 }
 
@@ -201,24 +240,27 @@ function mostrarAlerta(contenido, titulo = 'Faltan campos obligatorios', tipo = 
 // =======================================================
 $(document).ready(function () {
 
-    // — Inicializar módulos de secciones del formulario —
     inicializarModuloLana(RUTAS);
     inicializarModuloCortinas(RUTAS);
     inicializarModuloDecoracion(RUTAS);
     inicializarModuloDiseno();
 
-
-    // {{-- ==========================================
-    //   MOTOR DE CÁLCULO — COTIZADOR AUTOMÁTICO
-    //   Recalcula todo cada vez que el usuario cambia
-    //   cualquier campo del formulario.
-    // ========================================== --}}
+    // Convierte los selects ESTÁTICOS (sin búsqueda AJAX) en Select2
+    // también, para que hereden el mismo look "dark glass" en su lista.
+    $('#selectTamano, #selectAcabado, #selectCantidadColores, #selectCantCortinaLana, #selectCantCortinaFiesta, #selectCantFlores, #selectNivelDiseno').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        minimumResultsForSearch: Infinity, // oculta el buscador: son listas cortas y fijas
+    });
 
 
     // =======================================================
-    // 1. CONSTANTES Y CONFIGURACIÓN BASE
+    // 5.1 CONSTANTES Y CONFIGURACIÓN BASE
     // =======================================================
-
+    // "Precio fantasma" = precio de referencia que se usa SOLO cuando el
+    // cliente pide un material nuevo que todavía no existe en el inventario
+    // (Select2 "Cotizar nuevo material"). Sirve para no dejar el cálculo en
+    // $0 mientras bodega registra el insumo real.
     const PRECIOS_FANTASMA = {
         lana:                 0.0127,  // $1.15 / 90g
         cinta_garza:          0.11,    // $5.00 / 45.72m
@@ -230,6 +272,7 @@ $(document).ready(function () {
         cortina_fiesta_mayor: 0.50,    // pedido >= 12 bastones
     };
 
+    // Cantidades fijas de insumos de ensamblaje por cada bastón producido.
     const RECETA = {
         cinchos_por_baston:  3,     // 3 cinchos por unidad
         elastico_por_baston: 0.40,  // 0.40 m (40 cm) por unidad
@@ -237,8 +280,13 @@ $(document).ready(function () {
 
 
     // =======================================================
-    // 2. FUNCIÓN MAESTRA — Recalcula la tabla y los totales
+    // 5.2 FUNCIÓN MAESTRA — Recalcula la tabla y los totales
     // =======================================================
+
+    /**
+     * Agrega una línea al carrito global (window.carritoInsumos), que luego
+     * se envía como JSON al backend al guardar la cotización.
+     */
     function agregarAlCarrito({ insumo_id = null, nombre_material, cantidad_requerida, subtotal_calculado }) {
         window.carritoInsumos.push({
             insumo_id: insumo_id ?? null,
@@ -248,14 +296,23 @@ $(document).ready(function () {
         });
     }
 
+    /**
+     * Motor de cálculo del cotizador. Lee TODO el estado actual del formulario,
+     * recalcula el costo de cada fase (base, ensamblaje, lana, cortinas,
+     * decoración, diseño), repinta la tabla de impacto en inventario y
+     * actualiza el panel de totales.
+     *
+     * Se dispara con debounce cada vez que el usuario cambia algún campo
+     * (ver sección 5.3).
+     */
     function calcularCotizacion() {
 
         window.carritoInsumos = [];
         const tabla = $('#cuerpoTablaImpacto');
 
-        // ✅ Acumulamos el HTML de todas las filas y lo pintamos una sola
-        // vez al final con tabla.html(...). Antes cada tabla.append(...)
-        // forzaba un reflow individual del navegador.
+        // Acumulamos el HTML de todas las filas y lo pintamos una sola vez
+        // al final con tabla.html(...). Antes cada tabla.append(...) forzaba
+        // un reflow individual del navegador por cada fila.
         const filasHtml = [];
 
         let costoTotalMateriales = 0;
@@ -265,7 +322,7 @@ $(document).ready(function () {
         const colorBase        = $('#selectAcabado').val();
         const tamanoBase       = $('#selectTamano').val();
 
-        // --- GUARDA DEL FORMULARIO ---
+        // ---- Guarda de formulario: sin estos 3 campos no hay nada que calcular ----
         if (cantidadBastones <= 0 || !colorBase || !tamanoBase) {
             tabla.html(`
                 <tr>
@@ -286,6 +343,8 @@ $(document).ready(function () {
 
         // ---------------------------------------------------
         // FASE 1: BASE DEL BASTÓN
+        // Precio unitario depende del acabado (plata/dorado) y de si el
+        // pedido alcanza el volumen de mayoreo (>= 12 unidades).
         // ---------------------------------------------------
         let precioBaseUnitario = 0;
         let nombreAcabado      = '';
@@ -304,6 +363,8 @@ $(document).ready(function () {
         let esGrande     = (tamanoBase === '55' || tamanoBase === '60');
         let tamanoVisual = esGrande ? '55-60 cm' : '45-50 cm';
 
+        // Buscamos en el inventario real la base que coincide en color + tamaño,
+        // para poder avisar si hay stock suficiente o si hay que comprar.
         let baseEnKardex = INVENTARIO.find(item => {
             if (item.categoria !== 'base_baston' || !item.nombre) return false;
             let nombreBD     = item.nombre.toLowerCase();
@@ -333,7 +394,9 @@ $(document).ready(function () {
         });
 
         // ---------------------------------------------------
-        // FASE 2: INSUMOS FIJOS DE ENSAMBLAJE
+        // FASE 2: INSUMOS FIJOS DE ENSAMBLAJE (cinchos + elástico)
+        // Estos NO dependen del diseño elegido, solo de la cantidad de
+        // bastones, según la RECETA fija definida arriba.
         // ---------------------------------------------------
         const totalCinchos  = RECETA.cinchos_por_baston  * cantidadBastones;
         const totalElastico = RECETA.elastico_por_baston * cantidadBastones;
@@ -370,12 +433,14 @@ $(document).ready(function () {
 
         // ---------------------------------------------------
         // FASE 3: CUERPO (LANA)
+        // El consumo total de lana se reparte en partes iguales entre
+        // los colores que el usuario haya seleccionado (1, 2 o 3 colores).
         // ---------------------------------------------------
         const consumoLana_g = esGrande ? 150 : 135;
 
-        // ✅ Una sola pasada por los selects: recogemos las selecciones
-        // válidas y de una vez sabemos cuántas hay (antes se recorría
-        // el mismo .each() dos veces: una para contar, otra para calcular).
+        // Una sola pasada por los selects: recogemos las selecciones válidas
+        // y de una vez sabemos cuántas hay (antes se recorría el mismo
+        // .each() dos veces: una para contar, otra para calcular).
         const seleccionesLana = [];
         $('#contenedorColoresLana .select2-ajax').each(function () {
             const data = $(this).select2('data');
@@ -387,6 +452,8 @@ $(document).ready(function () {
 
         seleccionesLana.forEach(function (seleccion) {
             let nombreLana   = seleccion.text;
+            // "Tag nuevo" = el usuario escribió un color que no existe en el
+            // inventario todavía (Select2 lo deja crear on-the-fly).
             const esTagNuevo = seleccion.newTag || isNaN(seleccion.id);
             let costoLana    = 0;
             let stockActual  = 0;
@@ -433,7 +500,8 @@ $(document).ready(function () {
         // FASE 4: CORTINAS (LANA Y FIESTA)
         // ---------------------------------------------------
 
-        // 4.1 Cortinas de Lana
+        // 4.1 Cortinas de Lana — mismo patrón que el cuerpo, pero con un
+        // consumo fijo de 30g por color (no se reparte entre colores).
         if ($('#swCortinaLana').is(':checked')) {
             let gramosPorCortinaLana = 30 * cantidadBastones;
 
@@ -489,11 +557,12 @@ $(document).ready(function () {
             });
         }
 
-        // 4.2 Cortinas de Fiesta
+        // 4.2 Cortinas de Fiesta — se venden por paquete (4 unidades), y el
+        // precio "fantasma" depende del volumen total de cortinas del pedido.
         if ($('#swCortinaFiesta').is(':checked')) {
 
-            // ✅ Igual que en lana: una sola pasada para recoger las
-            // selecciones válidas, en vez de recorrer el select dos veces.
+            // Igual que en lana: una sola pasada para recoger las selecciones
+            // válidas, en vez de recorrer el select dos veces.
             const seleccionesFiesta = [];
             $('#contenedorCortinasFiesta select').each(function () {
                 const data = $(this).select2('data');
@@ -566,6 +635,15 @@ $(document).ready(function () {
         // FASE 5: DECORACIÓN Y APLIQUES
         // =======================================================
 
+        /**
+         * Procesa un select de cinta (Select2 con búsqueda AJAX) y agrega
+         * su fila + su costo al cálculo general.
+         *
+         * @param {string|HTMLElement} idSelect     Selector jQuery o elemento del <select>.
+         * @param {string} nombreFila                Etiqueta a mostrar en la tabla (ej. "Lazo Simple").
+         * @param {number} metrosPorUnidad            Metros de cinta que consume 1 bastón.
+         * @param {number} recargoFijo                Extra de mano de obra por bastón (ej. $0.70 del nombre bordado).
+         */
         function procesarCinta(idSelect, nombreFila, metrosPorUnidad, recargoFijo = 0) {
             let dataSelect = $(idSelect).select2('data');
             if (dataSelect && dataSelect.length > 0 && dataSelect[0].id !== '') {
@@ -587,6 +665,8 @@ $(document).ready(function () {
                         stockDisponible = insumoBD.stock_actual; // en metros
                     }
                 } else {
+                    // Sin insumo real: adivinamos el tipo de cinta por el nombre
+                    // para usar un precio fantasma más realista que el genérico.
                     let precioFantasma  = PRECIOS_FANTASMA.cinta_gross; // Default
                     let textoMinuscula  = nombreMaterial.toLowerCase();
 
@@ -599,6 +679,7 @@ $(document).ready(function () {
 
                 costoTotalMateriales += costoCalculado;
 
+                // El recargo (ej. bordado de nombre) es mano de obra, no material.
                 let totalRecargo = recargoFijo * cantidadBastones;
                 if (totalRecargo > 0) {
                     costoTotalManoObra += totalRecargo;
@@ -633,10 +714,10 @@ $(document).ready(function () {
             }
         }
 
-        // 5.1 Lazo Simple
+        // 5.1 Lazo Simple (1.5m, sin recargo)
         if ($('#swLazoSimple').is(':checked')) procesarCinta('select[name="cinta_lazo_simple"]', 'Lazo Simple', 1.5, 0);
 
-        // 5.2 Flores Dinámicas
+        // 5.2 Flores Dinámicas (1.0m cada una, cantidad variable definida por el usuario)
         if ($('#swLazoFlor').is(':checked')) {
             let numeroFlor = 1;
             $('#contenedorFlores select').each(function () {
@@ -645,10 +726,10 @@ $(document).ready(function () {
             });
         }
 
-        // 5.3 Lazo con Nombre
+        // 5.3 Lazo con Nombre (1.0m + $0.70 de mano de obra por el bordado)
         if ($('#swLazoNombre').is(':checked')) procesarCinta('select[name="cinta_lazo_nombre"]', 'Lazo c/ Nombre', 1.0, 0.70);
 
-        // 5.4 Apliques Manuales
+        // 5.4 Apliques Manuales — no vienen de inventario, es un costo fijo por unidad ($0.50 c/u).
         if ($('#swApliques').is(':checked')) {
             let cantApliques  = parseInt($('#cantApliques').val()) || 1;
             let totalApliques = cantApliques * cantidadBastones;
@@ -676,6 +757,8 @@ $(document).ready(function () {
 
         // =======================================================
         // FASE 6: DISEÑOS PERSONALIZADOS (MANO DE OBRA)
+        // Tarifa fija por nivel de complejidad (Básico/Intermedio/Premium),
+        // multiplicada por la cantidad de bastones del pedido.
         // =======================================================
         if ($('#swDisenoPersonalizado').is(':checked')) {
             let tarifaDisenoUnidad = parseFloat($('#selectNivelDiseno').val()) || 0;
@@ -709,8 +792,10 @@ $(document).ready(function () {
 
         // =======================================================
         // ACTUALIZACIÓN DEL PANEL FINANCIERO VISUAL
+        // "Ganancia fija" = mano de obra base por bastón, independiente
+        // de los extras (diseño, apliques, bordado) que ya se sumaron
+        // por separado en costoTotalManoObra.
         // =======================================================
-
         let tarifaManoObraFija = 3.00;
         let totalGananciaFija  = tarifaManoObraFija * cantidadBastones;
 
@@ -718,7 +803,7 @@ $(document).ready(function () {
         let costoUnitario = granTotal / cantidadBastones;
 
         $('#txtCostoMateriales').text(`$ ${costoTotalMateriales.toFixed(2)}`);
-        $('#txtCostoManoObra').text(`$ ${costoTotalManoObra.toFixed(2)}`); 
+        $('#txtCostoManoObra').text(`$ ${costoTotalManoObra.toFixed(2)}`);
         $('#txtGananciaFija').text(`$ ${totalGananciaFija.toFixed(2)}`);
 
         $('#txtCostoTotal').text(`$ ${granTotal.toFixed(2)}`);
@@ -726,24 +811,26 @@ $(document).ready(function () {
 
         $('#btnGuardarCotizacion').prop('disabled', false);
 
-    } 
+    }
 
 
     // =======================================================
-    // 3. TRIGGERS — Eventos que disparan el recálculo
+    // 5.3 TRIGGERS — Eventos que disparan el recálculo
     // =======================================================
 
-    // Debounce corto: agrupa cambios que llegan casi al mismo tiempo
-    // (por ejemplo, Select2 puede disparar varios 'change' en cadena),
-    // así calcularCotizacion() no se ejecuta 3-4 veces por un solo clic.
+    // Debounce corto: agrupa cambios que llegan casi al mismo tiempo (por
+    // ejemplo, Select2 puede disparar varios 'change' en cadena), así
+    // calcularCotizacion() no se ejecuta 3-4 veces por un solo clic.
     let temporizadorRecalculo = null;
     function recalcularConDebounce() {
         clearTimeout(temporizadorRecalculo);
         temporizadorRecalculo = setTimeout(calcularCotizacion, 80);
     }
 
-    // Controles simples que NO son <select> (inputs de texto/número y switches).
-    // Los <select> se manejan aparte, en un único listener delegado más abajo.
+    // Controles simples que NO son <select> (inputs de texto/número y
+    // switches). Los <select> se manejan aparte, en un único listener
+    // delegado más abajo (para que también funcione con los selects que
+    // los módulos crean dinámicamente, ej. al añadir más colores).
     const controlesSimples = [
         '#inputCantidad',
         '#swCortinaLana', '#swCortinaFiesta',
@@ -754,15 +841,15 @@ $(document).ready(function () {
     $(controlesSimples).on('input change', recalcularConDebounce);
     $('body').on('change', 'select', recalcularConDebounce);
 
-    calcularCotizacion(); 
+    // Primer cálculo al cargar la página (deja la tabla en su estado "vacío").
+    calcularCotizacion();
 
 
     // =======================================================
-    // GUARDAR COTIZACIÓN — AJAX + modal de validación
+    // 5.4 GUARDAR COTIZACIÓN — AJAX + modal de validación
     // =======================================================
-    // =======================================================
-    // PASO 1: VALIDACIÓN (Botón verde de la pantalla principal)
-    // =======================================================
+
+    // ---- PASO 1: Validación (botón verde de la pantalla principal) ----
     $('#btnGuardarCotizacion').on('click', function (e) {
         e.preventDefault();
 
@@ -784,24 +871,22 @@ $(document).ready(function () {
 
         if (faltantes.length > 0) {
             mostrarAlerta(faltantes, 'Faltan campos obligatorios', 'warning');
-            return; 
+            return;
         }
 
-        // Todo bien: Mostramos el modal para pedir los datos del cliente
+        // Todo bien: mostramos el modal para pedir los datos del cliente.
         const modalCliente = new bootstrap.Modal(document.getElementById('modalDatosCliente'));
         modalCliente.show();
     });
 
-    // =======================================================
-    // PASO 2: GUARDAR COTIZACIÓN (Botón dentro del Modal Cliente)
-    // =======================================================
+    // ---- PASO 2: Guardar cotización (botón dentro del modal Cliente) ----
     $('#btnConfirmarPedidoModal').on('click', function (e) {
         e.preventDefault();
 
         const nombreCliente = $('#inputNombreCliente').val();
         const correoCliente = $('#inputCorreoCliente').val();
 
-        if(nombreCliente.trim() === '') {
+        if (nombreCliente.trim() === '') {
             mostrarAlerta('Por favor ingresa el nombre del cliente.', 'Falta información', 'warning');
             return;
         }
@@ -810,6 +895,8 @@ $(document).ready(function () {
         const textoOriginal = btnGuardar.html();
         btnGuardar.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Guardando Pedido...');
 
+        // Armamos el payload: todos los campos del form + datos del cliente
+        // + el resumen de costos ya formateado + el detalle del carrito.
         let datosFormulario = $('#formCotizador').serializeArray();
         datosFormulario.push({ name: 'nombre_cliente', value: nombreCliente });
         datosFormulario.push({ name: 'correo_cliente', value: correoCliente });
@@ -827,36 +914,35 @@ $(document).ready(function () {
             type: 'POST',
             headers: { 'X-CSRF-TOKEN': csrfToken },
             data: datosFormulario,
-        success: function (response) {
-                    // A. Ocultamos el modal de captura de cliente (usando jQuery clásico)
-                    $('#modalDatosCliente').modal('hide');
+            success: function (response) {
+                // A. Ocultamos el modal de captura de cliente.
+                $('#modalDatosCliente').modal('hide');
 
-                    // B. Imprimimos el ID en los modales de éxito
-                    $('#modalNumCotizacion').text(response.id);
-                    $('#txtNumeroCotizacionExport').text(response.id);
-                    
-                    // C. Inyectamos el ID en los botones PDF
-                    $('#btnPdfReceta').attr('href', '/pedidos/' + response.id + '/pdf-receta');
-                    $('#btnPdfNota').attr('href', '/pedidos/' + response.id + '/pdf-nota');
-                    
-                    // D. Mostramos el éxito usando jQuery clásico
-                    $('#modalExito').modal('show');
+                // B. Imprimimos el ID del pedido en los modales de éxito.
+                $('#modalNumCotizacion').text(response.id);
+                $('#txtNumeroCotizacionExport').text(response.id);
 
-                    setTimeout(function () {
-                        // Quitamos foco para evitar la alerta amarilla
-                        if (document.activeElement) {
-                            document.activeElement.blur();
-                        }
-                        
-                        // Ocultamos el éxito
-                        $('#modalExito').modal('hide');
-                        
-                        // Mostramos el panel (AQUÍ ES DONDE DEBE APARECER)
-                        $('#panelExportar').removeClass('d-none').hide().slideDown();
-                        
-                        btnGuardar.prop('disabled', false).html(textoOriginal);
-                    }, 1800);
-                },
+                // C. Inyectamos el ID en los enlaces de descarga de PDF.
+                $('#btnPdfReceta').attr('href', '/pedidos/' + response.id + '/pdf-receta');
+                $('#btnPdfNota').attr('href', '/pedidos/' + response.id + '/pdf-nota');
+
+                // D. Mostramos el modal de éxito.
+                $('#modalExito').modal('show');
+
+                setTimeout(function () {
+                    // Quitamos foco para evitar el "outline" amarillo del navegador.
+                    if (document.activeElement) {
+                        document.activeElement.blur();
+                    }
+
+                    // Ocultamos el éxito y mostramos el panel de exportación
+                    // (botones de PDF / enviar por correo).
+                    $('#modalExito').modal('hide');
+                    $('#panelExportar').removeClass('d-none').hide().slideDown();
+
+                    btnGuardar.prop('disabled', false).html(textoOriginal);
+                }, 1800);
+            },
             error: function (xhr) {
                 console.error('Fallo al guardar:', xhr.responseText);
                 mostrarAlerta('No se pudo conectar con el servidor. Revisa tu conexión.', 'Error al guardar el pedido', 'danger');
@@ -865,27 +951,25 @@ $(document).ready(function () {
         });
     });
 
-    // =======================================================
-    // PASO 3: CERRAR FLUJO Y LIMPIAR PANTALLA (Delegación)
-    // =======================================================
-    $(document).on('click', '#btnCerrarFlujoExportacion', function(e) {
-        e.preventDefault(); 
-        
-        // 1. Limpiamos el modal del cliente
+    // ---- PASO 3: Cerrar flujo y limpiar pantalla (delegado porque el
+    // botón vive dentro de #panelExportar, que se muestra dinámicamente) ----
+    $(document).on('click', '#btnCerrarFlujoExportacion', function (e) {
+        e.preventDefault();
+
         $('#inputNombreCliente').val('');
         $('#inputCorreoCliente').val('');
-        
-        // 2. Ejecutamos tu función de reseteo original
+
         resetearFormulario();
     });
 
     // =======================================================
-    // FUNCIÓN DE RESETEO
+    // 5.5 FUNCIÓN DE RESETEO
+    // Deja el formulario listo para cotizar un pedido nuevo desde cero.
     // =======================================================
     function resetearFormulario() {
         $('#inputCantidad').val('');
         $('#selectTamano').val('').trigger('change');
-        $('#selectCantColores').val('1').trigger('change');
+        $('#selectCantidadColores').val('1').trigger('change');
 
         $('#contenedorColoresLana .select2-ajax').each(function () {
             $(this).val(null).trigger('change');
@@ -896,7 +980,7 @@ $(document).ready(function () {
             '#swLazoSimple',  '#swLazoFlor', '#swLazoNombre',
             '#swApliques',    '#swDisenoPersonalizado',
         ];
-        
+
         switches.forEach(function (id) {
             if ($(id).is(':checked')) {
                 $(id).prop('checked', false).trigger('change');
@@ -917,22 +1001,21 @@ $(document).ready(function () {
     }
 
     // =======================================================
-    // ENVÍO DE CORREOS
+    // 5.6 ENVÍO DE NOTA DE VENTA POR CORREO
     // =======================================================
-    $(document).on('click', '#btnConfirmarEnvio', function(e) {
+    $(document).on('click', '#btnConfirmarEnvio', function (e) {
         e.preventDefault();
-        
+
         let btn = $(this);
         let textoOriginal = btn.html();
         let emailDestino = $('#emailCliente').val();
-        let pedidoId = $('#txtNumeroCotizacionExport').text(); 
+        let pedidoId = $('#txtNumeroCotizacionExport').text();
 
-        if(!emailDestino) {
+        if (!emailDestino) {
             alert("Por favor, ingresa un correo electrónico.");
             return;
         }
 
-        // Efecto de carga en el botón
         btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Enviando...');
 
         $.ajax({
@@ -943,27 +1026,24 @@ $(document).ready(function () {
                 pedido_id: pedidoId,
                 email: emailDestino
             },
-            success: function(response) {
-                // 1. HERRAMIENTA DE DISEÑO
+            success: function (response) {
                 console.log("¡Servidor respondió con éxito!", response);
-                
-                if(response.success) {
-                    // 2. Cerramos el modal de captura de forma limpia
+
+                if (response.success) {
+                    // Cerramos el modal de captura de correo y limpiamos el input.
                     $('#modalEnviarCorreo').modal('hide');
-                    
-                    // 3. Limpiamos el input para futuras cotizaciones
-                    $('#emailCliente').val(''); 
-                    
-                    // 4. Mostramos el nuevo modal estético de éxito
+                    $('#emailCliente').val('');
+
+                    // Mostramos el modal de confirmación de envío.
                     $('#modalCorreoExito').modal('show');
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 alert("Hubo un error al enviar el correo. Revisa la consola.");
                 console.error(xhr.responseText);
             },
-            complete: function() {
-                // Restauramos el botón a su estado original
+            complete: function () {
+                // Restauramos el botón a su estado original, haya éxito o error.
                 btn.prop('disabled', false).html(textoOriginal);
             }
         });

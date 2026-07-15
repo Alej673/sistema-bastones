@@ -1,0 +1,306 @@
+/* INTENTO DE PARCHE PARA EL FONDO BLANCO DEL LAYOUT ADMIN */
+body, main, .content-wrapper, .container-fluid {
+    background-color: #1b1027 !important;
+}
+
+.dark-glass-kardex {
+    /* ── Paleta morado / fucsia ── */
+    --color-morado: #a855f7;
+    --color-morado-claro: #c084fc;
+    --color-morado-oscuro: #5b21b6;
+    --color-fucsia: #e879f9;
+    --color-fucsia-oscuro: #86198f;
+    --color-violeta-boton: #7c3aed;
+    --color-texto: #f5eaff;
+    --color-texto-mutado: #b9a8c9;
+    --color-borde: rgba(232, 121, 249, 0.14);
+
+    color: var(--color-texto);
+    min-height: 100vh;
+    padding: 20px;
+    background: linear-gradient(145deg, #1e1030 0%, #2c1548 50%, #1b0f28 100%);
+    border-radius: 16px;
+}
+
+.dark-glass-kardex h2, .dark-glass-kardex .h3 {
+    color: var(--color-texto);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+    font-weight: 700;
+}
+
+/* Scrollbars temáticos (Chrome/Edge) */
+.dark-glass-kardex ::-webkit-scrollbar { width: 8px; height: 8px; }
+.dark-glass-kardex ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 8px; }
+.dark-glass-kardex ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--color-morado), var(--color-fucsia-oscuro));
+    border-radius: 8px;
+}
+
+/* 1. TARJETAS GLASSMORPHISM OPTIMIZADAS */
+.glass-card {
+    background: rgba(88, 42, 130, 0.28) !important;
+    backdrop-filter: blur(10px); /* OPTIMIZADO: De 25px a 10px */
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--color-borde) !important;
+    border-radius: 16px !important;
+    /* Sombras simplificadas para mejor renderizado */
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
+}
+
+.glass-card-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--color-borde) !important;
+    color: var(--color-morado-claro) !important;
+}
+
+/* 2. TABLAS */
+.glass-table {
+    color: var(--color-texto) !important;
+    --bs-table-bg: transparent;
+    margin-bottom: 0;
+}
+
+.glass-table thead th {
+    background-color: rgba(30, 12, 48, 0.85) !important; /* Más opaco para compensar menos blur */
+    color: var(--color-texto-mutado) !important;
+    border-bottom: 2px solid var(--color-borde) !important;
+    backdrop-filter: blur(4px); /* OPTIMIZADO: De 10px a 4px */
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.glass-table tbody tr {
+    /* OPTIMIZADO: Solo animamos background y transform, no 'all' */
+    transition: background-color 0.15s ease, transform 0.1s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+.glass-table tbody tr:nth-of-type(odd) {
+    background-color: rgba(168, 85, 247, 0.06) !important;
+}
+
+.glass-table tbody td {
+    color: var(--color-texto) !important;
+    vertical-align: middle;
+    border: none !important;
+}
+
+.glass-table tbody tr:hover {
+    background-color: rgba(232, 121, 249, 0.14) !important;
+    cursor: default;
+}
+
+.glass-table tbody tr:active {
+    background-color: rgba(232, 121, 249, 0.26) !important;
+}
+
+.text-dark { color: #ffffff !important; }
+.text-muted, .text-secondary { color: var(--color-texto-mutado) !important; }
+
+/* 3. BOTONES NEUMÓRFICOS OPTIMIZADOS */
+.glass-btn-primary {
+    background: linear-gradient(135deg, var(--color-violeta-boton) 0%, var(--color-fucsia-oscuro) 100%) !important;
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4), -1px -1px 4px rgba(255, 255, 255, 0.05) !important;
+    /* OPTIMIZADO: Transiciones específicas */
+    transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+.glass-btn-primary:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.1);
+    /* Sombra hover más ligera */
+    box-shadow: 4px 6px 12px rgba(0, 0, 0, 0.5), -1px -1px 5px rgba(255, 255, 255, 0.08) !important;
+}
+.glass-btn-primary:active {
+    transform: translateY(1px);
+    box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.5), inset -1px -1px 4px rgba(255, 255, 255, 0.05) !important;
+}
+
+.glass-btn-action {
+    background: rgba(35, 18, 50, 0.85) !important;
+    border: 1px solid var(--color-borde) !important;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3) !important;
+    color: var(--color-texto) !important;
+    border-radius: 8px;
+    /* OPTIMIZADO: Transiciones específicas */
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.glass-btn-action:hover {
+    background: rgba(50, 24, 72, 0.95) !important;
+    border-color: rgba(232, 121, 249, 0.4) !important;
+    transform: translateY(-1px);
+}
+.glass-btn-action:active {
+    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.4) !important;
+    background: rgba(15, 8, 22, 0.9) !important;
+    transform: translateY(0);
+}
+.glass-btn-action.text-success { color: #4ade80 !important; }
+.glass-btn-action.text-success:hover { color: #6ee7a0 !important; }
+.glass-btn-action.text-danger { color: #f87171 !important; }
+.glass-btn-action.text-danger:hover { color: #fca5a5 !important; }
+.glass-btn-action.text-secondary { color: var(--color-texto-mutado) !important; }
+.glass-btn-action.text-secondary:hover { color: var(--color-morado-claro) !important; }
+
+/* 4. INPUTS HUNDIDOS */
+.glass-input, .glass-select {
+    background: rgba(20, 10, 32, 0.85) !important; /* Menos transparencia para compensar la falta de blur */
+    border: 1px solid rgba(255, 255, 255, 0.04) !important;
+    color: var(--color-texto) !important;
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.6) !important;
+    border-radius: 8px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.glass-input::placeholder { color: rgba(255, 255, 255, 0.28) !important; }
+.glass-input:focus, .glass-select:focus {
+    background: rgba(28, 14, 42, 0.95) !important;
+    border-color: rgba(232, 121, 249, 0.5) !important;
+    outline: none;
+}
+
+.glass-input[type="number"]::-webkit-outer-spin-button,
+.glass-input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.glass-input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.buscador-animado { width: 140px; transition: width 0.3s ease-out; }
+.buscador-animado:focus { width: 100%; }
+@media (min-width: 768px) { .buscador-animado { width: 220px; } }
+
+/* 5. ETIQUETAS */
+.glass-badge-light { background: rgba(168, 85, 247, 0.12) !important; border: 1px solid rgba(232, 121, 249, 0.2); color: #e4d4f0; }
+.glass-badge-success { background: rgba(74, 222, 128, 0.15) !important; border: 1px solid rgba(74, 222, 128, 0.3); color: #4ade80 !important; }
+.glass-badge-warning { background: rgba(250, 204, 21, 0.15) !important; border: 1px solid rgba(250, 204, 21, 0.3); color: #facc15 !important; }
+.glass-badge-danger { background: rgba(248, 113, 113, 0.15) !important; border: 1px solid rgba(248, 113, 113, 0.3); color: #f87171 !important; }
+
+/* 6. MODALES */
+.modal-content { background: transparent !important; border: none !important; }
+.modal-header, .modal-footer { border-color: var(--color-borde) !important; }
+.btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+
+#overlayConfirmarBorrado { display: none; position: fixed; inset: 0; background: rgba(10, 4, 16, 0.85); z-index: 1060; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+#overlayConfirmarBorrado.activo { display: flex; }
+#tarjetaConfirmarBorrado { animation: entradaModal 0.2s ease-out; max-width: 380px; width: 90%; padding: 2rem; }
+@keyframes entradaModal { from { opacity: 0; transform: scale(0.92) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+/* 7. SELECT PERSONALIZADO */
+.custom-select { position: relative; width: 100%; }
+.custom-select-trigger { width: 100%; text-align: left; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.85rem; cursor: pointer; font-size: 0.95rem; }
+.custom-select-value.placeholder { color: rgba(255, 255, 255, 0.28); }
+.custom-select-arrow { color: var(--color-morado-claro); transition: transform 0.2s ease; margin-left: 8px; flex-shrink: 0; }
+.custom-select.abierto .custom-select-arrow { transform: rotate(180deg); }
+
+.custom-select.abierto .custom-select-trigger {
+    border-color: rgba(232, 121, 249, 0.5) !important;
+}
+
+.custom-select-options {
+    list-style: none; margin: 0; padding: 6px; position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+    max-height: 240px; overflow-y: auto; z-index: 80; background: rgba(26, 12, 42, 0.97) !important;
+    backdrop-filter: blur(8px); /* OPTIMIZADO: De 20px a 8px */
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(232, 121, 249, 0.25) !important; border-radius: 12px !important;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5) !important;
+    display: none; opacity: 0; transform: translateY(-6px); 
+    transition: opacity 0.1s ease, transform 0.1s ease;
+}
+.custom-select.abierto .custom-select-options { display: block; opacity: 1; transform: translateY(0); }
+.custom-select-options li { padding: 0.55rem 0.75rem; border-radius: 8px; color: var(--color-texto); cursor: pointer; font-size: 0.9rem; transition: background-color 0.1s ease; }
+.custom-select-options li:hover { background: rgba(232, 121, 249, 0.16); color: #ffffff; }
+.custom-select-options li.seleccionada { background: rgba(168, 85, 247, 0.25); color: var(--color-morado-claro); font-weight: 600; }
+
+.custom-select.error .custom-select-trigger {
+    border-color: rgba(248, 113, 113, 0.6) !important;
+    box-shadow: inset 2px 2px 6px rgba(0,0,0,0.4), 0 0 0 2px rgba(248, 113, 113, 0.15) !important;
+}
+
+/* 1. ELIMINAR EL RESALTADO GRIS ALREDEDOR DEL TEXTO (SUAVIZADO DE FUENTES) */
+.custom-select-value {
+    background: transparent !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    /* Fuerza un renderizado limpio en Brave/Chrome sobre fondos oscuros */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* 2. OPTIMIZAR EL TRIGGER (BOTÓN) DEL SELECT */
+.custom-select-trigger.glass-select {
+    background: rgba(20, 10, 32, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.04) !important;
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.6) !important;
+    color: var(--color-texto) !important;
+    /* Elimina cualquier herencia de Bootstrap que cause el recuadro gris */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    outline: none !important;
+}
+
+/* 3. MEJORAR EL COLOR DEL PLACEHOLDER EN MODO OSCURO */
+.custom-select-value.placeholder {
+    /* Un tono claro pero desactivado, sin subtonos grises de fondo */
+    color: rgba(245, 234, 255, 0.35) !important; 
+    background: transparent !important;
+}
+
+/* ==========================================================================
+   OPTIMIZACIÓN EXTRA PARA MÓVILES (ESPACIADO Y RESPONSIVO KARDEX)
+   ========================================================================== */
+@media (max-width: 575.98px) {
+    /* 1. Contenedor principal al máximo ancho */
+    .dark-glass-kardex {
+        padding: 12px 4px !important;
+        border-radius: 0 !important;
+    }
+
+    /* 2. Forzar contenedores base para no perder píxeles laterales */
+    body, main, .content-wrapper, .container-fluid, .container {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        overflow-x: hidden;
+    }
+
+    /* 3. Tarjetas del Kardex (Cabeceras y Cuerpos) */
+    .glass-card .card-body {
+        padding: 16px 8px !important;
+    }
+    .glass-card-header {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+
+    /* 4. Optimización de la Tabla de Kardex */
+    .glass-table th, 
+    .glass-table td {
+        padding: 8px 4px !important; /* Menos espacio entre celdas */
+        font-size: 0.82rem !important; /* Letra un poco más pequeña para encajar columnas */
+    }
+
+    /* 5. Inputs, Botones y Custom Selects listos para el toque (Touch-friendly) */
+    .glass-input, 
+    .custom-select-trigger, 
+    .glass-btn-primary, 
+    .glass-btn-action {
+        min-height: 44px !important; 
+        font-size: 0.9rem !important;
+    }
+
+    /* 6. Modal de Confirmación de Borrado más compacto */
+    #tarjetaConfirmarBorrado {
+        padding: 1.2rem !important; /* Reducimos desde 2rem para que no quede aplastado */
+        width: 95%;
+    }
+    
+    /* 7. Buscador superior al máximo ancho posible */
+    .buscador-animado {
+        width: 100% !important;
+    }
+}

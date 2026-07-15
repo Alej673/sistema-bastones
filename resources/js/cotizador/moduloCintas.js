@@ -1,7 +1,7 @@
-
 // {{-- ==========================================
 //     MÓDULO 4 — SWITCHES Y CINTAS
 // ========================================== --}}
+import { inicializarSelect2Ajax } from './utilsSelect2.js';
 
 export function inicializarModuloDecoracion(RUTAS) {
     const togglesModulo4 = [
@@ -11,36 +11,19 @@ export function inicializarModuloDecoracion(RUTAS) {
         { switch: $('#swApliques'),   caja: $('#cajaApliques')   }
     ];
 
+    // Un único listener por switch: muestra/oculta la caja Y, si se activa,
+    // inicializa Select2 SOLO en los selects que viven dentro de esa caja
+    // (antes eran dos listeners separados sobre el mismo switch).
     togglesModulo4.forEach(item => {
         item.switch.on('change', function () {
-            item.caja.toggleClass('d-none', !$(this).is(':checked'));
-        });
-    });
+            const activo = $(this).is(':checked');
+            item.caja.toggleClass('d-none', !activo);
 
-    function inicializarCintas() {
-        $('.select2-ajax-cintas').not('[data-select2-id]').select2({
-            theme: 'bootstrap-5',
-            width: 'resolve',
-            placeholder: 'Buscar color de cinta...',
-            tags: true,
-            delay: 250,
-            ajax: {
-                url: RUTAS.buscarCintas, // <-- Ruta dinámica
-                dataType: 'json',
-                data: params => ({ q: params.term }),
-                processResults: data => ({ results: data })
-            },
-            createTag: function (params) {
-                var term = $.trim(params.term);
-                if (term === '') return null;
-                return { id: term, text: term + ' (Cotizar nuevo material)', newTag: true };
+            if (activo) {
+                inicializarSelect2Ajax(item.caja.find('.select2-ajax-cintas'), RUTAS.buscarCintas, {
+                    placeholder: 'Buscar color de cinta...',
+                });
             }
-        });
-    }
-
-    togglesModulo4.forEach(item => {
-        item.switch.on('change', function () {
-            if ($(this).is(':checked')) inicializarCintas();
         });
     });
 
@@ -60,7 +43,11 @@ export function inicializarModuloDecoracion(RUTAS) {
                 </div>
             `);
         }
-        inicializarCintas();
+
+        // Escopado solo a los selects de flores recién creados.
+        inicializarSelect2Ajax(contenedor.find('.select2-ajax-cintas'), RUTAS.buscarCintas, {
+            placeholder: 'Buscar color de cinta...',
+        });
     });
 
     // Dibuja "Flor 1" al iniciar

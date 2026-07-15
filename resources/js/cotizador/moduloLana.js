@@ -1,6 +1,8 @@
 // ==========================================
 //  MÓDULO 2 — BUSCADORES DE LANA
-// ========================================== 
+// ==========================================
+import { inicializarSelect2Ajax } from './utilsSelect2.js';
+
 export function inicializarModuloLana(RUTAS) {
     const contenedorLanas   = $('#contenedorColoresLana');
     const selectCantidad    = $('#selectCantidadColores');
@@ -22,25 +24,10 @@ export function inicializarModuloLana(RUTAS) {
             `);
         }
 
-        // Conecta los selects recién creados al motor AJAX de lanas
-        $('.select2-ajax').select2({
-            theme: 'bootstrap-5',
-            width: 'resolve',
+        // Solo inicializamos los selects que acabamos de crear dentro de
+        // este contenedor, nunca la clase .select2-ajax de forma global.
+        inicializarSelect2Ajax(contenedorLanas.find('.select2-ajax'), RUTAS.buscarLanas, {
             placeholder: 'Buscar o escribir nuevo color...',
-            tags: true,
-            delay: 250,
-            ajax: {
-                url: RUTAS.buscarLanas, // <-- Usamos la ruta dinámica del puente
-                dataType: 'json',
-                data: params => ({ q: params.term }),
-                processResults: data => ({ results: data }),
-                cache: true
-            },
-            createTag: function (params) {
-                var term = $.trim(params.term);
-                if (term === '') return null;
-                return { id: term, text: term + ' (Cotizar nuevo material)', newTag: true };
-            }
         });
     }
 

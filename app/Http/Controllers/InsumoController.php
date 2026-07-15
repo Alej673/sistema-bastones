@@ -9,11 +9,11 @@ class InsumoController extends Controller
     /**
      * Display a listing of the resource.
      */
+    // Función para mostrar la página de index
     public function index()
     {
-        $insumos = \App\Models\Insumo::all(); // Solo trae los que NO están borrados
-        
-        // El withTrashed() permite leer el nombre del insumo incluso si fue eliminado
+        $insumos = \App\Models\Insumo::all(); 
+
         $movimientos = \App\Models\Movimiento::with(['insumo' => function($query) {
             $query->withTrashed();
         }])->latest()->take(15)->get();
@@ -48,7 +48,7 @@ class InsumoController extends Controller
         $multiplicador = 1;
         $unidad = 'Unidades';
 
-        // 2. El Motor de Traducción (Mundo Físico -> Mundo Digital)
+        // 2. El Motor de Traducción 
         switch ($request->categoria) {
             case 'lana':
                 $multiplicador = 90; 
@@ -78,7 +78,7 @@ class InsumoController extends Controller
                 $multiplicador = 100; 
                 $unidad = 'Unidades';
                 break;
-            case 'base_baston': // <-- NUEVO: Agregado para que no falle al crear bastones
+            case 'base_baston':
                 $multiplicador = 1; 
                 $unidad = 'Unidades';
                 break;

@@ -3,82 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso Seguro - Sistema de Gestión y Kardex</title>
+    <title>Acceso Seguro - Kardex Automatizado</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
-        /* 1. CONFIGURACIÓN BASE Y FONDO ULTRA-MINIMALISTA */
+        /* 1. CONFIGURACIÓN BASE - NUEVA PALETA DE COLORES */
         :root {
-            --color-amatista: #6e3553; /* Púrpura base aclarado */
-            --color-amatista-pupa: #C8A9B9; /* Púrpura pálido para bordes */
-            --color-dorado: #d0a976; /* Dorado base aclarado */
-            --color-fondo: #d5d5d5; /* Fondo blanco roto */
+            --color-morado: #a855f7;
+            --color-morado-claro: #c084fc;
+            --color-morado-oscuro: #5b21b6;
+            --color-violeta-boton: #7c3aed;
+            --color-fucsia: #e879f9;
+            --color-fucsia-oscuro: #86198f;
+            
+            --color-fondo-medio: #2c1548;
+            --color-fondo-base: #1b0f28;
+            
+            --color-texto: #f5eaff;
+            --color-texto-mutado: #b9a8c9;
+            --color-error: #f87171;
+            --color-exito: #4ade80;
         }
 
         body {
-            background: linear-gradient(135deg, var(--color-fondo) 0%, #FFFFFF 100%);
+            /* Gradiente de fondo usando tus colores base y medio */
+            background: linear-gradient(135deg, var(--color-fondo-base) 0%, var(--color-fondo-medio) 100%);
             height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Inter', sans-serif; /* Usar una fuente sans-serif limpia */
+            font-family: 'Inter', sans-serif;
             margin: 0;
             overflow: hidden;
             position: relative;
         }
 
-        /* Toque sutil de polvo dorado en el fondo */
-        body::before {
+        /* Esferas de fondo translúcidas para dar el brillo morado/fucsia al cristal */
+        body::before, body::after {
             content: '';
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image: radial-gradient(#C5A57A 1px, transparent 1px);
-            background-size: 50px 50px;
-            opacity: 0.15;
+            border-radius: 50%;
             z-index: 1;
+            filter: blur(80px);
         }
 
-        /* 2. TARJETA DE FORMULARIO NÍTIDA Y CENTRADA */
+        body::before {
+            width: 450px;
+            height: 450px;
+            background: rgba(168, 85, 247, 0.25); /* --color-morado translúcido */
+            top: -100px;
+            left: -150px;
+        }
+
+        body::after {
+            width: 350px;
+            height: 350px;
+            background: rgba(134, 25, 143, 0.3); /* --color-fucsia-oscuro translúcido */
+            bottom: -50px;
+            right: -100px;
+        }
+
+        /* 2. TARJETA DARK GLASSMORPHISM */
         .login-card {
-            background: #FFFFFF;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03); /* Sombra ultra sutil */
+            /* Usamos el Fondo Medio con opacidad para el cristal */
+            background: rgba(44, 21, 72, 0.4); 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(192, 132, 252, 0.15); /* Borde sutil Morado Claro */
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.05);
             width: 100%;
-            max-width: 380px;
-            padding: 40px;
+            max-width: 420px;
+            padding: 50px 45px;
             z-index: 2;
             text-align: center;
         }
 
-        /* 3. TIPOGRAFÍA DE MARCA ELEGANTE (PERO SUTIL) */
+        /* 3. TIPOGRAFÍA */
         .brand-title {
-            font-family: 'Playfair Display', serif; /* Fuente serif elegante y sutil */
-            font-size: 24px;
-            color: var(--color-amatista);
-            margin: 0 0 5px 0;
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            color: var(--color-texto);
+            margin: 0 0 8px 0;
             font-weight: 700;
+            letter-spacing: -0.5px;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
         }
 
         .brand-subtitle {
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-            color: var(--color-amatista);
-            opacity: 0.8;
-            margin: 0 0 30px 0;
+            font-size: 12px;
+            color: var(--color-texto-mutado);
+            margin: 0 0 40px 0;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
         }
 
-        /* 4. CAMPOS DE ENTRADA CON ACENTOS SUTILES */
+        /* 4. CAMPOS DE ENTRADA NEUMORFISMO (Hundidos) */
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             text-align: left;
         }
 
         .form-label {
             display: block;
             font-size: 12px;
-            color: var(--color-amatista);
-            margin-bottom: 5px;
+            color: var(--color-texto-mutado);
+            margin-bottom: 8px;
             font-weight: 500;
+            padding-left: 4px;
         }
 
         .input-group {
@@ -89,99 +123,127 @@
 
         .input-icon {
             position: absolute;
-            left: 12px;
+            left: 16px;
             font-size: 14px;
-            color: var(--color-dorado);
+            color: var(--color-texto-mutado);
+            transition: color 0.3s ease;
             opacity: 0.7;
         }
 
         .form-control {
             width: 100%;
-            padding: 10px 10px 10px 36px;
+            padding: 14px 14px 14px 44px;
             font-size: 14px;
-            border: 1px solid var(--color-amatista-pupa);
-            border-radius: 6px;
-            background: #FAFAFC;
-            color: #333333;
-            transition: border-color 0.3s;
+            border: 1px solid rgba(192, 132, 252, 0.05);
+            border-radius: 12px;
+            /* Hundimiento: Fondo Base translúcido con sombra negra */
+            background: rgba(27, 15, 40, 0.7); 
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.6), 
+                        inset -3px -3px 8px rgba(192, 132, 252, 0.03); /* Brillo morado claro al fondo */
+            color: var(--color-texto);
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-control::placeholder {
+            color: rgba(185, 168, 201, 0.4); /* Texto mutado con opacidad */
         }
 
         .form-control:focus {
             outline: none;
-            border-color: var(--color-amatista);
-            box-shadow: 0 0 0 2px rgba(166, 124, 146, 0.1);
+            background: rgba(27, 15, 40, 0.9);
+            border-color: var(--color-morado); /* Brillo morado al enfocar */
+            box-shadow: inset 6px 6px 12px rgba(0, 0, 0, 0.8), 
+                        inset -2px -2px 6px rgba(192, 132, 252, 0.08);
         }
 
-        /* 5. BOTÓN DE ENVÍO SÓLIDO Y LIMPIO */
+        .form-control:focus + .input-icon,
+        .input-group:focus-within .input-icon {
+            color: var(--color-fucsia); /* Icono fucsia al hacer clic */
+            opacity: 1;
+        }
+
+        /* VALIDACIÓN LARAVEL */
+        .form-control.is-invalid {
+            border-color: rgba(248, 113, 113, 0.5); /* Color Peligro */
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.6), 
+                        inset -3px -3px 8px rgba(248, 113, 113, 0.05);
+            background: rgba(248, 113, 113, 0.05);
+        }
+
+        .error-message {
+            color: var(--color-error);
+            font-size: 11px;
+            margin-top: 8px;
+            display: block;
+            font-weight: 500;
+            padding-left: 4px;
+        }
+
+        /* 5. BOTÓN DE ENVÍO NEUMORFISMO (Sobresalido) */
         .btn-submit {
-            background: var(--color-amatista);
+            background: var(--color-violeta-boton);
             color: #FFFFFF;
-            border: none;
-            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px;
             font-size: 14px;
             font-weight: 600;
-            border-radius: 6px;
+            border-radius: 12px;
             width: 100%;
             cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
+            margin-top: 15px;
+            /* Sombra exterior para sobresalir */
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), 
+                        -2px -2px 8px rgba(192, 132, 252, 0.1);
         }
 
         .btn-submit:hover {
-            background-color: #936A7D;
+            background-color: var(--color-morado-oscuro);
         }
 
         .btn-submit:active {
-            transform: translateY(1px);
+            /* Efecto hundido al hacer clic */
+            box-shadow: inset 4px 4px 10px rgba(0, 0, 0, 0.6), 
+                        inset -2px -2px 6px rgba(0, 0, 0, 0.2);
+            transform: translateY(2px);
         }
 
-        .btn-icon {
-            font-size: 12px;
-            color: var(--color-dorado);
-        }
-
-        /* 6. ENLACES SECUNDARIOS SÚPER SUTILES EN EL PIE */
-        .auth-footer {
-            margin-top: 25px;
-            font-size: 12px;
-            color: #999999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .auth-link {
-            color: var(--color-amatista);
-            text-decoration: none;
-            transition: color 0.3s;
-            font-weight: 500;
-        }
-
-        .auth-link:hover {
-            color: #c2779a;
-        }
-
-        .secondary-link {
-            font-weight: 400;
-            opacity: 0.7;
-        }
-
-        /* Checkbox simple */
+        /* Checkbox oscuro */
         .remember-group {
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             text-align: left;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            padding-left: 4px;
         }
 
         .remember-label {
-            font-size: 12px;
-            color: #757575;
-            font-weight: 400;
+            font-size: 13px;
+            color: var(--color-texto-mutado);
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .remember-label:hover {
+            color: var(--color-texto);
+        }
+        
+        input[type="checkbox"] {
+            accent-color: var(--color-morado);
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            border-radius: 4px;
+            /* Ajuste para que se vea bien en fondo oscuro */
+            filter: invert(0.8) hue-rotate(180deg) brightness(1.2); 
+            mix-blend-mode: screen;
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
@@ -190,8 +252,8 @@
 
     <div class="login-card">
         
-        <h1 class="brand-title">Sistema de Gestión y Kardex</h1>
-        <p class="brand-subtitle">Acceso Seguro</p>
+        <h1 class="brand-title">Kardex Automatizado</h1>
+        <p class="brand-subtitle">Producción de Bastones para Cachiporreras</p>
         
         <form method="POST" action="{{ route('login') }}">
             @csrf
@@ -200,25 +262,31 @@
                 <label for="email" class="form-label">Correo Electrónico</label>
                 <div class="input-group">
                     <span class="input-icon"><i class="fa-solid fa-envelope"></i></span>
-                    <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}" required autofocus placeholder="email@dominio.com">
+                    <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" placeholder="usuario@correo.com">
                 </div>
+                @error('email')
+                    <span class="error-message">{{ $message }}</span>
+                @enderror
             </div>
 
             <div class="form-group">
                 <label for="password" class="form-label">Contraseña</label>
                 <div class="input-group">
                     <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
-                    <input type="password" class="form-control" id="password" name="password" required placeholder="••••••••">
+                    <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" placeholder="••••••••">
                 </div>
+                @error('password')
+                    <span class="error-message">{{ $message }}</span>
+                @enderror
             </div>
 
             <div class="remember-group">
                 <input type="checkbox" id="remember_me" name="remember">
-                <label class="remember-label" for="remember_me">Mantener sesión iniciada</label>
+                <label class="remember-label" for="remember_me">Recordar mis credenciales</label>
             </div>
 
             <button type="submit" class="btn-submit">
-                Ingresar al Sistema <i class="fa-solid fa-arrow-right-to-bracket btn-icon"></i>
+                Ingresar al Sistema <i class="fa-solid fa-arrow-right"></i>
             </button>
             
         </form>

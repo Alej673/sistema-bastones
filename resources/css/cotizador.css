@@ -1,0 +1,367 @@
+/* ==========================================================================
+   ESTILOS: DARK NEUMORPHIC GLASS — COTIZADOR
+   Aplica colores y reglas sobre la vista de Nueva Cotización.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. TARJETAS Y CONTENEDORES (Glassmorphism Base)
+   -------------------------------------------------------------------------- */
+.glass-card {
+    background: rgba(44, 21, 72, 0.4) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(232, 121, 249, 0.14) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.06) !important;
+    color: #f5eaff;
+}
+
+.glass-card .card-body {
+    background: transparent !important;
+}
+
+.glass-card-header {
+    background: rgba(30, 12, 48, 0.65) !important;
+    border-bottom: 1px solid rgba(232, 121, 249, 0.14) !important;
+    color: #c084fc !important;
+}
+
+.glass-card > .glass-card-header:first-child {
+    border-radius: 16px 16px 0 0 !important;
+}
+
+/* Evitamos que las tarjetas internas de los módulos sean muy opacas */
+.glass-subcard {
+    background: rgba(20, 10, 32, 0.4) !important;
+    backdrop-filter: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.04) !important;
+    border-radius: 12px !important;
+    box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Panel de exportación (Ajusta el fondo un poco más sólido) */
+.panel-exportar .glass-card {
+    background: rgba(38, 18, 56, 0.9) !important;
+}
+
+/* Regla global para bordes consistentes */
+.glass-border {
+    border-color: rgba(232, 121, 249, 0.14) !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. TABLA DE IMPACTO EN INVENTARIO
+   -------------------------------------------------------------------------- */
+.glass-table {
+    color: var(--color-texto, #f5eaff) !important;
+    --bs-table-bg: transparent;
+}
+.glass-table thead th {
+    background-color: rgba(30, 12, 48, 0.65) !important;
+    color: var(--color-texto-mutado, #b9a8c9) !important;
+    border-bottom: 2px solid var(--color-borde, rgba(232, 121, 249, 0.14)) !important;
+    backdrop-filter: blur(10px);
+    font-weight: 600;
+}
+.glass-table tbody tr {
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+.glass-table tbody tr:hover {
+    background-color: rgba(232, 121, 249, 0.12) !important;
+}
+.glass-table td, .glass-table th {
+    border-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. FORMULARIOS (Inputs, Selects, Input Groups)
+   -------------------------------------------------------------------------- */
+.glass-input, .glass-select {
+    background-color: rgba(20, 10, 32, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    color: #f5eaff !important;
+    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.65), inset -2px -2px 6px rgba(255, 255, 255, 0.03) !important;
+    border-radius: 8px !important;
+}
+.glass-input::placeholder {
+    color: rgba(255, 255, 255, 0.28) !important;
+}
+.glass-input:focus, .glass-select:focus {
+    background-color: rgba(28, 14, 42, 0.9) !important;
+    border-color: rgba(232, 121, 249, 0.5) !important;
+    box-shadow: inset 6px 6px 12px rgba(0, 0, 0, 0.75), inset -2px -2px 6px rgba(255, 255, 255, 0.04) !important;
+    outline: none;
+    color: #f5eaff !important;
+}
+
+.glass-select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%23e879f9' d='M6 8 0 0h12z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.85rem center !important;
+    background-size: 11px 7px !important;
+    padding-right: 2.2rem !important;
+}
+.glass-select option {
+    background-color: #1c1030;
+    color: #ffffff;
+}
+
+.input-group-text {
+    background: rgba(232, 121, 249, 0.10) !important;
+    border: 1px solid rgba(232, 121, 249, 0.25) !important;
+    color: #e9d5ff !important;
+    font-weight: 600;
+    border-radius: 8px 0 0 8px !important;
+}
+
+.input-group {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   4. SWITCHES (Toggle Buttons Neumórficos) - TAMAÑO CORREGIDO
+   -------------------------------------------------------------------------- */
+.glass-switch {
+    width: 2.4rem !important; /* Antes 3rem */
+    height: 1.3rem !important; /* Antes 1.6rem */
+    background-color: #241335 !important;
+    border: none !important;
+    border-radius: 2rem !important;
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.55),
+                inset -2px -2px 5px rgba(255, 255, 255, 0.04) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23ffffff'/%3E%3Cstop offset='1' stop-color='%23dcd0ea'/%3E%3C/linearGradient%3E%3Cfilter id='s' x='-50%25' y='-50%25' width='200%25' height='200%25'%3E%3CfeDropShadow dx='0' dy='1' stdDeviation='1' flood-color='%23000000' flood-opacity='0.5'/%3E%3C/filter%3E%3C/defs%3E%3Ccircle cx='12' cy='12' r='9' fill='url(%23g)' filter='url(%23s)'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-size: 1.05rem 1.05rem !important; /* Antes 1.3rem */
+    background-position: left 2px center !important;
+    transition: background-position .25s ease, background-color .25s ease, box-shadow .25s ease !important;
+    margin-top: 0.15rem !important; /* Alineación vertical perfecta con el label */
+    cursor: pointer;
+}
+
+.glass-switch:checked {
+    background-color: var(--color-fucsia-oscuro, #86198f) !important;
+    background-position: right 2px center !important;
+    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.4),
+                0 0 10px rgba(232, 121, 249, 0.45) !important;
+}
+
+.glass-switch:focus {
+    box-shadow: 0 0 0 3px rgba(232, 121, 249, 0.2),
+                inset 2px 2px 5px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. BOTONES
+   -------------------------------------------------------------------------- */
+.glass-btn-primary {
+    background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.5), -2px -2px 6px rgba(255, 255, 255, 0.05) !important;
+}
+.glass-btn-primary:hover:not(:disabled) {
+    filter: brightness(1.08);
+    box-shadow: 5px 5px 14px rgba(0, 0, 0, 0.55), 0 0 16px rgba(232, 121, 249, 0.35) !important;
+    transform: translateY(-1px);
+    color: #ffffff !important;
+}
+.glass-btn-primary:disabled {
+    background: rgba(50, 24, 72, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+    box-shadow: none !important;
+    opacity: 0.55;
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.glass-btn-action {
+    background: rgba(232, 121, 249, 0.08) !important;
+    border: 1px solid rgba(232, 121, 249, 0.2) !important;
+    color: #c084fc !important;
+}
+.glass-btn-action:hover {
+    background: rgba(232, 121, 249, 0.16) !important;
+    transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+   6. ESTADOS Y BADGES
+   -------------------------------------------------------------------------- */
+.glass-badge-warning {
+    background: rgba(250, 204, 21, 0.18) !important;
+    color: #facc15 !important;
+    border: 1px solid rgba(250, 204, 21, 0.3);
+}
+.glass-badge-success {
+    background: rgba(74, 222, 128, 0.15) !important;
+    color: #4ade80 !important;
+    border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   7. FIX PARA SELECT2 EN TEMA OSCURO
+   -------------------------------------------------------------------------- */
+.select2-container--bootstrap-5 .select2-selection,
+.select2-container .select2-selection {
+    background-color: rgba(20, 10, 32, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.65), inset -2px -2px 6px rgba(255, 255, 255, 0.03) !important;
+    border-radius: 8px !important;
+}
+.select2-container--bootstrap-5 .select2-selection__rendered,
+.select2-container .select2-selection__rendered {
+    color: #f5eaff !important;
+}
+.select2-container--bootstrap-5 .select2-selection__placeholder {
+    color: rgba(255, 255, 255, 0.35) !important;
+}
+.select2-container--bootstrap-5 .select2-selection__arrow b {
+    border-color: #e879f9 transparent transparent transparent !important;
+}
+.select2-dropdown {
+    background-color: rgba(26, 12, 42, 0.98) !important;
+    border: 1px solid rgba(232, 121, 249, 0.25) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.6) !important;
+}
+.select2-search--dropdown .select2-search__field {
+    background-color: rgba(20, 10, 32, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #f5eaff !important;
+    border-radius: 6px !important;
+}
+.select2-results__option {
+    color: #f5eaff !important;
+    background-color: transparent !important;
+}
+.select2-results__option--highlighted {
+    background-color: rgba(232, 121, 249, 0.18) !important;
+    color: #ffffff !important;
+}
+.select2-results__option[aria-selected="true"] {
+    background-color: rgba(168, 85, 247, 0.25) !important;
+    color: #c084fc !important;
+}
+.select2-results__options {
+    max-height: 160px !important;
+    overflow-y: auto;
+}
+
+.select2-container {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+}
+
+/* ==========================================================================
+   OPTIMIZACIÓN EXTRA PARA MÓVILES (ESPACIADO Y RESPONSIVO)
+   ========================================================================== */
+@media (max-width: 575.98px) {
+    /* 1. Contenedor principal: reducir al mínimo el espacio lateral */
+    .dark-glass-cotizador {
+        padding: 12px 4px !important; /* Apenas 4px de separación a los lados */
+        border-radius: 0 !important; /* Opcional: quita el borde curvo exterior para aprovechar las esquinas */
+    }
+
+    /* 2. Forzar que los contenedores globales de Bootstrap no roben espacio */
+    body, main, .content-wrapper, .container-fluid, .container {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        overflow-x: hidden; /* Evita el scroll horizontal accidental */
+    }
+
+    /* 3. Tarjetas principales: mantener aire arriba/abajo, pero menos a los lados */
+    .dark-glass-cotizador .card-body {
+        padding: 16px 8px !important; 
+    }
+
+    /* 4. Sub-módulos (Lazos, Cortinas, Apliques): maximizar área útil */
+    .dark-glass-cotizador .border.glass-border {
+        padding: 12px 8px !important;
+        margin-bottom: 14px !important;
+    }
+
+    /* 5. Separa los grupos de inputs para que no queden pegados verticalmente */
+    .dark-glass-cotizador .mb-3, 
+    .dark-glass-cotizador .form-group {
+        margin-bottom: 16px !important; 
+    }
+
+    /* 6. Espaciado específico para los selectores de color dinámicos (Color 1, Color 2...) */
+    .dark-glass-cotizador [id^="contenedor-color"], 
+    .dark-glass-cotizador .row.g-2 > div {
+        margin-bottom: 10px !important; /* Separa los selects de colores cuando aparecen varios */
+    }
+
+    /* 7. Altura y tamaño de texto cómodo para los selects e inputs */
+    .dark-glass-cotizador .form-control,
+    .dark-glass-cotizador .form-select,
+    .select2-container--bootstrap-5 .select2-selection {
+        height: 45px !important; /* Altura ideal para interactuar con los dedos */
+        font-size: 0.92rem !important;
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+    }
+
+    /* 8. Estilo especial para los switches (Toggles) de las cortinas */
+    .dark-glass-cotizador .form-switch {
+        padding-left: 2.8em !important;
+        margin-top: 10px;
+        margin-bottom: 12px;
+    }
+    
+    .dark-glass-cotizador .form-switch .form-check-input {
+        width: 2.2em !important;
+        height: 1.2em !important;
+        margin-left: -2.8em !important;
+    }
+
+    .dark-glass-cotizador .form-switch label {
+        padding-top: 2px;
+        font-weight: 500;
+    }
+
+    /* 9. Títulos de secciones más legibles */
+    .dark-glass-cotizador h2, 
+    .dark-glass-cotizador .h3 {
+        font-size: 1.15rem !important;
+        margin-bottom: 12px !important;
+    }
+
+    /* 10. Optimización de los contenedores internos en módulos 3, 4 y 5 */
+    .dark-glass-cotizador .border.glass-border {
+        padding: 14px 12px !important; /* Espacio interno balanceado para los sub-bloques */
+        margin-bottom: 14px !important; /* Separación marcada entre sub-opciones */
+        background: rgba(20, 10, 32, 0.2) !important; /* Ligero contraste de fondo */
+    }
+
+    /* 11. Separación de los contenedores dinámicos generados por JS */
+    #contenedorColoresLana,
+    #contenedorCortinasLana,
+    #contenedorCortinasFiesta,
+    #contenedorFlores {
+        gap: 12px !important; /* Fuerza una separación sana entre Select2 cuando se agregan múltiples colores */
+        margin-top: 12px !important;
+    }
+
+    /* 12. Forzar que las filas internas de los modales y sub-bloques se separen verticalmente */
+    .dark-glass-cotizador .row.g-2 > div {
+        margin-bottom: 8px; /* Evita que el input de cantidad y el select queden pegados al colapsar */
+    }
+
+    /* 13. Ajustar el espaciado de los subtítulos de los lazos (Módulo 4) */
+    .dark-glass-cotizador p.text-muted.small.fw-bold {
+        margin-top: 15px !important;
+        margin-bottom: 10px !important;
+        font-size: 0.8rem !important;
+        letter-spacing: 0.5px;
+    }
+
+    /* 14. Corrección estética para el buscador de Select2 en celular */
+    .select2-container--bootstrap-5 .select2-selection--single {
+        display: flex;
+        align-items: center;
+    }
+}

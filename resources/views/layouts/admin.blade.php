@@ -4,73 +4,71 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <title>@yield('titulo') - Taller Admin</title>
+    
+    <title>@yield('titulo') - Kardex Admin</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f4f6f9; }
-        
-        /* Estilos generales del menú */
-        .sidebar { background-color: #212529; color: white; }
-        .sidebar a { color: #adb5bd; text-decoration: none; padding: 10px 20px; display: block; border-radius: 5px; margin: 0 10px 5px 10px;}
-        .sidebar a:hover, .sidebar a.active { color: white; background-color: #343a40; }
-        
-        /* FIJAR EL MENÚ SÓLO EN PANTALLAS GRANDES */
-        @media (min-width: 992px) {
-            .sidebar { 
-                height: 100vh; 
-                position: sticky; 
-                top: 0; 
-                overflow-y: auto; 
-            }
-        }
-        
-        .card { border-radius: 10px; border: none; }
-        .card-header { font-weight: bold; background-color: white; border-bottom: 1px solid #eee; border-radius: 10px 10px 0 0 !important; }
-        .card { border-radius: 10px; border: none; }
-        .card-header { font-weight: bold; background-color: white; border-bottom: 1px solid #eee; border-radius: 10px 10px 0 0 !important; }
-    </style>
-</head>
-<body>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    @vite(['resources/css/estilos_nav.css'])
 
-<div class="d-lg-none bg-dark text-white p-3 d-flex justify-content-between align-items-center shadow-sm sticky-top" style="z-index: 1040;">
-    <h5 class="mb-0">Taller Admin</h5>
-    <button class="btn btn-outline-light btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
-        ☰ Menú
+    @stack('css')
+</head>
+<body class="theme-synthwave">
+
+<div class="d-lg-none mobile-header p-3 d-flex justify-content-between align-items-center shadow-sm sticky-top">
+    <h5 class="mb-0 fw-bold text-white">Taller Admin</h5>
+    <button class="btn btn-outline-light btn-sm glass-btn-mobile" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+        <i class="fa-solid fa-bars"></i> Menú
     </button>
 </div>
 
 <div class="container-fluid">
     <div class="row">
         
-        <nav class="col-lg-2 offcanvas-lg offcanvas-start bg-dark sidebar pt-3" tabindex="-1" id="sidebarMenu">
-            <div class="offcanvas-header d-lg-none border-bottom mb-3">
-                <h5 class="offcanvas-title text-white">Taller Admin</h5>
+        <nav class="col-lg-2 offcanvas-lg offcanvas-start sidebar-glass pt-3" tabindex="-1" id="sidebarMenu">
+            <div class="offcanvas-header d-lg-none border-bottom border-secondary mb-3">
+                <h5 class="offcanvas-title text-white fw-bold">Taller Admin</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu"></button>
             </div>
             
             <div class="offcanvas-body d-flex flex-column h-100">
-                <h5 class="text-center mb-4 text-light d-none d-lg-block">Taller Admin</h5>
+                <h5 class="text-center mb-4 text-white fw-bold d-none d-lg-block brand-glow">Kardex Bastoneras</h5>
                 
-                <a href="#">🏠 Inicio</a>
-                <a href="{{ route('insumos.index') }}" class="{{ request()->routeIs('insumos.*') ? 'active text-white bg-primary' : '' }}">📦 Inventario de Insumos</a>
-                <a href="{{ route('cotizador.create') }}" class="{{ request()->routeIs('cotizador.*') ? 'active text-white bg-primary' : '' }}">📝 Nueva Cotización</a>
-                <a href="#">🗂️ Historial de Ventas</a>
+                <div class="sidebar-links">
+                    <a href="#" class="nav-link-glass">
+                        <i class="fa-solid fa-house me-2"></i> Inicio
+                    </a>
+                    
+                    <a href="{{ route('insumos.index') }}" class="nav-link-glass {{ request()->routeIs('insumos.*') ? 'active' : '' }}">
+                        <i class="fa-solid fa-boxes-stacked me-2"></i> Inventario
+                    </a>
+                    
+                    <a href="{{ route('cotizador.create') }}" class="nav-link-glass {{ request()->routeIs('cotizador.*') ? 'active' : '' }}">
+                        <i class="fa-solid fa-file-invoice-dollar me-2"></i> Cotizador
+                    </a>
+                    
+                    <a href="#" class="nav-link-glass">
+                        <i class="fa-solid fa-chart-line me-2"></i> Ventas
+                    </a>
+                </div>
 
-                <div class="mt-auto">
-                    <hr class="border-secondary"> <form method="POST" action="{{ route('logout') }}">
+                <div class="mt-auto pb-3">
+                    <hr class="border-secondary opacity-25"> 
+                    <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <a href="{{ route('logout') }}" 
                            onclick="event.preventDefault(); this.closest('form').submit();" 
-                           class="text-danger fw-bold">
-                            🚪 Cerrar Sesión
+                           class="nav-link-glass text-danger fw-bold btn-logout">
+                            <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Cerrar Sesión
                         </a>
                     </form>
                 </div>
             </div>
         </nav>
 
-        <main class="col-lg-10 p-4">
+        <main class="col-lg-10 p-4 main-content">
             @yield('contenido')
         </main>
 
@@ -78,5 +76,8 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+@stack('js')
+
 </body>
 </html>

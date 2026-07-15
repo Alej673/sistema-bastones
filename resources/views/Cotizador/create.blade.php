@@ -2,56 +2,52 @@
 
 @section('titulo', 'Nueva Cotización')
 
-@section('contenido')
-
-    {{-- ==========================================
-         DEPENDENCIAS CSS
-    ========================================== --}}
+@push('css')
+    {{-- Dependencias CSS --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    @vite('resources/css/cotizador.css')
     @vite('resources/css/estilos.css')
+@endpush
 
-    {{-- ==========================================
-         ENCABEZADO DE PÁGINA
-    ========================================== --}}
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-4 border-bottom">
-        <h2 class="h3 text-dark fw-bold">Cotizador Automático de Producción</h2>
+@section('contenido')
+
+<div class="dark-glass-cotizador pb-5">
+
+    {{-- ENCABEZADO DE PÁGINA --}}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-4 border-bottom glass-border">
+        <h2 class="h3 fw-bold">Cotizador Automático de Producción</h2>
     </div>
 
-
-    {{-- ==========================================
-         LAYOUT PRINCIPAL: FORMULARIO + RESULTADO
-    ========================================== --}}
+    {{-- LAYOUT PRINCIPAL: FORMULARIO + RESULTADO --}}
     <div class="row align-items-start">
-
 
         {{-- ======================================
              COLUMNA IZQUIERDA — FORMULARIO
         ====================================== --}}
         <div class="col-lg-5 mb-4">
-            <div class="card shadow-sm border-primary border-opacity-25">
+            <div class="card glass-card shadow-sm mb-3">
 
-                <div class="card-header bg-white text-primary fw-bold py-3 border-bottom border-primary border-opacity-25">
+                <div class="card-header glass-card-header fw-bold py-3 text-white">
                     Configuración del Pedido
                 </div>
 
-                <div class="card-body bg-light">
+                <div class="card-body">
                     <form id="formCotizador">
 
-
                         {{-- MÓDULO 1: ESTRUCTURA BASE --}}
-                        <div class="card mb-3 border-0 shadow-sm">
+                        <div class="card glass-subcard mb-3 border-0 shadow-sm">
                             <div class="card-body p-3">
                                 <h6 class="text-secondary fw-bold mb-3 small">1. ESTRUCTURA BASE</h6>
                                 <div class="row g-2">
                                     <div class="col-sm-4 col-12">
                                         <label class="form-label text-muted small mb-1">Cant. Bastones</label>
-                                        <input type="number" id="inputCantidad" name="cantidad_total_bastones" class="form-control" value="" min="1">
+                                        <input type="number" id="inputCantidad" name="cantidad_total_bastones" class="form-control glass-input" value="1" min="1">
                                     </div>
                                     <div class="col-sm-8 col-12">
                                         <label class="form-label text-muted small mb-1">Tamaño Específico</label>
-                                        <select id="selectTamano" class="form-select">
+                                        <select id="selectTamano" class="form-select glass-select">
                                             <option value="" selected disabled>Seleccione medida...</option>
                                             <option value="45">45 cm (Consumo Pequeño)</option>
                                             <option value="50">50 cm (Consumo Pequeño)</option>
@@ -61,7 +57,7 @@
                                     </div>
                                     <div class="col-12 mt-2">
                                         <label class="form-label text-muted small mb-1">Acabado del Bastón</label>
-                                        <select id="selectAcabado" class="form-select">
+                                        <select id="selectAcabado" class="form-select glass-select">
                                             <option value="plata" selected>Plata</option>
                                             <option value="dorado">Dorado</option>
                                         </select>
@@ -70,39 +66,36 @@
                             </div>
                         </div>
 
-
                         {{-- MÓDULO 2: CUERPO (LANA) --}}
-                        <div class="card mb-3 border-0 shadow-sm">
+                        <div class="card glass-subcard mb-3 border-0 shadow-sm">
                             <div class="card-body p-3">
                                 <h6 class="text-secondary fw-bold mb-3 small">2. CUERPO (LANA)</h6>
                                 <div class="mb-2">
                                     <label class="form-label text-muted small mb-1">Cantidad de Colores</label>
-                                    <select id="selectCantidadColores" class="form-select">
+                                    <select id="selectCantidadColores" class="form-select glass-select">
                                         <option value="1" selected>1 Color (Sólido)</option>
                                         <option value="2">2 Colores (50/50)</option>
                                         <option value="3">3 Colores (33/33/33)</option>
                                     </select>
                                 </div>
-                                {{-- Los buscadores de color se inyectan aquí por JS --}}
                                 <div id="contenedorColoresLana" class="d-flex flex-column gap-2 mt-2"></div>
                             </div>
                         </div>
 
-
                         {{-- MÓDULO 3: CORTINAS --}}
-                        <div class="card mb-3 border-0 shadow-sm">
+                        <div class="card glass-subcard mb-3 border-0 shadow-sm">
                             <div class="card-body p-3">
                                 <h6 class="text-secondary fw-bold mb-3 small">3. CORTINAS (OPCIONALES)</h6>
 
                                 {{-- Cortina de Lana --}}
-                                <div class="mb-3 border rounded p-3 bg-white">
+                                <div class="border glass-border rounded p-3 mb-3">
                                     <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" id="swCortinaLana">
-                                        <label class="form-check-label fw-bold text-dark" for="swCortinaLana">Incluir Cortina de Lana</label>
+                                        <input class="form-check-input glass-switch" type="checkbox" id="swCortinaLana">
+                                        <label class="form-check-label fw-bold text-white" for="swCortinaLana">Incluir Cortina de Lana</label>
                                     </div>
                                     <div id="cajaCortinaLana" class="mt-2 d-none">
                                         <label class="form-label text-muted small mb-1">Cantidad de Colores (Lana)</label>
-                                        <select id="selectCantCortinaLana" class="form-select form-select-sm mb-2">
+                                        <select id="selectCantCortinaLana" class="form-select glass-select form-select-sm mb-2">
                                             <option value="1" selected>1 Color</option>
                                             <option value="2">2 Colores</option>
                                             <option value="3">3 Colores</option>
@@ -112,14 +105,14 @@
                                 </div>
 
                                 {{-- Cortina de Fiesta --}}
-                                <div class="border rounded p-3 bg-white">
+                                <div class="border glass-border rounded p-3">
                                     <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" id="swCortinaFiesta">
-                                        <label class="form-check-label fw-bold text-dark" for="swCortinaFiesta">Incluir Cortinas de Fiesta</label>
+                                        <input class="form-check-input glass-switch" type="checkbox" id="swCortinaFiesta">
+                                        <label class="form-check-label fw-bold text-white" for="swCortinaFiesta">Incluir Cortinas de Fiesta</label>
                                     </div>
                                     <div id="cajaCortinaFiesta" class="mt-2 d-none">
                                         <label class="form-label text-muted small mb-1">Cantidad de Colores (Fiesta)</label>
-                                        <select id="selectCantCortinaFiesta" class="form-select form-select-sm mb-2">
+                                        <select id="selectCantCortinaFiesta" class="form-select glass-select form-select-sm mb-2">
                                             <option value="1" selected>1 Color</option>
                                             <option value="2">2 Colores</option>
                                             <option value="3">3 Colores</option>
@@ -131,36 +124,33 @@
                             </div>
                         </div>
 
-
                         {{-- MÓDULO 4: DECORACIÓN Y APLIQUES --}}
-                        <div class="card mb-3 border-0 shadow-sm">
+                        <div class="card glass-subcard mb-3 border-0 shadow-sm">
                             <div class="card-body p-3">
                                 <h6 class="text-secondary fw-bold mb-3 small">4. DECORACIÓN Y APLIQUES</h6>
 
-                                <p class="text-muted small fw-bold border-bottom pb-1 mb-2">Lazos (Inventario)</p>
+                                <p class="text-muted small fw-bold border-bottom glass-border pb-1 mb-2">Lazos (Inventario)</p>
 
-                                {{-- Lazo Simple --}}
-                                <div class="border rounded p-2 mb-2 bg-light">
+                                <div class="border glass-border rounded p-2 mb-2">
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="swLazoSimple">
-                                        <label class="form-check-label fw-bold text-dark" for="swLazoSimple">Lazo Simple (1.5m)</label>
+                                        <input class="form-check-input glass-switch" type="checkbox" id="swLazoSimple">
+                                        <label class="form-check-label fw-bold text-white" for="swLazoSimple">Lazo Simple (1.5m)</label>
                                     </div>
                                     <div id="cajaLazoSimple" class="mt-2 d-none">
-                                        <select class="form-select select2-ajax-cintas" name="cinta_lazo_simple">
+                                        <select class="form-select glass-select select2-ajax-cintas" name="cinta_lazo_simple">
                                             <option value="" selected disabled>Buscar color de cinta...</option>
                                         </select>
                                     </div>
                                 </div>  
 
-                                {{-- Flores --}}
-                                <div class="border rounded p-2 mb-2 bg-light">
+                                <div class="border glass-border rounded p-2 mb-2">
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="swLazoFlor">
-                                        <label class="form-check-label fw-bold text-dark" for="swLazoFlor">Flores (1.0m c/u)</label>
+                                        <input class="form-check-input glass-switch" type="checkbox" id="swLazoFlor">
+                                        <label class="form-check-label fw-bold text-white" for="swLazoFlor">Flores (1.0m c/u)</label>
                                     </div>
                                     <div id="cajaLazoFlor" class="mt-2 d-none">
                                         <label class="form-label text-muted small mb-1">Cantidad de Flores</label>
-                                        <select id="selectCantFlores" class="form-select form-select-sm mb-2">
+                                        <select id="selectCantFlores" class="form-select glass-select form-select-sm mb-2">
                                             <option value="1" selected>1 Flor</option>
                                             <option value="2">2 Flores</option>
                                             <option value="3">3 Flores</option>
@@ -171,30 +161,28 @@
                                     </div> 
                                 </div> 
 
-                                {{-- Lazo con Nombre --}}
-                                <div class="border rounded p-2 mb-2 bg-light">
+                                <div class="border glass-border rounded p-2 mb-2">
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="swLazoNombre">
-                                        <label class="form-check-label fw-bold text-dark" for="swLazoNombre">Lazo c/ Nombre (1.0m + $0.70)</label>
+                                        <input class="form-check-input glass-switch" type="checkbox" id="swLazoNombre">
+                                        <label class="form-check-label fw-bold text-white" for="swLazoNombre">Lazo c/ Nombre (1.0m + $0.70)</label>
                                     </div>
                                     <div id="cajaLazoNombre" class="mt-2 d-none">
-                                        <select class="form-select select2-ajax-cintas" name="cinta_lazo_nombre">
+                                        <select class="form-select glass-select select2-ajax-cintas" name="cinta_lazo_nombre">
                                             <option value="" selected disabled>Buscar color de cinta...</option>
                                         </select>
                                     </div>
                                 </div> 
 
-                                <p class="text-muted small fw-bold border-bottom pb-1 mb-2 mt-3">Detalles Manuales (Solo Cotización)</p>
+                                <p class="text-muted small fw-bold border-bottom glass-border pb-1 mb-2 mt-3">Detalles Manuales (Solo Cotización)</p>
 
-                                {{-- Apliques --}}
-                                <div class="border rounded p-2 mb-2 bg-white">
+                                <div class="border glass-border rounded p-2 mb-2">
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="swApliques">
-                                        <label class="form-check-label fw-bold text-dark" for="swApliques">Incluir Apliques ($0.50 c/u)</label>
+                                        <input class="form-check-input glass-switch" type="checkbox" id="swApliques">
+                                        <label class="form-check-label fw-bold text-white" for="swApliques">Incluir Apliques ($0.50 c/u)</label>
                                     </div>
                                     <div id="cajaApliques" class="mt-2 d-none">
                                         <label class="form-label text-muted small mb-0">Cantidad de apliques por bastón</label>
-                                        <input type="number" class="form-control form-control-sm w-50" id="cantApliques" value="0" min="1">
+                                        <input type="number" class="form-control glass-input form-control-sm w-50" id="cantApliques" value="0" min="1">
                                     </div>
                                 </div>  
 
@@ -202,26 +190,26 @@
                         </div>  
 
                         {{-- MÓDULO 5: DISEÑOS PERSONALIZADOS --}}
-                        <div class="card mb-3 border-0 shadow-sm border-warning border-opacity-25">
+                        <div class="card glass-subcard mb-3 border-0 shadow-sm">
                             <div class="card-body p-3">
                                 <h6 class="text-secondary fw-bold mb-3 small">5. DISEÑOS PERSONALIZADOS (OPCIONAL)</h6>
 
-                                <div class="border rounded p-3 bg-white">
+                                <div class="border glass-border rounded p-3">
                                     <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" id="swDisenoPersonalizado">
-                                        <label class="form-check-label fw-bold text-dark" for="swDisenoPersonalizado">
-                                            <i class="fa-solid text-warning"></i> Incluir Diseño Especial en Lana
+                                        <input class="form-check-input glass-switch" type="checkbox" id="swDisenoPersonalizado">
+                                        <label class="form-check-label fw-bold text-white" for="swDisenoPersonalizado">
+                                            <i class="fa-solid"></i> Incluir Diseño Especial en Lana
                                         </label>
                                     </div>
 
                                     <div id="cajaDisenoPersonalizado" class="mt-3 d-none">
                                         <label class="form-label text-muted small mb-1">Nivel de Complejidad (Mano de Obra)</label>
-                                        <select class="form-select form-select-sm" id="selectNivelDiseno" name="tarifa_diseno">
+                                        <select class="form-select glass-select form-select-sm" id="selectNivelDiseno" name="tarifa_diseno">
                                             <option value="1.50" selected>Básico ($1.50)</option>
                                             <option value="2.00">Intermedio ($2.00)</option>
                                             <option value="3.00">Premium ($3.00)</option>
                                         </select>
-                                        <div class="form-text mt-2" style="font-size: 0.75rem; color: #64748b;">
+                                        <div class="form-text mt-2 text-muted" style="font-size: 0.75rem;">
                                             <i class="fa-solid fa-circle-info"></i> Este valor se sumará como costo directo al precio base de cada bastón cotizado.
                                         </div>
                                     </div>
@@ -234,36 +222,34 @@
             </div>
         </div>
 
-
         {{-- ======================================
              COLUMNA DERECHA — VISTA PREVIA
         ====================================== --}}
         <div class="col-lg-7">
             
-            {{-- Contenedor envolvente que mantiene ambas tarjetas juntas y sticky en desktop --}}
             <div class="vista-previa-container">
-                {{-- Se removió sticky-top del HTML y se movió al CSS con media query >= lg --}}
-                <div class="card shadow-sm border-dark mb-3 card-vista-previa">
-                    <div class="card-header bg-dark text-warning fw-bold py-3 d-flex justify-content-between align-items-center">
-                        <span><i class="fa-solid fa-boxes-stacked"></i> Vista Previa: Impacto en Inventario</span>
-                        <span id="lblResumenBastones" class="badge bg-warning text-dark">0 Bastones</span>
+                
+                <div class="card glass-card shadow-sm mb-3 card-vista-previa">
+                    <div class="card-header glass-card-header fw-bold py-3 d-flex justify-content-between align-items-center">
+                        <span class="text-white"><i class="fa-solid fa-boxes-stacked"></i> Vista Previa: Impacto en Inventario</span>
+                        <span id="lblResumenBastones" class="badge glass-badge-warning">0 Bastones</span>
                     </div>
+                    
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-hover table-borderless align-middle mb-0" id="tablaImpacto">
-                                <thead class="table-light border-bottom">
+                            <table class="table glass-table align-middle mb-0" id="tablaImpacto">
+                                <thead>
                                     <tr>
-                                        {{-- En móvil la col "Cálculo Interno" se oculta via CSS --}}
-                                        <th class="text-secondary small fw-bold" style="width: 35%;">Material</th>
-                                        <th class="text-secondary small fw-bold" style="width: 30%;">Cálculo Interno</th>
-                                        <th class="text-secondary small fw-bold" style="width: 15%;">Subtotal</th>
-                                        <th class="text-secondary small fw-bold text-end" style="width: 20%;">A Descontar</th>
+                                        <th style="width: 35%;">Material</th>
+                                        <th style="width: 30%;">Cálculo Interno</th>
+                                        <th style="width: 15%;">Subtotal</th>
+                                        <th class="text-end" style="width: 20%;">A Descontar</th>
                                     </tr>
                                 </thead>
                                 <tbody id="cuerpoTablaImpacto">
                                     <tr>
                                         <td colspan="4" class="text-center text-muted py-5">
-                                            <i class="fa-solid fa-calculator fa-2x mb-2 text-light"></i><br>
+                                            <i class="fa-solid fa-calculator fa-2x mb-2" style="opacity: 0.5;"></i><br>
                                             Esperando configuración del pedido...
                                         </td>
                                     </tr>
@@ -273,161 +259,109 @@
                     </div>
                 </div>
 
-                <div class="card shadow-sm border-success border-opacity-25 card-costos-totales">
-                    <div class="card-body bg-light">
-                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                <div class="card glass-card shadow-sm card-costos-totales">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center border-bottom glass-border pb-2 mb-2">
                             <span class="text-muted fw-bold">Costo Base Materiales:</span>
-                        <span class="fs-5 fw-bold text-dark" id="txtCostoMateriales">$ 0.00</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
-                        <span class="text-muted fw-bold">Extras:</span>
-                        <span class="fs-5 fw-bold text-dark" id="txtCostoManoObra">$ 0.00</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="text-secondary fw-bold">Mano de Obra(Ganancia Base):</span>
-                        <span class="fs-5 fw-bold text-dark" id="txtGananciaFija">$ 0.00</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                        <span class="text-success fw-bold fs-5">COSTO TOTAL PRODUCCIÓN:</span>
-                        <span class="fs-3 fw-bold text-success" id="txtCostoTotal">$ 0.00</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center mt-1">
-                        <span class="text-muted small">Costo sugerido por unidad:</span>
-                        <span class="fw-bold text-secondary" id="txtCostoUnitario">$ 0.00 c/u</span>
-                    </div>
-                    
-                    <button type="button" class="btn btn-success w-100 fw-bold mt-4 py-2 shadow-sm" id="btnGuardarCotizacion" disabled>
-                        <i class="fa-solid fa-floppy-disk"></i> Confirmar y Guardar Pedido
-                    </button>
-                </div>
-            </div>
-
-            {{-- ==========================================
-                 PANEL DE EXPORTACIÓN
-                 ✅ Restilizado con el mismo lenguaje visual que
-                 modalValidacion: icono circular sobre fondo suave,
-                 tarjeta rounded-4, sombra sutil y tipografía 13-15px.
-                 Antes usaba un badge genérico de Bootstrap y bordes
-                 más "de librería"; ahora es consistente con el resto
-                 del cotizador.
-            ========================================== --}}
-            <div id="panelExportar" class="panel-exportar mt-4 d-none">
-                <div class="card border-0 rounded-4" style="box-shadow: 0 8px 32px rgba(0,0,0,0.08); background: #ffffff;">
-                    <div class="card-body p-4">
-
-                        {{-- Encabezado: icono circular + texto, igual patrón que modalValidacion --}}
-                        <div class="d-flex align-items-center gap-3 mb-4">
-                            <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
-                                 style="width:44px; height:44px; min-width:44px; background:#EAF3DE;">
-                                <i class="fa-solid fa-check" style="color:#3B6D11; font-size:17px;"></i>
-                            </div>
-                            <div>
-                                <p class="fw-semibold text-dark mb-0" style="font-size:15px;">
-                                    Pedido guardado &mdash; #<span id="txtNumeroCotizacionExport">---</span>
-                                </p>
-                                <p class="text-muted mb-0" style="font-size:13px;">¿Qué deseas hacer ahora?</p>
-                            </div>
+                            <span class="fs-5 fw-bold text-white" id="txtCostoMateriales">$ 0.00</span>
                         </div>
+                        <div class="d-flex justify-content-between align-items-center border-bottom glass-border pb-2 mb-2">
+                            <span class="text-muted fw-bold">Extras:</span>
+                            <span class="fs-5 fw-bold text-white" id="txtCostoManoObra">$ 0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-secondary fw-bold">Mano de Obra (Ganancia Base):</span>
+                            <span class="fs-5 fw-bold text-white" id="txtGananciaFija">$ 0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="fw-bold fs-5 text-success">COSTO TOTAL PRODUCCIÓN:</span>
+                            <span class="fs-3 fw-bold text-success" id="txtCostoTotal">$ 0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <span class="text-muted small">Costo sugerido por unidad:</span>
+                            <span class="fw-bold text-secondary" id="txtCostoUnitario">$ 0.00 c/u</span>
+                        </div>
+                        
+                        <button type="button" class="btn glass-btn-primary w-100 fw-bold mt-4 py-2" id="btnGuardarCotizacion" disabled>
+                            <i class="fa-solid fa-floppy-disk"></i> Confirmar y Guardar Pedido
+                        </button>
+                    </div>
+                </div>
 
-                        <div class="d-grid gap-2">
-                            {{-- Fila 1: Botones PDF --}}
-                            <div class="row g-2">
-                                <div class="col-12 col-md-6">
-                                    <a href="#" target="_blank" class="btn btn-panel-exportar btn-panel-danger w-100" id="btnPdfReceta">
-                                        <i class="fa-solid fa-clipboard-list me-2"></i> Receta Bodega
-                                    </a>
+                {{-- PANEL DE EXPORTACIÓN --}}
+                <div id="panelExportar" class="panel-exportar mt-4 d-none">
+                    <div class="card glass-card border-0 rounded-4">
+                        <div class="card-body p-4">
+
+                            <div class="d-flex align-items-center gap-3 mb-4">
+                                <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
+                                     style="width:44px; height:44px; min-width:44px; background: rgba(74, 222, 128, 0.15); border: 1px solid rgba(74, 222, 128, 0.3);">
+                                    <i class="fa-solid fa-check" style="font-size:17px; color: #4ade80;"></i>
                                 </div>
-                                <div class="col-12 col-md-6">
-                                    <a href="#" target="_blank" class="btn btn-panel-exportar btn-panel-primary w-100" id="btnPdfNota">
-                                        <i class="fa-solid fa-file-invoice-dollar me-2"></i> Nota de Venta
-                                    </a>
+                                <div>
+                                    <p class="fw-semibold text-white mb-0" style="font-size:15px;">
+                                        Pedido guardado &mdash; #<span id="txtNumeroCotizacionExport">---</span>
+                                    </p>
+                                    <p class="text-muted mb-0" style="font-size:13px;">¿Qué deseas hacer ahora?</p>
                                 </div>
                             </div>
 
-                            {{-- Fila 2: Botón de Correo --}}
-                            <button type="button" class="btn btn-panel-exportar btn-panel-info w-100" data-bs-toggle="modal" data-bs-target="#modalEnviarCorreo">
-                                <i class="fa-solid fa-paper-plane me-2"></i> Enviar Nota por Correo
-                            </button>
+                            <div class="d-grid gap-2">
+                                <div class="row g-2">
+                                    <div class="col-12 col-md-6">
+                                        <a href="#" target="_blank" class="btn glass-btn-action w-100 py-2" id="btnPdfReceta" style="color: #f87171 !important;">
+                                            <i class="fa-solid fa-clipboard-list me-2"></i> Receta Bodega
+                                        </a>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <a href="#" target="_blank" class="btn glass-btn-action w-100 py-2" id="btnPdfNota" style="color: var(--color-fucsia) !important;">
+                                            <i class="fa-solid fa-file-invoice-dollar me-2"></i> Nota de Venta
+                                        </a>
+                                    </div>
+                                </div>
 
-                            <hr class="text-muted opacity-25 my-2">
+                                <button type="button" class="btn glass-btn-primary w-100 py-2" data-bs-toggle="modal" data-bs-target="#modalEnviarCorreo">
+                                    <i class="fa-solid fa-paper-plane me-2"></i> Enviar Nota por Correo
+                                </button>
 
-                            {{-- Fila 3: Botón para Reiniciar --}}
-                            <button type="button" class="btn btn-panel-exportar btn-panel-neutral w-100" id="btnCerrarFlujoExportacion">
-                                <i class="fa-solid fa-rotate-right me-2"></i> Cerrar y Crear Nuevo Pedido
-                            </button>
+                                <hr class="glass-border opacity-25 my-2">
+
+                                <button type="button" class="btn glass-btn-action text-secondary w-100 py-2" id="btnCerrarFlujoExportacion">
+                                    <i class="fa-solid fa-rotate-right me-2"></i> Cerrar y Crear Nuevo Pedido
+                                </button>
+                            </div>
+
                         </div>
-
                     </div>
                 </div>
-            </div>
-
-            {{-- ==========================================
-                 ESTILOS DEL PANEL DE EXPORTACIÓN
-                 (mismos colores/tono que ya usas en mostrarAlerta()
-                 del JS: warning #BA7517/#FAEEDA, danger #A32D2D/#FCEBEB,
-                 info #185FA5/#E6F1FB, success #3B6D11/#EAF3DE)
-            ========================================== --}}
-            <style>
-                .btn-panel-exportar {
-                    border: none;
-                    border-radius: 10px;
-                    padding: 11px 14px;
-                    font-size: 13px;
-                    font-weight: 600;
-                    text-align: center;
-                    transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
-                    box-shadow: 0 2px 8px rgba(0,0,0,.04);
-                }
-                .btn-panel-exportar:hover {
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 12px rgba(0,0,0,.08);
-                }
-                .btn-panel-danger   { background: #FCEBEB; color: #A32D2D; }
-                .btn-panel-danger:hover   { background: #FADCDC; color: #A32D2D; }
-
-                .btn-panel-primary  { background: #E6F1FB; color: #185FA5; }
-                .btn-panel-primary:hover  { background: #D5E8F9; color: #185FA5; }
-
-                .btn-panel-info     { background: #E6F1FB; color: #185FA5; }
-                .btn-panel-info:hover     { background: #D5E8F9; color: #185FA5; }
-
-                .btn-panel-neutral  { background: #F4F4F5; color: #52525B; }
-                .btn-panel-neutral:hover  { background: #E9E9EC; color: #3F3F46; }
-
-                .panel-exportar { animation: panelExportarFadeIn .25s ease; }
-                @keyframes panelExportarFadeIn {
-                    from { opacity: 0; transform: translateY(6px); }
-                    to   { opacity: 1; transform: translateY(0); }
-                }
-            </style>
 
             </div>{{-- /vista-previa-container --}}
 
         </div>
-
-
     </div>{{-- /row --}}
 
     {{-- ==========================================
-         MODAL: ENVIAR COTIZACIÓN POR CORREO    
+         MODALES CON ESTILO GLASSMORPHISM
     ========================================== --}}
+
+    {{-- MODAL: ENVIAR COTIZACIÓN POR CORREO --}}
     <div class="modal fade" id="modalEnviarCorreo" tabindex="-1" aria-labelledby="modalCorreoLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title fw-bold" id="modalCorreoLabel"><i class="fa-solid fa-envelope"></i> Enviar Nota de Venta</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content glass-card" style="background: rgba(38, 18, 56, 0.96) !important;">
+                <div class="modal-header glass-card-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold text-white" id="modalCorreoLabel"><i class="fa-solid fa-envelope" style="color: var(--color-fucsia);"></i> Enviar Nota de Venta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
                     <p class="text-muted small mb-3">Se adjuntará un PDF con la nota de venta al cliente. (Los detalles internos de producción no serán enviados).</p>
                     <div class="mb-3">
-                        <label for="emailCliente" class="form-label fw-bold">Correo electrónico del cliente</label>
-                        <input type="email" class="form-control" id="emailCliente" placeholder="ejemplo@correo.com">
+                        <label for="emailCliente" class="form-label text-muted small fw-bold">Correo electrónico del cliente</label>
+                        <input type="email" class="form-control glass-input" id="emailCliente" placeholder="ejemplo@correo.com">
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary text-white" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-info text-white fw-bold" id="btnConfirmarEnvio">
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn glass-btn-action px-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn glass-btn-primary fw-bold px-4" id="btnConfirmarEnvio">
                         <i class="fa-solid fa-paper-plane"></i> Enviar Ahora
                     </button>
                 </div>
@@ -435,30 +369,27 @@
         </div>
     </div>
 
-
-    {{-- ==========================================
-     MODAL: DATOS DEL CLIENTE (PRE-GUARDADO)    
-    ========================================== --}}
+    {{-- MODAL: DATOS DEL CLIENTE (PRE-GUARDADO) --}}
     <div class="modal fade" id="modalDatosCliente" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
-            <div class="modal-content border-0 rounded-4" style="box-shadow: 0 8px 32px rgba(0,0,0,0.10);">
-                <div class="modal-header bg-light border-0 rounded-top-4 pt-4 px-4">
-                    <h6 class="modal-title fw-bold text-dark"><i class="fa-solid fa-user-tag text-info me-2"></i> Finalizar Pedido</h6>
+            <div class="modal-content glass-card" style="background: rgba(38, 18, 56, 0.96) !important;">
+                <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
+                    <h6 class="modal-title fw-bold text-white"><i class="fa-solid fa-user-tag me-2" style="color: var(--color-fucsia);"></i> Finalizar Pedido</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body px-4 py-3">
                     <p class="text-muted small mb-4">Ingresa los datos del cliente para asociarlos a la nota de venta.</p>
                     
                     <div class="mb-3">
-                        <label class="form-label fw-semibold" style="font-size: 14px;">Nombre / Institución</label>
-                        <input type="text" class="form-control" id="inputNombreCliente" placeholder="Ej. Unidad Educativa Sucre" required>
+                        <label class="form-label text-muted small fw-bold mb-1">Nombre / Institución</label>
+                        <input type="text" class="form-control glass-input" id="inputNombreCliente" placeholder="Ej. Unidad Educativa Sucre" required>
                     </div>
                     <div class="mb-4">
-                        <label class="form-label fw-semibold" style="font-size: 14px;">Correo Electrónico (Opcional)</label>
-                        <input type="email" class="form-control" id="inputCorreoCliente" placeholder="ejemplo@correo.com">
+                        <label class="form-label text-muted small fw-bold mb-1">Correo Electrónico (Opcional)</label>
+                        <input type="email" class="form-control glass-input" id="inputCorreoCliente" placeholder="ejemplo@correo.com">
                     </div>
 
-                    <button type="button" class="btn btn-success w-100 fw-bold rounded-3 py-2 shadow-sm" id="btnConfirmarPedidoModal">
+                    <button type="button" class="btn glass-btn-primary w-100 fw-bold rounded-3 py-2 shadow-sm" id="btnConfirmarPedidoModal">
                         <i class="fa-solid fa-floppy-disk me-2"></i> Confirmar y Guardar Pedido
                     </button>
                 </div>
@@ -466,20 +397,18 @@
         </div>
     </div>
 
-    {{-- ==========================================
-         MODAL DE ÉXITO
-    ========================================== --}}
+    {{-- MODAL DE ÉXITO --}}
     <div class="modal fade" id="modalExito" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 360px;">
-            <div class="modal-content border-0 rounded-4" style="box-shadow: 0 8px 32px rgba(0,0,0,0.10);">
+            <div class="modal-content glass-card" style="background: rgba(38, 18, 56, 0.96) !important;">
                 <div class="modal-body text-center px-4 py-4">
                     <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
-                        style="width:40px; height:40px; background:#EAF3DE;">
-                        <i class="fa-solid fa-check" style="color:#3B6D11; font-size:16px;"></i>
+                         style="width:40px; height:40px; background: rgba(74, 222, 128, 0.15); border: 1px solid rgba(74, 222, 128, 0.3);">
+                        <i class="fa-solid fa-check" style="font-size:16px; color: #4ade80;"></i>
                     </div>
-                    <p class="fw-semibold text-dark mb-1" style="font-size:15px;">Pedido guardado</p>
+                    <p class="fw-semibold text-white mb-1" style="font-size:15px;">Pedido guardado</p>
                     <p class="text-muted mb-0" style="font-size:13px; line-height:1.6;">
-                        El pedido <strong class="text-dark">#<span id="modalNumCotizacion"></span></strong>
+                        El pedido <strong class="text-white">#<span id="modalNumCotizacion"></span></strong>
                         fue registrado exitosamente.
                     </p>
                 </div>
@@ -487,97 +416,80 @@
         </div>
     </div>
 
-    {{-- MODAL DE VALIDACIÓN --}}
+    {{-- MODAL DE VALIDACIÓN (El JS inyecta colores, pero este es su HTML base) --}}
     <div class="modal fade" id="modalValidacion" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 360px;">
-            <div class="modal-content border-0 rounded-4" style="box-shadow: 0 8px 32px rgba(0,0,0,0.10);">
-
+            <div class="modal-content glass-card" style="background: rgba(38, 18, 56, 0.96) !important;">
                 <div class="px-4 pt-4 pb-0">
                     <div class="d-flex align-items-start gap-3">
                         <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
-                            style="width:36px; height:36px; min-width:36px; background:#FAEEDA; margin-top:2px;">
-                            <i class="fa-solid fa-triangle-exclamation" style="color:#BA7517; font-size:15px;"></i>
+                             style="width:36px; height:36px; min-width:36px; margin-top:2px;">
+                            <i class="fa-solid fa-triangle-exclamation" style="font-size:15px;"></i>
                         </div>
                         <div>
-                            <p class="fw-semibold text-dark mb-1" id="modalValidacionTitulo"
-                            style="font-size:15px; line-height:1.3;">Faltan campos obligatorios</p>
+                            <p class="fw-semibold mb-1 text-white" id="modalValidacionTitulo"
+                               style="font-size:15px; line-height:1.3;">Faltan campos obligatorios</p>
                             <p class="text-muted mb-0" style="font-size:13px;">
                                 Completa lo siguiente antes de guardar
                             </p>
                         </div>
                     </div>
                 </div>
-
                 <div class="px-4 pt-3 pb-0">
                     <ul id="listaValidacion" class="list-unstyled mb-0 d-flex flex-column gap-2"></ul>
                 </div>
-
                 <div class="px-4 pt-3 pb-4">
-                    <button type="button"
-                            class="btn w-100 rounded-3"
-                            data-bs-dismiss="modal"
-                            style="font-size:13px; font-weight:500; padding:9px;
-                                background:#FAEEDA; color:#854F0B; border:none;">
-                        <i class="fa-solid fa-pen-to-square me-2" style="font-size:12px;"></i>
-                        Entendido, llenar los campos.
-                    </button>
+                    <button type="button" class="btn w-100 rounded-3" data-bs-dismiss="modal"></button>
                 </div>
-
             </div>
         </div>
     </div>
 
-    {{-- ==========================================
-         MODAL: CORREO ENVIADO CON ÉXITO
-    ========================================== --}}
+    {{-- MODAL: CORREO ENVIADO CON ÉXITO --}}
     <div class="modal fade" id="modalCorreoExito" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 360px;">
-            <div class="modal-content border-0 rounded-4" style="box-shadow: 0 8px 32px rgba(0,0,0,0.10);">
+            <div class="modal-content glass-card" style="background: rgba(38, 18, 56, 0.96) !important;">
                 <div class="modal-body text-center px-4 py-4">
                     <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
-                        style="width:40px; height:40px; background:#E6F1FB;">
-                        <i class="fa-solid fa-paper-plane" style="color:#185FA5; font-size:15px;"></i>
+                         style="width:40px; height:40px; background: rgba(232, 121, 249, 0.15); border: 1px solid rgba(232, 121, 249, 0.3);">
+                        <i class="fa-solid fa-paper-plane" style="font-size:15px; color: var(--color-fucsia);"></i>
                     </div>
-                    <p class="fw-semibold text-dark mb-1" style="font-size:15px;">Correo enviado</p>
+                    <p class="fw-semibold text-white mb-1" style="font-size:15px;">Correo enviado</p>
                     <p class="text-muted mb-4" style="font-size:13px; line-height:1.6;">
                         La nota de venta fue despachada correctamente al cliente.
                     </p>
-                    <button type="button"
-                            class="btn w-100 rounded-3"
-                            data-bs-dismiss="modal"
-                            style="font-size:13px; font-weight:600; padding:9px;
-                                background:#E6F1FB; color:#185FA5; border:none;">
-                        <i class="fa-solid fa-check me-2" style="font-size:12px;"></i>
-                        Entendido
+                    <button type="button" class="btn glass-btn-action w-100 rounded-3 py-2" data-bs-dismiss="modal" style="color: var(--color-fucsia) !important;">
+                        <i class="fa-solid fa-check me-2"></i> Entendido
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- ==========================================
-         DEPENDENCIAS JS Y PUENTE DE DATOS
-    ========================================== --}}
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+</div>{{-- /dark-glass-cotizador --}}
 
-    {{-- 1. Inventario inyectado de forma silenciosa (Tu solución) --}}
-    <script type="application/json" id="datos-inventario">
-        @json($insumos)
-    </script>
+{{-- ==========================================
+     DEPENDENCIAS JS Y PUENTE DE DATOS
+========================================== --}}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    {{-- 2. El "Puente" solo para las rutas --}}
-    <script>
-        window.KardexConfig = {
-            rutas: {
-                buscarLanas: "{{ route('lanas.buscar') }}",
-                buscarCortinas: "{{ route('cortinas.buscar') }}",
-                buscarCintas: "{{ route('cintas.buscar') }}"
-            }
-        };
-    </script>
+<script type="application/json" id="datos-inventario">
+    @json($insumos)
+</script>
 
-    {{-- 3. Llamamos a tu JS principal usando Vite --}}
+<script>
+    window.KardexConfig = {
+        rutas: {
+            buscarLanas: "{{ route('lanas.buscar') }}",
+            buscarCortinas: "{{ route('cortinas.buscar') }}",
+            buscarCintas: "{{ route('cintas.buscar') }}"
+        }
+    };
+</script>
+
+@push('js')
     @vite(['resources/js/cotizador.js'])
+@endpush
 
 @endsection

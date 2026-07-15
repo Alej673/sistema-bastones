@@ -1,97 +1,290 @@
-/* Limita el dropdown de Select2 para mostrar ~4 opciones */
+/* ============================================
+   ESTILOS: DARK NEUMORPHIC GLASS — COTIZADOR
+   ============================================ */
+
+/* 1. CONFIGURACIÓN BASE Y PARCHE DE FONDO */
+body, main, .content-wrapper, .container-fluid {
+    background-color: #1b1027 !important;
+}
+
+.dark-glass-cotizador {
+    --color-morado: #a855f7;
+    --color-morado-claro: #c084fc;
+    --color-morado-oscuro: #5b21b6;
+    --color-fucsia: #e879f9;
+    --color-fucsia-oscuro: #86198f;
+    --color-violeta-boton: #7c3aed;
+    --color-texto: #f5eaff;
+    --color-texto-mutado: #b9a8c9;
+    --color-borde: rgba(232, 121, 249, 0.14);
+
+    color: var(--color-texto);
+    min-height: 100vh;
+    padding: 20px;
+    background: linear-gradient(145deg, #1e1030 0%, #2c1548 50%, #1b0f28 100%);
+    border-radius: 16px;
+}
+
+.dark-glass-cotizador h2, .dark-glass-cotizador .h3, .dark-glass-cotizador h6 {
+    color: var(--color-texto);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+}
+.dark-glass-cotizador h6.text-secondary { color: var(--color-morado-claro) !important; }
+
+/* Scrollbars temáticos */
+.dark-glass-cotizador ::-webkit-scrollbar { width: 8px; height: 8px; }
+.dark-glass-cotizador ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 8px; }
+.dark-glass-cotizador ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--color-morado), var(--color-fucsia-oscuro));
+    border-radius: 8px;
+}
+
+/* 2. TARJETAS PRINCIPALES (Contenedores Mayores) */
+/* .dark-glass-cotizador > .row > .col-lg-5 > .card,
+.dark-glass-cotizador > .row > .col-lg-7 > .card-vista-previa {
+    background: rgba(44, 21, 72, 0.4) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid var(--color-borde) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.06) !important;
+} */
+
+/* 3. TARJETAS ANIDADAS (Módulos internos del formulario) */
+/* Evitamos el backdrop-filter anidado para que no se multiplique el desenfoque ni afecte el rendimiento */
+.dark-glass-cotizador .card .card {
+    background: rgba(20, 10, 32, 0.4) !important;
+    backdrop-filter: none !important; 
+    -webkit-backdrop-filter: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.03) !important;
+    border-radius: 12px !important;
+    box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3) !important; /* Leve hundimiento neumórfico */
+}
+
+.dark-glass-cotizador .card-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--color-borde) !important;
+    color: var(--color-morado-claro) !important;
+}
+.dark-glass-cotizador .card-body { background: transparent !important; }
+
+/* Cajas internas forzadas a oscuras */
+.dark-glass-cotizador .bg-white,
+.dark-glass-cotizador .bg-light {
+    background: rgba(20, 10, 32, 0.35) !important;
+}
+
+.dark-glass-cotizador .text-dark { color: #ffffff !important; }
+.dark-glass-cotizador .text-muted,
+.dark-glass-cotizador .text-secondary { color: var(--color-texto-mutado) !important; }
+
+/* 4. INPUTS Y SELECTS (CORRECCIÓN DE LOS TRIÁNGULOS GIGANTES) */
+.dark-glass-cotizador .form-control,
+.dark-glass-cotizador .form-select {
+    background-color: rgba(20, 10, 32, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    color: var(--color-texto) !important;
+    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.65), inset -2px -2px 6px rgba(255, 255, 255, 0.03) !important;
+    border-radius: 8px;
+}
+.dark-glass-cotizador .form-control::placeholder { color: rgba(255, 255, 255, 0.28) !important; }
+.dark-glass-cotizador .form-control:focus,
+.dark-glass-cotizador .form-select:focus {
+    background-color: rgba(28, 14, 42, 0.9) !important;
+    border-color: rgba(232, 121, 249, 0.5) !important;
+    box-shadow: inset 6px 6px 12px rgba(0, 0, 0, 0.75), inset -2px -2px 6px rgba(255, 255, 255, 0.04) !important;
+    outline: none;
+}
+
+/* Parche definitivo para la flecha del Select nativo */
+.dark-glass-cotizador .form-select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%23e879f9' d='M6 8 0 0h12z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.85rem center !important;
+    background-size: 11px 7px !important;
+}
+.dark-glass-cotizador .form-select option {
+    background-color: #1c1030;
+    color: #ffffff;
+}
+
+/* Quitar flechitas nativas numéricas */
+.dark-glass-cotizador input[type="number"]::-webkit-outer-spin-button,
+.dark-glass-cotizador input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0;
+}
+.dark-glass-cotizador input[type="number"] { -moz-appearance: textfield; }
+
+/* 5. SWITCHES (Toggle Buttons) */
+.dark-glass-cotizador .form-check-input {
+    background-color: rgba(20, 10, 32, 0.8) !important;
+    border-color: rgba(232, 121, 249, 0.25) !important;
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5) !important;
+}
+.dark-glass-cotizador .form-switch .form-check-input {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3E%3Ccircle r='3' fill='%23b9a8c9'/%3E%3C/svg%3E") !important;
+}
+.dark-glass-cotizador .form-check-input:checked {
+    background-color: var(--color-fucsia-oscuro) !important;
+    border-color: var(--color-fucsia) !important;
+    box-shadow: 0 0 8px rgba(232, 121, 249, 0.4) !important;
+}
+.dark-glass-cotizador .form-switch .form-check-input:checked {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3E%3Ccircle r='3' fill='%23ffffff'/%3E%3C/svg%3E") !important;
+}
+.dark-glass-cotizador .form-check-label { color: var(--color-texto); }
+
+/* 6. TABLA DE IMPACTO EN INVENTARIO */
+.dark-glass-cotizador .table {
+    color: var(--color-texto) !important;
+    --bs-table-bg: transparent;
+}
+.dark-glass-cotizador thead.table-light,
+.dark-glass-cotizador .table thead {
+    background-color: rgba(30, 12, 48, 0.8) !important;
+}
+.dark-glass-cotizador .table thead th {
+    color: var(--color-texto-mutado) !important;
+    border-bottom: 2px solid var(--color-borde) !important;
+}
+.dark-glass-cotizador .table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+    transition: background-color 0.2s ease;
+}
+.dark-glass-cotizador .table-hover tbody tr:hover {
+    background-color: rgba(232, 121, 249, 0.12) !important;
+}
+.dark-glass-cotizador .table td, .dark-glass-cotizador .table th {
+    border-color: rgba(255,255,255,0.04) !important;
+}
+
+/* 7. BADGES */
+.dark-glass-cotizador .badge.bg-warning {
+    background: rgba(250, 204, 21, 0.18) !important;
+    color: #facc15 !important;
+    border: 1px solid rgba(250, 204, 21, 0.3);
+}
+
+/* 8. BOTONES */
+.dark-glass-cotizador .btn {
+    transition: all 0.2s ease;
+    border-radius: 8px;
+}
+.dark-glass-cotizador .btn-success {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    box-shadow: 4px 4px 10px rgba(0,0,0,0.5), -2px -2px 6px rgba(255,255,255,0.05) !important;
+}
+.dark-glass-cotizador .btn-success:hover:not(:disabled) {
+    box-shadow: 5px 5px 14px rgba(0,0,0,0.55), 0 0 16px rgba(74, 222, 128, 0.35) !important;
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+}
+.dark-glass-cotizador .btn-success:disabled {
+    background: rgba(50, 24, 72, 0.6) !important;
+    border-color: rgba(255,255,255,0.06) !important;
+    box-shadow: none !important;
+    opacity: 0.55;
+}
+
+/* 9. PANEL DE EXPORTACIÓN */
+.dark-glass-cotizador .panel-exportar .card {
+    background: rgba(38, 18, 56, 0.9) !important;
+}
+.dark-glass-cotizador .btn-panel-exportar {
+    border: 1px solid var(--color-borde) !important;
+    box-shadow: 3px 3px 6px rgba(0,0,0,0.4), -1px -1px 4px rgba(255,255,255,0.03) !important;
+}
+.dark-glass-cotizador .btn-panel-exportar:hover {
+    transform: translateY(-1px);
+    box-shadow: 5px 5px 14px rgba(0,0,0,0.5), 0 0 12px rgba(232,121,249,0.25) !important;
+}
+.dark-glass-cotizador .btn-panel-danger   { background: rgba(248,113,113,0.15) !important; color: #fca5a5 !important; }
+.dark-glass-cotizador .btn-panel-primary,
+.dark-glass-cotizador .btn-panel-info     { background: rgba(232,121,249,0.14) !important; color: var(--color-morado-claro) !important; }
+
+/* 10. SELECT2 INTEGRACIÓN */
+.select2-container--bootstrap-5 .select2-selection,
+.select2-container .select2-selection {
+    background-color: rgba(20, 10, 32, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.65), inset -2px -2px 6px rgba(255, 255, 255, 0.03) !important;
+    border-radius: 8px !important;
+}
+.select2-container--bootstrap-5 .select2-selection__rendered,
+.select2-container .select2-selection__rendered {
+    color: #f5eaff !important;
+}
+.select2-container--bootstrap-5 .select2-selection__placeholder {
+    color: rgba(255, 255, 255, 0.35) !important;
+}
+.select2-container--bootstrap-5 .select2-selection__arrow b {
+    border-color: #e879f9 transparent transparent transparent !important;
+}
+
+.select2-dropdown {
+    background-color: rgba(44, 21, 72, 0.75) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(232, 121, 249, 0.25) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.06) !important;
+}
+
+.select2-search--dropdown .select2-search__field {
+    background-color: rgba(20, 10, 32, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #f5eaff !important;
+    border-radius: 6px !important;
+}
+
+.select2-results__options {
+    background: transparent !important;
+}
+
+.select2-results__option--highlighted {
+    background-color: rgba(232, 121, 249, 0.18) !important;
+    color: #ffffff !important;
+}
+.select2-results__option[aria-selected="true"] {
+    background-color: rgba(168, 85, 247, 0.25) !important;
+    color: #c084fc !important;
+}
 .select2-results__options {
     max-height: 160px !important;
     overflow-y: auto;
 }
 
 /* ============================================
-RESPONSIVO — 390px (teléfonos pequeños)
-============================================ */
-
-/* La tabla de impacto tiene 4 columnas — en móvil
-reducimos fuentes y colapsamos columna "Cálculo Interno"
-para que no se desborde horizontalmente             */
+   RESPONSIVO — 390px (Móvil)
+   ============================================ */
 @media (max-width: 575.98px) {
-    
-    /* Ocultar columna "Cálculo Interno" en móvil para ganar espacio */
     #tablaImpacto thead th:nth-child(2),
-    #tablaImpacto tbody td:nth-child(2) {
-        display: none;
-    }
+    #tablaImpacto tbody td:nth-child(2) { display: none; }
+    #tablaImpacto td, #tablaImpacto th { font-size: 0.72rem; padding: 0.35rem 0.4rem; }
+    #tablaImpacto th:nth-child(1), #tablaImpacto td:nth-child(1) { width: 50%; }
+    #tablaImpacto th:nth-child(3), #tablaImpacto td:nth-child(3) { width: 25%; }
+    #tablaImpacto th:nth-child(4), #tablaImpacto td:nth-child(4) { width: 25%; }
     
-    /* Texto más compacto en la tabla */
-    #tablaImpacto td,
-    #tablaImpacto th {
-        font-size: 0.72rem;
-        padding: 0.35rem 0.4rem;
-    }
-    
-    /* Ajuste de anchos para las columnas restantes (3 columnas en móvil) */
-    #tablaImpacto th:nth-child(1),
-    #tablaImpacto td:nth-child(1) { width: 50%; }
-    #tablaImpacto th:nth-child(3),
-    #tablaImpacto td:nth-child(3) { width: 25%; }
-    #tablaImpacto th:nth-child(4),
-    #tablaImpacto td:nth-child(4) { width: 25%; }
-    
-    /* Módulo 1 — fila de Cant/Tamaño: apilar verticalmente */
     #formCotizador .row.g-2 .col-sm-4,
     #formCotizador .row.g-2 .col-sm-8 { width: 100%; }
     
-    /* Textos de estados (Stock/Falta) más compactos */
-    #cuerpoTablaImpacto span {
-        font-size: 0.68rem;
-    }
-    
-    /* Panel de exportar: botones full-width ya están, solo reducir padding */
-    #panelExportar .btn {
-        font-size: 0.82rem;
-        padding: 0.45rem 0.6rem;
-    }
-    
-    /* Encabezado de página */
+    #cuerpoTablaImpacto span { font-size: 0.68rem; }
+    #panelExportar .btn { font-size: 0.82rem; padding: 0.45rem 0.6rem; }
     .h3 { font-size: 1.1rem; }
-    
-    /* Separación entre columna formulario y columna resultado */
     .col-lg-5 { margin-bottom: 1rem; }
 }
 
 /* ============================================
-STICKY-TOP — Solo activo en pantallas >= lg
-En móvil/tablet la tabla NO es sticky para
-evitar que tape la tarjeta de totales.
-============================================ */
-.card-vista-previa {
-    /* Por defecto (móvil): posición normal en el flujo */
-    position: static;
-}
+   STICKY-TOP (Desktop)
+   ============================================ */
+.card-vista-previa { position: static; }
 
 @media (min-width: 992px) {
-    /* Solo en desktop aplicamos el sticky al contenedor envolvente */
-    .vista-previa-container {
-        position: sticky;
-        top: 20px;
-        z-index: 100;
-    }
-    
-    /* La tarjeta de vista previa se comporta normalmente dentro del contenedor sticky */
-    .card-vista-previa {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    /* El body de la tabla crece con scroll interno */
-    .card-vista-previa .card-body {
-        overflow-y: auto;
-        flex: 1;
-        min-height: 0;
-        max-height: calc(100vh - 200px);
-    }
-    
-    /* Tarjeta de costos dentro del contenedor sticky */
-    .card-costos-totales {
-        position: relative;
-        background: white;
-    }
+    .vista-previa-container { position: sticky; top: 20px; z-index: 100; }
+    .card-vista-previa { position: relative; display: flex; flex-direction: column; }
+    .card-vista-previa .card-body { overflow-y: auto; flex: 1; min-height: 0; max-height: calc(100vh - 200px); }
+    .card-costos-totales { position: relative; background: transparent; }
 }
