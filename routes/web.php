@@ -1,47 +1,64 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\InsumoController;
 use App\Http\Controllers\CotizadorController;
+use App\Http\Controllers\VentasController;
 
-// Si alguien entra a la raíz, lo mandamos directo al inventario
-Route::get('/', function () {
-    return redirect()->route('insumos.index');
-});
+// ==========================================
+// REDIRECCIONES PRINCIPALES
+// ==========================================
+// Si alguien entra a la raíz o al dashboard vacío, va directo al inventario operativo
+Route::redirect('/', '/insumos');
+Route::redirect('/dashboard', '/insumos')->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/dashboard', function () {
-    // En lugar de cargar la vista vacía del dashboard, redireccionamos al Kardex
-    return redirect()->route('insumos.index');
-})->middleware(['auth', 'verified'])->name('dashboard');
 
+// ==========================================
+// RUTAS PROTEGIDAS (Requieren autenticación)
+// ==========================================
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
-    // 1. El resource crea automáticamente la ruta 'update' por nosotros
+
+    // ------------------------------------------
+    // Módulo de Perfil (Breeze)
+    // ------------------------------------------
+    Route::controller(ProfileController::class)->group(function () {
+        Route::get('/profile', 'edit')->name('profile.edit');
+        Route::patch('/profile', 'update')->name('profile.update');
+        Route::delete('/profile', 'destroy')->name('profile.destroy');
+    });
+
+    // ------------------------------------------
+    // Módulo de Inventarios (Kardex)
+    // ------------------------------------------
     Route::resource('insumos', InsumoController::class);
-    
-    // 2. Agregamos nuestra ruta personalizada usando la sintaxis correcta
     Route::patch('/insumos/{id}/ajustar', [InsumoController::class, 'ajustarStock'])->name('insumos.ajustar');
 
-    // Rutas del Cotizador
-    Route::get('/cotizador', [\App\Http\Controllers\CotizadorController::class, 'create'])->name('cotizador.create');
-    Route::post('/cotizador', [\App\Http\Controllers\CotizadorController::class, 'store'])->name('cotizador.store');
-    // Ruta para la búsqueda en tiempo real de lanas mediante Select2
-    Route::get('/buscar-lanas', [App\Http\Controllers\CotizadorController::class, 'buscarLanas'])->name('lanas.buscar');
-    // Ruta para la búsqueda asíncrona de Cortinas de Fiesta
-    Route::get('/buscar-cortinas', [App\Http\Controllers\CotizadorController::class, 'buscarCortinas'])->name('cortinas.buscar');
-    // Ruta para la búsqueda asíncrona de Cintas (Abarca Satín, Garza y Gross)
-    Route::get('/buscar-cintas', [App\Http\Controllers\CotizadorController::class, 'buscarCintas'])->name('cintas.buscar');
-    // Ruta para recibir el secuestro de datos por AJAX
-    Route::post('/cotizaciones/guardar', [CotizadorController::class, 'guardar'])->name('cotizaciones.guardar');
-    // Rutas para generar PDFs On-the-Fly
-    Route::get('/pedidos/{id}/pdf-receta', [\App\Http\Controllers\CotizadorController::class, 'generarPdfReceta']);
-    Route::get('/pedidos/{id}/pdf-nota', [\App\Http\Controllers\CotizadorController::class, 'generarPdfNota']);
-    Route::post('/pedidos/enviar-correo', [\App\Http\Controllers\CotizadorController::class, 'enviarCorreo'])->name('pedidos.enviar_correo');
-});
+    // ------------------------------------------
+    // Módulo de Cotizador Automático
+    // ------------------------------------------
+    Route::controller(CotizadorController::class)->group(function () {
+        // Vistas y guardado general
+        Route::get('/cotizador', 'create')->name('cotizador.create');
+        Route::post('/cotizador', 'store')->name('cotizador.store');
+        Route::post('/cotizaciones/guardar', 'guardar')->name('cotizaciones.guardar');
 
+        // Endpoints de Búsqueda Asíncrona (AJAX / Select2)
+        Route::get('/buscar-lanas', 'buscarLanas')->name('lanas.buscar');
+        Route::get('/buscar-cortinas', 'buscarCortinas')->name('cortinas.buscar');
+        Route::get('/buscar-cintas', 'buscarCintas')->name('cintas.buscar');
+
+        // Generación de Documentos (PDF On-the-Fly) y Notificaciones
+        Route::get('/pedidos/{id}/pdf-receta', 'generarPdfReceta')->name('pedidos.pdf_receta');
+        Route::get('/pedidos/{id}/pdf-nota', 'generarPdfNota')->name('pedidos.pdf_nota');
+        Route::post('/pedidos/enviar-correo', 'enviarCorreo')->name('pedidos.enviar_correo');
+    });
+
+    // ------------------------------------------
+    // Módulo de Ventas e Historial (KPIs)
+    // ------------------------------------------
+    Route::get('/ventas', [VentasController::class, 'index'])->name('ventas.index');
+
+});
 
 require __DIR__.'/auth.php';

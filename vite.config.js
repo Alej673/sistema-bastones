@@ -16,6 +16,7 @@ export default defineConfig({
                 'resources/css/inventario.css',
                 'resources/js/inventario.js',
                 'resources/css/cotizador.css',
+                'resources/css/ventas.css',
                 'resources/js/cotizador.js',      // ¡Agregado! (Muy importante para que funcione tu cotizador)
                 'resources/css/estilos_nav.css',  // ¡Agregado! (El que causó el error)
             ],

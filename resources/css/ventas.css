@@ -1,0 +1,132 @@
+/* =========================================
+   PALETA GLOBAL DEL MÓDULO (fuente única de verdad)
+   ========================================= */
+:root {
+    --color-morado: #a855f7;
+    --color-morado-claro: #c084fc;
+    --color-morado-oscuro: #5b21b6;
+    --color-violeta-boton: #7c3aed;
+    --color-fucsia: #e879f9;
+    --color-fucsia-oscuro: #86198f;
+    --color-fondo-medio: #2c1548;
+    --color-fondo-base: #1b0f28;
+    --color-texto: #f5eaff;
+    --color-texto-mutado: #b9a8c9;
+    --color-exito: #4ade80;
+    --color-peligro: #f87171;
+}
+
+/* =========================================
+   BASE: forzamos el fondo oscuro sobre los
+   componentes Bootstrap que compiten en especificidad
+   ========================================= */
+.card-panel {
+    background-color: var(--color-fondo-medio) !important;
+    border-radius: 12px;
+    border: 0 !important;
+    color: var(--color-texto);
+}
+
+.input-dark {
+    background-color: var(--color-fondo-base) !important;
+    color: var(--color-texto) !important;
+    border: 0 !important;
+}
+
+.input-dark::placeholder {
+    color: var(--color-texto-mutado) !important;
+    opacity: 1;
+}
+
+.input-dark:focus {
+    background-color: var(--color-fondo-base) !important;
+    color: var(--color-texto) !important;
+    box-shadow: 0 0 0 0.2rem rgba(168, 85, 247, 0.35) !important;
+}
+
+.input-dark::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+.text-lavanda { color: var(--color-texto-mutado) !important; }
+.text-accent  { color: var(--color-morado-claro) !important; }
+
+.btn-accion {
+    background-color: var(--color-morado) !important;
+    color: #fff !important;
+}
+.btn-accion-secundaria {
+    background-color: var(--color-fucsia) !important;
+    color: var(--color-fondo-base) !important;
+}
+
+/* =========================================
+   TABLA
+   ========================================= */
+.table {
+    background-color: transparent !important;
+    color: var(--color-texto) !important;
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--color-texto);
+}
+
+.table th, .table td {
+    background-color: transparent !important;
+    border-bottom: 1px solid var(--color-fondo-medio) !important;
+    vertical-align: middle;
+    color: var(--color-texto) !important;
+}
+
+.table thead th {
+    color: var(--color-morado-claro) !important;
+    border-bottom: 2px solid var(--color-morado-oscuro) !important;
+    font-weight: 600;
+}
+
+.table-hover tbody tr:hover td,
+.table-hover tbody tr:hover th {
+    background-color: var(--color-fondo-medio) !important;
+}
+
+/* =========================================
+   ESTADOS DE PEDIDO (sistema único: .badge-estado)
+   Coincide con el partial _fila-pedido.blade.php y ENUM de BD
+   ========================================= */
+.badge-estado {
+    border: 0 !important;
+    border-radius: 6px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+/* 1. Pendiente */
+.badge-estado.pendiente { 
+    background-color: rgba(192, 132, 252, 0.2) !important; 
+    color: var(--color-morado-claro) !important; 
+}
+
+/* 2. En Producción */
+.badge-estado.en_produccion { 
+    background-color: rgba(232, 121, 249, 0.2) !important; 
+    color: var(--color-fucsia) !important; 
+}
+
+/* 3. Realizado (Entregado) */
+.badge-estado.realizado { 
+    background-color: rgba(74, 222, 128, 0.2) !important; 
+    color: var(--color-exito) !important; 
+}
+
+/* 4. Cancelado */
+.badge-estado.cancelado { 
+    background-color: rgba(248, 113, 113, 0.2) !important; 
+    color: var(--color-peligro) !important; 
+}
+
+/* Menú desplegable del estado */
+.dropdown-menu-dark {
+    background-color: var(--color-fondo-medio) !important;
+    border-color: var(--color-morado-oscuro) !important;
+}

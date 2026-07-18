@@ -49,7 +49,7 @@
                         <i class="fa-solid fa-file-invoice-dollar me-2"></i> Cotizador
                     </a>
                     
-                    <a href="#" class="nav-link-glass">
+                    <a href="{{ route('ventas.index') }}" class="nav-link-glass">
                         <i class="fa-solid fa-chart-line me-2"></i> Ventas
                     </a>
                 </div>
