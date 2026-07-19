@@ -130,3 +130,117 @@
     background-color: var(--color-fondo-medio) !important;
     border-color: var(--color-morado-oscuro) !important;
 }
+
+/* =========================================
+   ESTILOS PARA SELECT2 (DARK MODE ERP)
+   ========================================= */
+
+/* 1. Contenedor principal (El botón que se ve antes de hacer clic) */
+.select2-container--default .select2-selection--single {
+    background-color: var(--color-fondo-base) !important;
+    border: 1px solid var(--color-fondo-base) !important;
+    height: 38px !important;
+    display: flex;
+    align-items: center;
+    border-radius: 6px;
+}
+
+/* 2. Texto del ítem seleccionado */
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: var(--color-texto) !important;
+    padding-left: 12px;
+}
+
+/* 3. Texto del Placeholder */
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: var(--color-texto-mutado) !important;
+}
+
+/* 4. La flechita de la derecha */
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: var(--color-texto-mutado) transparent transparent transparent !important;
+}
+
+/* 5. El menú desplegable (donde salen las opciones) */
+.select2-dropdown {
+    background-color: var(--color-fondo-medio) !important;
+    border: 1px solid var(--color-morado-oscuro) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
+
+/* 6. La caja de texto donde escribes (el buscador) */
+.select2-search--dropdown .select2-search__field {
+    background-color: var(--color-fondo-base) !important;
+    color: var(--color-texto) !important;
+    border: 1px solid var(--color-morado-oscuro) !important;
+    border-radius: 4px;
+    padding: 6px;
+}
+
+/* 7. Quitar el borde azul por defecto al hacer focus en el buscador */
+.select2-search--dropdown .select2-search__field:focus {
+    outline: none !important;
+    border-color: var(--color-morado-claro) !important;
+}
+
+/* 8. Los textos de las sugerencias */
+.select2-results__option {
+    color: var(--color-texto-mutado) !important;
+}   
+
+/* 9. Efecto Hover (pasar el mouse) y opción seleccionada */
+.select2-container--default .select2-results__option--highlighted[aria-selected],
+.select2-container--default .select2-results__option[aria-selected=true] {
+    background-color: var(--color-morado-oscuro) !important;
+    color: var(--color-texto) !important;
+}       
+
+/* =========================================
+   CORRECCIÓN SELECT2 EN INPUT-GROUP BOOTSTRAP
+   ========================================= */
+/* Forzar al contenedor de Select2 a usar el espacio sobrante en la misma línea */
+.input-group > .select2-container {
+    flex: 1 1 auto !important;
+    width: 1% !important; 
+}
+
+/* Quitar el borde redondeado izquierdo para que se pegue perfectamente al ícono de la lupa */
+.input-group > .select2-container .select2-selection--single {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+}
+
+/* =========================================
+   PAGINACIÓN (DARK MODE)
+   ========================================= */
+.pagination {
+    margin-bottom: 0;
+}
+
+.page-item .page-link {
+    background-color: var(--color-fondo-base) !important;
+    border-color: var(--color-fondo-medio) !important;
+    color: var(--color-texto-mutado) !important;
+    box-shadow: none !important;
+}
+
+.page-item .page-link:hover {
+    background-color: var(--color-fondo-medio) !important;
+    color: var(--color-morado-claro) !important;
+}
+
+.page-item.active .page-link {
+    background-color: var(--color-morado) !important;
+    border-color: var(--color-morado) !important;
+    color: #ffffff !important;
+    font-weight: bold;
+}
+
+.page-item.disabled .page-link {
+    background-color: var(--color-fondo-base) !important;
+    color: #6b7280 !important; /* Gris oscuro para indicar deshabilitado */
+    opacity: 0.6;
+}

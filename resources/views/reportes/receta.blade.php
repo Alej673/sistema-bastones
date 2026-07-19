@@ -75,36 +75,26 @@
     <table class="tabla-materiales">
         <thead>
             <tr>
-                <th style="width: 60%;">Material Requerido</th>
-                <th style="width: 40%;">Cantidad Física Neta</th>
+                <th style="width: 40%;">Material Requerido</th>
+                <th style="width: 20%;">Cantidad Física Neta</th>
+                <th style="width: 20%;">Stock Bodega</th>
+                <th style="width: 20%;">Estado</th>
             </tr>
         </thead>
         <tbody>
             @foreach($pedido->materiales as $mat)
-                <tr>
-                    <td>{{ $mat->nombre_material }}</td>
-                    <td>
-                        {{-- Lógica de Abstracción Gramática para el taller --}}
-                        @if(stripos($mat->nombre_material, 'lana') !== false)
-                            
-                            {{-- Si es lana, mostramos los gramos exactos y la equivalencia comercial en madejas --}}
-                            {{ number_format($mat->cantidad_requerida, 1) }} g 
-                            <br>
-                            <span class="badge-traduccion">(&approx; {{ ceil($mat->cantidad_requerida / 100) }} Madejas)</span>
-                            
-                        @elseif(stripos($mat->nombre_material, 'elástico') !== false || stripos($mat->nombre_material, 'elastico') !== false)
-                            
-                            {{-- Si es elástico, mostramos en metros --}}
-                            {{ number_format($mat->cantidad_requerida, 2) }} metros
-                            
-                        @else
-                            
-                            {{-- Para bases, cinchos, apliques y cortinas, son unidades enteras --}}
-                            {{ round($mat->cantidad_requerida) }} unidades
-                            
-                        @endif
-                    </td>
-                </tr>
+            <tr>
+                <td>{{ $mat->nombre_material }}</td>
+                <td>{{ $mat->cantidad_requerida }}</td>
+                <td>{{ $mat->stock_bodega }}</td>
+                <td>
+                    @if($mat->falta_comprar > 0)
+                        <strong style="color: red;">¡Faltan {{ $mat->falta_comprar }}! (Comprar)</strong>
+                    @else
+                        <strong style="color: green;">Stock Completo</strong>
+                    @endif
+                </td>
+            </tr>
             @endforeach
         </tbody>
     </table>

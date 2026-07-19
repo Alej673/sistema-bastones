@@ -23,7 +23,8 @@ class VentasController extends Controller
         // Aplicar filtro de búsqueda por cliente o número de documento
         if ($buscar) {
             $query->where(function($q) use ($buscar) {
-                $q->where('cliente', 'LIKE', "%{$buscar}%")
+                // CORRECCIÓN: Usamos 'cliente_nombre' tal como está en la BD
+                $q->where('cliente_nombre', 'LIKE', "%{$buscar}%")
                   ->orWhere('id', 'LIKE', "%{$buscar}%");
             });
         }
@@ -39,7 +40,7 @@ class VentasController extends Controller
         }
 
         // Obtener los pedidos ordenados por el más reciente
-        $pedidos = $query->orderBy('created_at', 'desc')->get();
+        $pedidos = $query->orderBy('created_at', 'desc')->paginate(10);
 
 
         // 3. CÁLCULO DE KPIs (Estadísticas para las tarjetas superiores)
@@ -80,4 +81,118 @@ class VentasController extends Controller
             'nombreBaseEstrella'
         ));
     }
+
+    public function actualizarEstado(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $pedido = Pedido::with('materiales')->findOrFail($id);
+            $nuevoEstado = $request->input('estado');
+            $estadoAnterior = $pedido->estado;
+            
+            $materialesNoEncontrados = []; // Aquí guardaremos los "fantasmas"
+            $materialesEnNegativo = []; // NUEVO: Para controlar la deuda
+
+            // REGLA DE NEGOCIO: Solo descontar si pasa a 'realizado' y no lo estaba ya
+            if ($nuevoEstado === 'realizado' && $estadoAnterior !== 'realizado') {
+                
+                foreach ($pedido->materiales as $item) {
+                    $insumo = null;
+
+                    // 1. Intentar buscar por ID (si ya estaba enlazado desde la cotización)
+                    if ($item->insumo_id) {
+                        $insumo = \App\Models\Insumo::find($item->insumo_id);
+                    }
+                    
+                    // 2. LA MAGIA: Si no tiene ID o no lo encontró, buscamos por su nombre exacto en la BD
+                    if (!$insumo) {
+                        $insumo = \App\Models\Insumo::where('nombre', $item->nombre_material)->first();
+                        
+                        // Si lo encuentra ahora (porque se creó después de cotizar), actualizamos el detalle
+                        // para que queden vinculados permanentemente
+                        if ($insumo) {
+                            $item->insumo_id = $insumo->id;
+                            $item->save();
+                        }
+                    }
+
+                    // 3. Proceder con el descuento si logramos encontrarlo de alguna de las dos formas
+                    if ($insumo) {
+                        // Restamos el stock físico
+                        $insumo->stock_actual -= $item->cantidad_requerida;
+                        $insumo->save();
+
+                        // LA NUEVA MAGIA: Si después de restar quedó en negativo, lo guardamos
+                        if ($insumo->stock_actual < 0) {
+                            $materialesEnNegativo[] = $insumo->nombre . ' (Quedó en ' . $insumo->stock_actual . ')';
+                        }
+
+                        // Escribimos en la bitácora de auditoría (Kardex)
+                        \App\Models\Movimiento::create([
+                            'insumo_id' => $insumo->id,
+                            'tipo_movimiento' => 'Salida (Venta)',
+                            'cantidad' => -$item->cantidad_requerida,
+                            'detalle' => 'Descuento automático por Pedido #' . str_pad($pedido->id, 4, '0', STR_PAD_LEFT)
+                        ]);
+                    } else {
+                        // 4. Definitivamente sigue sin existir en el inventario (Soft Fail)
+                        $materialesNoEncontrados[] = $item->nombre_material;
+                    }
+                }
+            }
+
+            // Guardamos el nuevo estado de la cabecera
+            $pedido->estado = $nuevoEstado;
+            $pedido->save();
+
+            DB::commit();
+
+            // Retornamos la respuesta a JavaScript
+            return response()->json([
+                'success' => true,
+                'no_encontrados' => $materialesNoEncontrados,
+                'en_negativo' => $materialesEnNegativo
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error crítico: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function buscarClientesAjax(Request $request)
+    {
+        $term = $request->input('q');
+
+        // Buscamos clientes únicos que coincidan con el término escrito
+        $clientes = Pedido::select('cliente_nombre')
+            ->where('cliente_nombre', 'LIKE', "%{$term}%")
+            ->groupBy('cliente_nombre')
+            ->orderBy('cliente_nombre', 'asc')
+            ->limit(10) // Limitamos a 10 sugerencias para optimizar rendimiento
+            ->get();
+
+        // Formateamos la respuesta para que Select2 la entienda (id y text)
+        $results = $clientes->map(function ($pedido) {
+            return [
+                'id' => $pedido->cliente_nombre,
+                'text' => $pedido->cliente_nombre
+            ];
+        });
+
+        return response()->json(['results' => $results]);
+    }
+
+    public function obtenerDetalles($id)
+    {
+        // Traemos el pedido incluyendo sus materiales asociados
+        $pedido = \App\Models\Pedido::with('materiales')->findOrFail($id);
+        
+        return response()->json($pedido);
+    }
 }
+

@@ -28,5 +28,17 @@
                 </tbody>
             </table>
         </div>
+        <!-- =========================================
+            PAGINACIÓN
+            ========================================= -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="text-lavanda small">
+                Mostrando {{ $pedidos->firstItem() ?? 0 }} a {{ $pedidos->lastItem() ?? 0 }} de {{ $pedidos->total() }} pedidos
+            </div>
+            <div>
+                <!-- Inyectamos los botones y mantenemos los filtros activos en la URL -->
+                {{ $pedidos->appends(request()->query())->links('pagination::bootstrap-5') }}
+            </div>
+        </div>
     </div>
 </div>

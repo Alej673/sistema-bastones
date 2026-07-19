@@ -232,12 +232,39 @@ public function guardar(Request $request)
     public function generarPdfReceta($id)
     {
         // 1. Buscamos el pedido y "cargamos" todos sus materiales asociados
-        $pedido = Pedido::with('materiales')->findOrFail($id);
+        $pedido = \App\Models\Pedido::with('materiales')->findOrFail($id);
 
-        // 2. Cargamos la vista de Blade y le pasamos los datos
+        // 2. LA MAGIA: Calculamos cuánto falta comprar de cada insumo
+        foreach ($pedido->materiales as $mat) {
+            $stockActual = 0;
+            $insumo = null;
+
+            // Buscamos el insumo por ID o por Nombre (igual que en el Soft Fail)
+            if ($mat->insumo_id) {
+                $insumo = \App\Models\Insumo::find($mat->insumo_id);
+            }
+            if (!$insumo) {
+                $insumo = \App\Models\Insumo::where('nombre', $mat->nombre_material)->first();
+            }
+
+            // Si el insumo existe en bodega, capturamos su stock real
+            if ($insumo) {
+                $stockActual = $insumo->stock_actual;
+            }
+
+            // Hacemos la resta: Requerido - Stock Actual
+            $diferencia = $mat->cantidad_requerida - $stockActual;
+            
+            // Inyectamos nuevas propiedades "al vuelo" para que el PDF las use
+            $mat->stock_bodega = $stockActual;
+            $mat->falta_comprar = $diferencia > 0 ? $diferencia : 0;
+        }
+
+        // 3. Cargamos la vista de Blade de la RECETA y le pasamos los datos
+        // Asegúrate de importar la clase Pdf arriba si no está: use Barryvdh\DomPDF\Facade\Pdf;
         $pdf = Pdf::loadView('reportes.receta', compact('pedido'));
 
-        // 3. stream() abre el PDF en el navegador (no guarda nada en el disco duro)
+        // 4. stream() abre el PDF en el navegador
         return $pdf->stream('Receta_Bodega_Pedido_' . $pedido->id . '.pdf');
     }
 

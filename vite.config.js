@@ -18,7 +18,8 @@ export default defineConfig({
                 'resources/css/cotizador.css',
                 'resources/css/ventas.css',
                 'resources/js/cotizador.js',      // ¡Agregado! (Muy importante para que funcione tu cotizador)
-                'resources/css/estilos_nav.css',  // ¡Agregado! (El que causó el error)
+                'resources/css/estilos_nav.css', 
+                'resources/js/historial.js',      // ¡Agregado! (Muy importante para que funcione tu historial)
             ],
             refresh: true,
         }),

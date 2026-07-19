@@ -32,6 +32,8 @@
         </div>
     </td>
     <td class="pe-4 text-end">
+        <!-- Nuevo botón de Vista Rápida -->
+        <button class="btn btn-sm btn-ver-detalle me-1" style="background-color: #38bdf8; color: #0f172a;" title="Ver Materiales" data-id="{{ $pedido->id }}">👁️</button>
         <button class="btn btn-sm btn-accion-secundaria" title="Nota de Venta" onclick="window.open('{{ route('pedidos.pdf_nota', $pedido->id) }}', '_blank')">📄</button>
         <button class="btn btn-sm btn-accion" title="Receta Interna" onclick="window.open('{{ route('pedidos.pdf_receta', $pedido->id) }}', '_blank')">📋</button>
     </td>

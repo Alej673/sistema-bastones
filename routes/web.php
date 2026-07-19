@@ -58,7 +58,15 @@ Route::middleware('auth')->group(function () {
     // Módulo de Ventas e Historial (KPIs)
     // ------------------------------------------
     Route::get('/ventas', [VentasController::class, 'index'])->name('ventas.index');
-
+    // Módulo de Ventas e Historial (KPIs)
+    Route::get('/ventas', [VentasController::class, 'index'])->name('ventas.index');
+    // NUEVA RUTA PARA AJAX:
+    Route::patch('/pedidos/{id}/estado', [VentasController::class, 'actualizarEstado'])->name('pedidos.estado');
+    // Módulo de Ventas e Historial (KPIs)
+    Route::get('/ventas', [VentasController::class, 'index'])->name('ventas.index');
+    Route::get('/buscar-clientes-historial', [VentasController::class, 'buscarClientesAjax'])->name('clientes.buscar_ajax');
+    // Ruta para consultar los materiales de un pedido por AJAX
+    Route::get('/pedidos/{id}/detalles', [VentasController::class, 'obtenerDetalles'])->name('pedidos.detalles');
 });
 
 require __DIR__.'/auth.php';
