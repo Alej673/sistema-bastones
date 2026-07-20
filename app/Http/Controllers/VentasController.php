@@ -63,10 +63,13 @@ class VentasController extends Controller
         // Busca el insumo con categoría 'base_baston' que más se repite en pedido_materiales
         $baseMasSolicitada = DB::table('pedido_materiales')
             ->join('insumos', 'pedido_materiales.insumo_id', '=', 'insumos.id')
-            ->select('insumos.nombre', DB::raw('COUNT(pedido_materiales.insumo_id) as total_veces'))
-            ->where('insumos.nombre', 'LIKE', '%Base%') // Filtro sutil por nombre de estructura
+            ->select(
+                'insumos.nombre', 
+                DB::raw('SUM(pedido_materiales.cantidad_requerida) as total_unidades')
+            )
+            ->where('insumos.nombre', 'LIKE', '%Base%') // Filtro por estructura base
             ->groupBy('pedido_materiales.insumo_id', 'insumos.nombre')
-            ->orderBy('total_veces', 'desc')
+            ->orderBy('total_unidades', 'desc') // Ordenamos por el volumen real acumulado
             ->first();
 
         $nombreBaseEstrella = $baseMasSolicitada ? $baseMasSolicitada->nombre : 'Ninguna aún';
@@ -94,8 +97,9 @@ class VentasController extends Controller
             $materialesNoEncontrados = []; // Aquí guardaremos los "fantasmas"
             $materialesEnNegativo = []; // NUEVO: Para controlar la deuda
 
-            // REGLA DE NEGOCIO: Solo descontar si pasa a 'realizado' y no lo estaba ya
-            if ($nuevoEstado === 'realizado' && $estadoAnterior !== 'realizado') {
+            // REGLA DE NEGOCIO BLINDADA: Solo descontar si pasa a 'realizado' 
+            // Y comprobamos en la base de datos que NUNCA se haya descontado antes.
+            if ($nuevoEstado === 'realizado' && $pedido->inventario_descontado == false) {
                 
                 foreach ($pedido->materiales as $item) {
                     $insumo = null;
@@ -140,9 +144,13 @@ class VentasController extends Controller
                         $materialesNoEncontrados[] = $item->nombre_material;
                     }
                 }
+
+                // 🛑 EL CANDADO DE SEGURIDAD 🛑
+                // Marcamos que ya se descontó para que jamás vuelva a entrar a este bloque IF
+                $pedido->inventario_descontado = true;
             }
 
-            // Guardamos el nuevo estado de la cabecera
+            // Guardamos el nuevo estado de la cabecera (y el candado si se activó)
             $pedido->estado = $nuevoEstado;
             $pedido->save();
 

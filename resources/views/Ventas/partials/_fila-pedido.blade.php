@@ -15,11 +15,13 @@
     <td>
         <div class="dropdown">
             <!-- 4. CORRECCIÓN: La clase del badge ahora lee exactamente el ENUM -->
+            <!-- AQUÍ AGREGAMOS EL BLOQUEO: Si es realizado, se desactiva el botón -->
             <button class="btn btn-sm dropdown-toggle badge-estado {{ $pedido->estado }}" 
                     type="button" 
                     data-bs-toggle="dropdown" 
                     aria-expanded="false" 
-                    data-bs-boundary="window">
+                    data-bs-boundary="window"
+                    {{ $pedido->estado == 'realizado' ? 'disabled' : '' }}>
                 {{ ucfirst(str_replace('_', ' ', $pedido->estado)) }}
             </button>
             <ul class="dropdown-menu dropdown-menu-dark shadow" style="background-color: #2c1548; border-color: #5b21b6;">
