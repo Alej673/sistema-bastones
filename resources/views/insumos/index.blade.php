@@ -348,4 +348,43 @@
 {{-- Inyectamos el JS exclusivo de esta vista --}}
 @push('js')
     @vite(['resources/js/inventario.js'])
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 1. ALERTA DE ÉXITO 
+            @if(session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Operación Exitosa!',
+                    text: '{{ session("success") }}',
+                    background: '#1b0f28', // Fondo mate sólido
+                    color: '#f5eaff', 
+                    confirmButtonColor: '#a855f7' // Tu morado base
+                });
+            @endif
+
+            // 2. ALERTA DE ERROR (Validación de duplicados)
+            @if($errors->any())
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de Validación',
+                    html: `
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    `,
+                    background: '#1b0f28', // Fondo mate sólido
+                    color: '#f5eaff',
+                    confirmButtonColor: '#f87171' // Peligro (semántico)
+                }).then((result) => {
+                    // Volver a abrir el modal después de que cierre la alerta
+                    var myModal = new bootstrap.Modal(document.getElementById('modalNuevoInsumo'));
+                    myModal.show();
+                });
+            @endif
+        });
+    </script>
 @endpush

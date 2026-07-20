@@ -35,16 +35,27 @@ class InsumoController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validamos usando el nuevo campo precio_unitario
+        // 1. Estandarizar el texto ANTES de validar (Blindaje de datos)
+        // Esto convierte " lana azul ", "LANA AZUL" o "lana azul" estrictamente en "Lana azul"
+        if ($request->has('nombre')) {
+            $request->merge([
+                'nombre' => ucfirst(strtolower(trim($request->nombre)))
+            ]);
+        }
+
+        // 2. Validamos usando la regla unique (Ahora sí incluida en el campo nombre)
         $request->validate([
-            'nombre' => 'required|string|max:255',
+            'nombre' => 'required|string|max:255|unique:insumos,nombre',
             'categoria' => 'required|string',
             'cantidad_comprada' => 'required|numeric|min:0',
             'precio_unitario' => 'required|numeric|min:0', 
             'alerta_minima' => 'required|numeric|min:0',
+        ],[
+            // Mensajes personalizados
+            'nombre.unique' => 'Este insumo ya se encuentra registrado en el Kardex.'
         ]);
 
-        //Preparar las variables que necesita la base de datos
+        // Preparar las variables que necesita la base de datos
         $multiplicador = 1;
         $unidad = 'Unidades';
 
@@ -116,8 +127,8 @@ class InsumoController extends Controller
             'cantidad' => $insumo->stock_actual,
             'detalle' => 'Creación de nuevo insumo en sistema'
         ]);
-
-        return redirect()->route('insumos.index');
+        return redirect()->route('insumos.index')
+        ->with('success', 'El insumo fue registrado exitosamente en el Kardex.');
     }
     /**
      * Display the specified resource.

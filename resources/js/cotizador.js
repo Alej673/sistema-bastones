@@ -414,32 +414,37 @@ $(document).ready(function () {
         // Precio unitario depende del acabado (plata/dorado) y de si el
         // pedido alcanza el volumen de mayoreo (>= 12 unidades).
         // ---------------------------------------------------
-        let precioBaseUnitario = 0;
+        let precioBaseFantasma = 0;
         let nombreAcabado      = '';
 
+        // 1. Definir el precio de emergencia (fantasma / mayoreo) por si no existe en BD
         if (colorBase === 'dorado') {
             nombreAcabado      = 'Dorado';
-            precioBaseUnitario = (cantidadBastones >= 12) ? 5.00 : 5.50;
+            precioBaseFantasma = (cantidadBastones >= 12) ? 5.00 : 5.50;
         } else {
             nombreAcabado      = 'Plata';
-            precioBaseUnitario = (cantidadBastones >= 12) ? 4.50 : 5.00;
+            precioBaseFantasma = (cantidadBastones >= 12) ? 4.50 : 5.00;
         }
-
-        let costoTotalBases = precioBaseUnitario * cantidadBastones;
-        costoTotalMateriales += costoTotalBases;
 
         let esGrande     = (tamanoBase === '55' || tamanoBase === '60');
         let tamanoVisual = tamanoBase + ' cm';
 
-        // Buscamos en el inventario real la base que coincide en color + tamaño,
-        // para poder avisar si hay stock suficiente o si hay que comprar.
+        // 2. Buscamos en el inventario real la base que coincide en color + tamaño
         let baseEnKardex = INVENTARIO.find(item => {
             if (item.categoria !== 'base_baston' || !item.nombre) return false;
-            let nombreBD     = item.nombre.toLowerCase();
+            let nombreBD      = item.nombre.toLowerCase();
             let colorBuscado  = colorBase.toLowerCase();
-            let tamanoBuscado = tamanoBase + 'cm';
+            let tamanoBuscado = tamanoBase.replace(/\D/g, ''); 
+            
             return nombreBD.includes(colorBuscado) && nombreBD.includes(tamanoBuscado);
         });
+
+        // 3. LA MAGIA: Si existe en Kardex forzamos su precio real a número. Si no, usamos el fantasma.
+        let precioBaseUnitario = baseEnKardex ? parseFloat(baseEnKardex.costo_unitario) : precioBaseFantasma;
+
+        // 4. Ahora sí, hacemos las matemáticas con el precio correcto
+        let costoTotalBases = precioBaseUnitario * cantidadBastones;
+        costoTotalMateriales += costoTotalBases;
 
         let alertaBase = (baseEnKardex && baseEnKardex.stock_actual >= cantidadBastones)
             ? `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Stock Suficiente</span>`
@@ -454,8 +459,11 @@ $(document).ready(function () {
             </tr>
         `);
 
+        // Extraemos el ID sin operadores opcionales para evitar crashes
+        let idBase = baseEnKardex ? baseEnKardex.id : null;
+
         agregarAlCarrito({
-            insumo_id: baseEnKardex?.id ?? null,
+            insumo_id: idBase,
             nombre_material: `Base ${nombreAcabado} (${tamanoVisual})`,
             cantidad_requerida: cantidadBastones,
             subtotal_calculado: costoTotalBases,
@@ -466,11 +474,20 @@ $(document).ready(function () {
         // Estos NO dependen del diseño elegido, solo de la cantidad de
         // bastones, según la RECETA fija definida arriba.
         // ---------------------------------------------------
+
         const totalCinchos  = RECETA.cinchos_por_baston  * cantidadBastones;
         const totalElastico = RECETA.elastico_por_baston * cantidadBastones;
 
-        const costoCinchos  = totalCinchos  * PRECIOS_FANTASMA.cinchos;
-        const costoElastico = totalElastico * PRECIOS_FANTASMA.elastico;
+        // BUSCAR PRECIOS REALES EN EL KARDEX:
+        const insumoCinchos  = INVENTARIO.find(item => item.categoria === 'cinchos');
+        const insumoElastico = INVENTARIO.find(item => item.categoria === 'elastico');
+
+        // Si existe en BD usa su precio real y lo forzamos a número (parseFloat), si no, usa el fantasma
+        const precioCinchosReal  = insumoCinchos  ? parseFloat(insumoCinchos.costo_unitario)  : PRECIOS_FANTASMA.cinchos;
+        const precioElasticoReal = insumoElastico ? parseFloat(insumoElastico.costo_unitario) : PRECIOS_FANTASMA.elastico;
+
+        const costoCinchos  = totalCinchos  * precioCinchosReal;
+        const costoElastico = totalElastico * precioElasticoReal;
 
         costoTotalMateriales += costoCinchos + costoElastico;
 
@@ -483,21 +500,35 @@ $(document).ready(function () {
             </tr>
             <tr>
                 <td class="text-dark ps-3">&#x21B3; Cinchos</td>
-                <td class="text-muted small">${totalCinchos} u. &times; $${PRECIOS_FANTASMA.cinchos.toFixed(2)}/u</td>
+                <td class="text-muted small">${totalCinchos} u. &times; $${precioCinchosReal.toFixed(2)}/u</td>
                 <td class="text-muted small">$${costoCinchos.toFixed(2)}</td>
                 <td class="text-end text-muted">&mdash;</td>
             </tr>
             <tr>
                 <td class="text-dark ps-3">&#x21B3; Elástico</td>
-                <td class="text-muted small">${totalElastico.toFixed(2)}m &times; $${PRECIOS_FANTASMA.elastico.toFixed(2)}/m</td>
+                <td class="text-muted small">${totalElastico.toFixed(2)}m &times; $${precioElasticoReal.toFixed(2)}/m</td>
                 <td class="text-muted small">$${costoElastico.toFixed(2)}</td>
                 <td class="text-end text-muted">&mdash;</td>
             </tr>
         `);
 
-        agregarAlCarrito({ insumo_id: null, nombre_material: 'Cinchos', cantidad_requerida: totalCinchos, subtotal_calculado: costoCinchos });
-        agregarAlCarrito({ insumo_id: null, nombre_material: 'Elástico', cantidad_requerida: totalElastico, subtotal_calculado: costoElastico });
+        // Extraemos los IDs de forma clásica, sin símbolos raros para evitar crashes
+        let idCinchos = insumoCinchos ? insumoCinchos.id : null;
+        let idElastico = insumoElastico ? insumoElastico.id : null;
 
+        agregarAlCarrito({ 
+            insumo_id: idCinchos, 
+            nombre_material: 'Cinchos', 
+            cantidad_requerida: totalCinchos, 
+            subtotal_calculado: costoCinchos 
+        });
+        
+        agregarAlCarrito({ 
+            insumo_id: idElastico, 
+            nombre_material: 'Elástico', 
+            cantidad_requerida: totalElastico, 
+            subtotal_calculado: costoElastico 
+        });
 
         // ---------------------------------------------------
         // FASE 3: CUERPO (LANA)
