@@ -131,19 +131,64 @@ class CotizadorController extends Controller
         return response()->json($cintas);
     }
 
-public function guardar(Request $request)
+    public function guardar(Request $request)
     {
-        // 1. Validación adaptada (el correo es opcional, pero si viene, que sea formato email)
+        // 1. Validación de estructura: campos base + materiales como arreglo obligatorio
         $request->validate([
-            'cantidad_total_bastones' => 'required|numeric|min:1',
-            'costo_total'             => 'required|numeric',
-            'correo_cliente'          => 'nullable|email'
+            'cantidad_total_bastones'            => 'required|numeric|min:1',
+            'costo_total'                         => 'required|numeric',
+            'correo_cliente'                      => 'nullable|email',
+            'materiales'                          => 'required|string',
         ]);
+
+        // 2. Decodificamos el carrito y validamos que sea un JSON válido y no esté vacío
+        $listaMateriales = json_decode($request->input('materiales'), true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || empty($listaMateriales) || !is_array($listaMateriales)) {
+            return response()->json([
+                'success' => false,
+                'mensaje' => 'El detalle de materiales llegó vacío o corrupto. No se puede guardar un pedido sin materiales.'
+            ], 422);
+        }
+
+        // 3. Validamos la estructura de CADA línea del carrito (defensa contra payloads manuales)
+        foreach ($listaMateriales as $mat) {
+            if (!isset($mat['nombre_material'], $mat['cantidad_requerida'], $mat['subtotal_calculado'])
+                || trim($mat['nombre_material']) === ''
+                || !is_numeric($mat['cantidad_requerida'])
+                || !is_numeric($mat['subtotal_calculado'])
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'mensaje' => 'Uno de los materiales del carrito tiene datos inválidos o incompletos.'
+                ], 422);
+            }
+        }
+
+        // 4. REGLA DE NEGOCIO: espejo de la validación del front (validarCintasNuevas en cotizador.js).
+        // Si un material es una cinta nueva (sin insumo_id, es decir aún no existe en inventario),
+        // su nombre debe incluir el tipo (Satín / Gross / Garza). Esto evita que alguien se salte
+        // el JS y guarde una cinta ambigua directo contra el endpoint.
+        foreach ($listaMateriales as $mat) {
+            $esCintaSinTipo = empty($mat['insumo_id'])
+                && str_contains(strtolower($mat['nombre_material']), 'cinta')
+                && !str_contains(strtolower($mat['nombre_material']), 'satin')
+                && !str_contains(strtolower($mat['nombre_material']), 'satín')
+                && !str_contains(strtolower($mat['nombre_material']), 'gross')
+                && !str_contains(strtolower($mat['nombre_material']), 'garza');
+
+            if ($esCintaSinTipo) {
+                return response()->json([
+                    'success' => false,
+                    'mensaje' => 'El material "' . $mat['nombre_material'] . '" es una cinta nueva sin tipo especificado (Satín, Gross o Garza).'
+                ], 422);
+            }
+        }
 
         try {
             DB::beginTransaction();
 
-            // 1. Guardar la cabecera del pedido (Maestro)
+            // 5. Guardar la cabecera del pedido (Maestro)
             $pedido = new \App\Models\Pedido();
             
             // Datos del cliente mapeados exactamente a como los envía tu AJAX
@@ -162,49 +207,44 @@ public function guardar(Request $request)
             $pedido->estado = 'pendiente'; 
             $pedido->save();
 
-            // 2. Descifrar el carrito de materiales enviado por JS 
-            $materialesJson = $request->input('materiales');
-            $listaMateriales = json_decode($materialesJson, true); 
+            // 6. Insertar cada material del carrito ya validado
+            foreach ($listaMateriales as $mat) {
+                
+                // --- INICIO: LÓGICA DE RECONOCIMIENTO AUTOMÁTICO DE INSUMOS ---
+                $insumoIdFinal = $mat['insumo_id'];
+                $nombreMaterialLimpiado = strtolower(trim($mat['nombre_material']));
 
-            if (!empty($listaMateriales)) {
-                foreach ($listaMateriales as $mat) {
+                // Solo intentamos autocompletar si el JS no envió un ID
+                if (is_null($insumoIdFinal) || empty($insumoIdFinal)) {
                     
-                    // --- INICIO: LÓGICA DE RECONOCIMIENTO AUTOMÁTICO DE INSUMOS ---
-                    $insumoIdFinal = $mat['insumo_id'];
-                    $nombreMaterialLimpiado = strtolower(trim($mat['nombre_material']));
-
-                    // Solo intentamos autocompletar si el JS no envió un ID
-                    if (is_null($insumoIdFinal) || empty($insumoIdFinal)) {
-                        
-                        // Lógica para interceptar "Cinchos"
-                        if (str_contains($nombreMaterialLimpiado, 'cincho')) {
-                            $insumoDetectado = \App\Models\Insumo::where('categoria', 'cinchos')->whereNull('deleted_at')->first();
-                            if ($insumoDetectado) {
-                                $insumoIdFinal = $insumoDetectado->id;
-                            }
-                        }
-                        
-                        // Lógica para interceptar "Elástico"
-                        if (str_contains($nombreMaterialLimpiado, 'elástico') || str_contains($nombreMaterialLimpiado, 'elastico')) {
-                            $insumoDetectado = \App\Models\Insumo::where('categoria', 'elastico')->whereNull('deleted_at')->first();
-                            if ($insumoDetectado) {
-                                $insumoIdFinal = $insumoDetectado->id;
-                            }
+                    // Lógica para interceptar "Cinchos"
+                    if (str_contains($nombreMaterialLimpiado, 'cincho')) {
+                        $insumoDetectado = \App\Models\Insumo::where('categoria', 'cinchos')->whereNull('deleted_at')->first();
+                        if ($insumoDetectado) {
+                            $insumoIdFinal = $insumoDetectado->id;
                         }
                     }
-                    // --- FIN: LÓGICA DE RECONOCIMIENTO ---
-
-                    // Insertamos cada fila en la tabla de detalles
-                    DB::table('pedido_materiales')->insert([
-                        'pedido_id'          => $pedido->id, 
-                        'insumo_id'          => $insumoIdFinal, // ¡Usamos nuestra variable validada!
-                        'nombre_material'    => $mat['nombre_material'],
-                        'cantidad_requerida' => $mat['cantidad_requerida'],
-                        'subtotal_calculado' => $mat['subtotal_calculado'],
-                        'created_at'         => now(),
-                        'updated_at'         => now(),
-                    ]);
+                    
+                    // Lógica para interceptar "Elástico"
+                    if (str_contains($nombreMaterialLimpiado, 'elástico') || str_contains($nombreMaterialLimpiado, 'elastico')) {
+                        $insumoDetectado = \App\Models\Insumo::where('categoria', 'elastico')->whereNull('deleted_at')->first();
+                        if ($insumoDetectado) {
+                            $insumoIdFinal = $insumoDetectado->id;
+                        }
+                    }
                 }
+                // --- FIN: LÓGICA DE RECONOCIMIENTO ---
+
+                // Insertamos cada fila en la tabla de detalles
+                DB::table('pedido_materiales')->insert([
+                    'pedido_id'          => $pedido->id, 
+                    'insumo_id'          => $insumoIdFinal, // ¡Usamos nuestra variable validada!
+                    'nombre_material'    => $mat['nombre_material'],
+                    'cantidad_requerida' => $mat['cantidad_requerida'],
+                    'subtotal_calculado' => $mat['subtotal_calculado'],
+                    'created_at'         => now(),
+                    'updated_at'         => now(),
+                ]);
             }
 
             DB::commit();

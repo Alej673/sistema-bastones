@@ -87,7 +87,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function actualizarNombreBaston() {
         if (selectorNuevo && selectorNuevo.value === 'base_baston') {
-            inputNombre.value = `Base ${selectorColor.value} ${selectorTamano.value}`;
+            // 1. Limpiamos el valor para quitarle el 'cm' pegado (ej. de '45cm' a '45')
+            let tamanoNumero = selectorTamano.value.replace('cm', '');
+            
+            // 2. Armamos el string con paréntesis y espacio EXACTAMENTE igual al cotizador
+            inputNombre.value = `Base ${selectorColor.value} (${tamanoNumero} cm)`;
         }
     }
 
@@ -104,6 +108,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 inputNombre.readOnly = true;
                 inputNombre.classList.add('bg-secondary', 'bg-opacity-10', 'fw-bold', 'text-secondary');
                 actualizarNombreBaston();
+
+            } else if (cat === 'cinta_garza' || cat === 'cinta_satin' || cat === 'cinta_gross') {
+                // NUEVO: Estandarización estricta para Cintas
+                opcionesBaston.classList.add('d-none');
+                inputNombre.readOnly = false;
+                inputNombre.classList.remove('bg-secondary', 'bg-opacity-10', 'fw-bold', 'text-primary');
+
+                // Inyectamos el prefijo automáticamente
+                let prefijo = '';
+                if (cat === 'cinta_garza') prefijo = 'Cinta Garza ';
+                if (cat === 'cinta_satin') prefijo = 'Cinta Satín ';
+                if (cat === 'cinta_gross') prefijo = 'Cinta Gross ';
+
+                inputNombre.value = prefijo;
+
+                // Ponemos el cursor al final para que la usuaria solo escriba el color
+                setTimeout(() => inputNombre.focus(), 100);
+
             } else {
                 opcionesBaston.classList.add('d-none');
                 inputNombre.readOnly = false;
@@ -119,11 +141,25 @@ document.addEventListener('DOMContentLoaded', function () {
     const formNuevoInsumo = document.querySelector('#modalNuevoInsumo form');
     if (formNuevoInsumo && selectorNuevo) {
         formNuevoInsumo.addEventListener('submit', function (e) {
-            if (!selectorNuevo.value) {
+            const cat = selectorNuevo.value;
+
+            if (!cat) {
                 e.preventDefault();
                 const cont = document.getElementById('customCategoria');
                 cont.classList.add('error');
                 cont.querySelector('.custom-select-trigger').focus();
+            } else {
+                // BLINDAJE DE SEGURIDAD AL GUARDAR
+                // Si la usuaria borró el prefijo "Cinta..." por error, el sistema lo repara antes de guardar.
+                let nombreActual = inputNombre.value.trim();
+
+                if (cat === 'cinta_garza' && !nombreActual.toLowerCase().includes('garza')) {
+                    inputNombre.value = 'Cinta Garza ' + nombreActual.replace(/cinta/gi, '').trim();
+                } else if (cat === 'cinta_satin' && !nombreActual.toLowerCase().includes('satín') && !nombreActual.toLowerCase().includes('satin')) {
+                    inputNombre.value = 'Cinta Satín ' + nombreActual.replace(/cinta/gi, '').trim();
+                } else if (cat === 'cinta_gross' && !nombreActual.toLowerCase().includes('gross')) {
+                    inputNombre.value = 'Cinta Gross ' + nombreActual.replace(/cinta/gi, '').trim();
+                }
             }
         });
     }

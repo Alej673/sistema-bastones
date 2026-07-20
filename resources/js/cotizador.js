@@ -234,6 +234,74 @@ function mostrarAlerta(contenido, titulo = 'Faltan campos obligatorios', tipo = 
     modal.show();
 }
 
+// =======================================================
+// 4.1 VALIDACIÓN: MATERIAL NUEVO SIN TIPO DE CINTA
+// =======================================================
+/**
+ * Revisa los selects de decoración que aceptan "Cotizar nuevo material"
+ * (Lazo Simple, Flores, Lazo con Nombre). Si el usuario escribió un
+ * material nuevo (no existe en el inventario) y no incluyó si es
+ * Satín / Gross / Garza, bloquea el guardado hasta que lo aclare.
+ *
+ * Se llama justo antes de abrir el modal de datos del cliente / antes
+ * de enviar el pedido, para no dejar pasar cintas ambiguas al inventario.
+ *
+ * @returns {boolean} true si todo está en orden, false si hay que detener el flujo.
+ */
+function validarCintasNuevas() {
+    // Recolectamos los selects de decoración que usan cintas y que están activos.
+    const selectsDecoracion = [];
+
+    if ($('#swLazoSimple').is(':checked')) {
+        selectsDecoracion.push($('select[name="cinta_lazo_simple"]').select2('data'));
+    }
+
+    if ($('#swLazoFlor').is(':checked')) {
+        $('#contenedorFlores select').each(function () {
+            selectsDecoracion.push($(this).select2('data'));
+        });
+    }
+
+    if ($('#swLazoNombre').is(':checked')) {
+        selectsDecoracion.push($('select[name="cinta_lazo_nombre"]').select2('data'));
+    }
+
+    let errorEncontrado = false;
+
+    selectsDecoracion.forEach(dataArray => {
+        if (dataArray && dataArray.length > 0) {
+            const seleccion = dataArray[0];
+            if (!seleccion || seleccion.id === '') return;
+
+            // Verificamos si es un Tag Nuevo (escrito a mano, sin ID de BD)
+            const esTagNuevo = seleccion.newTag || isNaN(seleccion.id);
+
+            if (esTagNuevo) {
+                const nombreLazo = seleccion.text.toLowerCase();
+
+                const tieneSatin = nombreLazo.includes('satin') || nombreLazo.includes('satín');
+                const tieneGross = nombreLazo.includes('gross');
+                const tieneGarza = nombreLazo.includes('garza');
+
+                if (!tieneSatin && !tieneGross && !tieneGarza) {
+                    errorEncontrado = true;
+                }
+            }
+        }
+    });
+
+    if (errorEncontrado) {
+        mostrarAlerta(
+            'Para cotizar un material nuevo, por favor incluye si la cinta es <b>Satín</b>, <b>Gross</b> o <b>Garza</b>.<br><br><small class="text-muted">Ejemplo: "Cinta roja gross"</small>',
+            'Falta el tipo de cinta',
+            'warning'
+        );
+        return false; // Bloquea la ejecución del guardado/cálculo
+    }
+
+    return true; // Todo está en orden, el cálculo puede continuar
+}
+
 
 // =======================================================
 // BLOQUE PRINCIPAL — Un solo $(document).ready()
@@ -361,7 +429,7 @@ $(document).ready(function () {
         costoTotalMateriales += costoTotalBases;
 
         let esGrande     = (tamanoBase === '55' || tamanoBase === '60');
-        let tamanoVisual = esGrande ? '55-60 cm' : '45-50 cm';
+        let tamanoVisual = tamanoBase + ' cm';
 
         // Buscamos en el inventario real la base que coincide en color + tamaño,
         // para poder avisar si hay stock suficiente o si hay que comprar.
@@ -615,7 +683,7 @@ $(document).ready(function () {
                         <tr>
                             <td class="fw-bold text-dark">Cortina Fiesta: ${nombreMaterial}</td>
                             <td class="text-muted small">${cortinasPorColor} cortinas calculadas</td>
-                            <td class="text-muted fw-bold">$${costoCalculado.toFixed(2)}</td>
+                            <td class="fw-bold text-muted">$${costoCalculado.toFixed(2)}</td>
                             <td class="text-end">${textoAlerta}</td>
                         </tr>
                     `);
@@ -853,6 +921,12 @@ $(document).ready(function () {
     $('#btnGuardarCotizacion').on('click', function (e) {
         e.preventDefault();
 
+        // Bloqueo preventivo: si hay una cinta nueva sin tipo (Satín/Gross/Garza),
+        // detenemos todo el flujo antes de siquiera revisar los demás campos.
+        if (!validarCintasNuevas()) {
+            return;
+        }
+
         const cantidad = parseInt($('#inputCantidad').val()) || 0;
         const tamano   = $('#selectTamano').val();
         const acabado  = $('#selectAcabado').val();
@@ -868,6 +942,56 @@ $(document).ready(function () {
         if (!tamano)         faltantes.push('Tamaño del bastón (Módulo 1)');
         if (!acabado)        faltantes.push('Acabado dorado / plata (Módulo 1)');
         if (!tieneColorLana) faltantes.push('Al menos un color de lana (Módulo 2)');
+
+        // ---- Módulo 3: Cortinas (solo si el switch respectivo está activo) ----
+        if ($('#swCortinaLana').is(':checked')) {
+            let tieneCortinaLana = false;
+            $('#contenedorCortinasLana select').each(function () {
+                const data = $(this).select2('data');
+                if (data && data.length > 0 && data[0].id !== '') tieneCortinaLana = true;
+            });
+            if (!tieneCortinaLana) faltantes.push('Color de Cortina de Lana (Módulo 3)');
+        }
+
+        if ($('#swCortinaFiesta').is(':checked')) {
+            let tieneCortinaFiesta = false;
+            $('#contenedorCortinasFiesta select').each(function () {
+                const data = $(this).select2('data');
+                if (data && data.length > 0 && data[0].id !== '') tieneCortinaFiesta = true;
+            });
+            if (!tieneCortinaFiesta) faltantes.push('Color de Cortina de Fiesta (Módulo 3)');
+        }
+
+        // ---- Módulo 4: Decoración y Apliques ----
+        if ($('#swLazoSimple').is(':checked')) {
+            const data = $('select[name="cinta_lazo_simple"]').select2('data');
+            if (!data || data.length === 0 || data[0].id === '') faltantes.push('Cinta para Lazo Simple (Módulo 4)');
+        }
+
+        if ($('#swLazoFlor').is(':checked')) {
+            let tieneFlores = false;
+            $('#contenedorFlores select').each(function () {
+                const data = $(this).select2('data');
+                if (data && data.length > 0 && data[0].id !== '') tieneFlores = true;
+            });
+            if (!tieneFlores) faltantes.push('Cinta para Flores (Módulo 4)');
+        }
+
+        if ($('#swLazoNombre').is(':checked')) {
+            const data = $('select[name="cinta_lazo_nombre"]').select2('data');
+            if (!data || data.length === 0 || data[0].id === '') faltantes.push('Cinta para Lazo con Nombre (Módulo 4)');
+        }
+
+        if ($('#swApliques').is(':checked')) {
+            const cantApliques = parseInt($('#cantApliques').val()) || 0;
+            if (cantApliques <= 0) faltantes.push('Cantidad de Apliques (Módulo 4)');
+        }
+
+        // ---- Módulo 5: Diseño Personalizado ----
+        if ($('#swDisenoPersonalizado').is(':checked')) {
+            const nivelDiseno = $('#selectNivelDiseno').val();
+            if (!nivelDiseno) faltantes.push('Nivel de Diseño Personalizado (Módulo 5)');
+        }
 
         if (faltantes.length > 0) {
             mostrarAlerta(faltantes, 'Faltan campos obligatorios', 'warning');

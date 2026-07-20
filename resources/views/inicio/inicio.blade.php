@@ -101,17 +101,17 @@
         </div>
     </div>
 
-    <!-- =========================================
-         FILA 3: PANELES DE ALERTAS DIVIDIDOS (6 y 6)
+        <!-- =========================================
+         FILA 3: PANELES DE ALERTAS DIVIDIDOS (4, 4 y 4)
          ========================================= -->
     <div class="row g-3">
         
-        <!-- Columna Izquierda (6): Deudas de Inventario -->
-        <div class="col-lg-6">
+        <!-- Columna Izquierda (4): Deudas de Inventario -->
+        <div class="col-lg-4">
             <div class="card card-panel" style="border-color: rgba(245, 158, 11, 0.4);">
                 <div class="card-panel-header" style="border-bottom-color: rgba(245, 158, 11, 0.2);">
                     <h5 class="card-panel-title" style="color: #f59e0b; font-size: 1rem;">
-                        <i class="fa-solid fa-triangle-exclamation me-2"></i> Deuda (Saldos en Negativo)
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i> Deuda (Negativo)
                     </h5>
                 </div>
                 <div class="card-body p-3">
@@ -127,36 +127,75 @@
                                 </button>
                             </div>
                         @empty
-                            <div class="text-muted small fst-italic text-center py-3">No hay deudas de inventario registradas en este momento.</div>
+                            <div class="text-muted small fst-italic text-center py-3">No hay deudas.</div>
                         @endforelse
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Columna Derecha (6): Insumos Huérfanos -->
-        <div class="col-lg-6">
+        <!-- Columna Central (4): Insumos Huérfanos -->
+        <div class="col-lg-4">
             <div class="card card-panel" style="border-color: rgba(239, 68, 68, 0.4);">
                 <div class="card-panel-header" style="border-bottom-color: rgba(239, 68, 68, 0.2);">
                     <h5 class="card-panel-title" style="color: #ef4444; font-size: 1rem;">
-                        <i class="fa-solid fa-circle-xmark me-2"></i> Materiales No Encontrados
+                        <i class="fa-solid fa-circle-xmark me-2"></i> No Encontrados
                     </h5>
                 </div>
                 <div class="card-body p-3">
                     <div class="d-flex flex-column gap-2">
-                        @forelse($materialesHuerfanos as $huerfano)
+                        @forelse($materialesHuerfanos ?? [] as $huerfano)
                             <div class="d-flex justify-content-between align-items-center p-2 rounded mb-1" style="background-color: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2);" id="alerta-huerfano-{{ $huerfano['detalle_id'] }}">
                                 <div>
                                     <span class="d-block text-white fw-bold" style="font-size: 0.9rem;">{{ $huerfano['nombre_material'] }}</span>
-                                    <span class="text-muted d-block mt-1" style="font-size: 0.8rem;">Detectado en Pedido #{{ str_pad($huerfano['pedido_id'], 4, '0', STR_PAD_LEFT) }}</span>
+                                    <span class="text-muted d-block mt-1" style="font-size: 0.8rem;">En Pedido #{{ str_pad($huerfano['pedido_id'], 4, '0', STR_PAD_LEFT) }}</span>
                                 </div>
-                                
                                 <button onclick="descartarHuerfano({{ $huerfano['detalle_id'] }})" class="btn btn-sm btn-link text-danger p-0" title="Ignorar esta alerta" style="text-decoration: none; font-size: 1.5rem; line-height: 1;">
                                     &times;
                                 </button>
                             </div>
                         @empty
-                            <div class="text-muted small fst-italic text-center py-3">Todos los materiales están enlazados correctamente.</div>
+                            <div class="text-muted small fst-italic text-center py-3">Todo enlazado.</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha (4): Stock Bajo / Por Agotarse -->
+        <div class="col-lg-4">
+            <div class="card card-panel" style="border-color: rgba(59, 130, 246, 0.4);">
+                <div class="card-panel-header" style="border-bottom-color: rgba(59, 130, 246, 0.2);">
+                    <h5 class="card-panel-title" style="color: #3b82f6; font-size: 1rem;">
+                        <i class="fa-solid fa-boxes-stacked me-2"></i> Por Agotarse
+                    </h5>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex flex-column gap-2">
+                        @forelse($insumosBajos ?? [] as $insumo)
+                            <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background-color: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2);">
+                                <div>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <span class="d-block text-white fw-bold" style="font-size: 0.9rem;">{{ $insumo->nombre }}</span>
+                                        
+                                        <!-- Insignia dinámica: Rojo si es 0, Amarillo si aún queda algo -->
+                                        @if($insumo->stock_actual <= 0)
+                                            <span class="badge ms-2" style="background-color: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); font-size: 0.65rem;">Agotado</span>
+                                        @else
+                                            <span class="badge ms-2" style="background-color: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); font-size: 0.65rem;">Bajo</span>
+                                        @endif
+                                    </div>
+                                    
+                                    <span class="text-muted d-block" style="font-size: 0.8rem;">Actual: {{ $insumo->stock_actual }} | Mín: {{ $insumo->stock_minimo }}</span>
+                                </div>
+                                
+                                <!-- Botón corregido usando el helper route() de Laravel -->
+                                <a href="{{ route('insumos.index') }}" class="btn btn-sm btn-link p-0" style="color: #3b82f6;" title="Ir al Kardex para reabastecer">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                </a>
+                            </div>
+                        @empty
+                            <div class="text-muted small fst-italic text-center py-3">Inventario óptimo.</div>
                         @endforelse
                     </div>
                 </div>
@@ -164,7 +203,6 @@
         </div>
 
     </div>
-</div>
 
 @push('js')
 

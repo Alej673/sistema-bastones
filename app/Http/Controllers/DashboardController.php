@@ -70,6 +70,16 @@ class DashboardController extends Controller
             }
         }
 
+        // =========================================================
+        // 5. ALERTAS TIPO C: STOCK BAJO / POR AGOTARSE (Celeste)
+        // =========================================================
+        // Compara que el stock_actual sea menor o igual al stock_minimo.
+        // Además, filtramos que sea mayor o igual a 0 para que no se dupliquen 
+        // con los insumos que ya están en "Deuda de Inventario" (alertasStock).
+        $insumosBajos = Insumo::whereColumn('stock_actual', '<=', 'stock_minimo')
+                              ->where('stock_actual', '>=', 0)
+                              ->get();
+
         // Retornamos todo a la vista inicio.blade.php
         return view('Inicio.inicio', compact(
             'ingresosMes', 
@@ -77,7 +87,8 @@ class DashboardController extends Controller
             'cotizacionesPendientes', 
             'actividadReciente',
             'alertasStock',
-            'materialesHuerfanos'
+            'materialesHuerfanos',
+            'insumosBajos'
         ));
     }
 

@@ -109,12 +109,70 @@ class VentasController extends Controller
                         $insumo = \App\Models\Insumo::find($item->insumo_id);
                     }
                     
-                    // 2. LA MAGIA: Si no tiene ID o no lo encontró, buscamos por su nombre exacto en la BD
+                    // 2. LA MAGIA EVOLUCIONADA: Búsqueda Inteligente (Fusión Tag + Nombre)
                     if (!$insumo) {
-                        $insumo = \App\Models\Insumo::where('nombre', $item->nombre_material)->first();
-                        
-                        // Si lo encuentra ahora (porque se creó después de cotizar), actualizamos el detalle
-                        // para que queden vinculados permanentemente
+                        $nombreCotizado = $item->nombre_material;
+
+                        // Intento A: Búsqueda flexible (Illa paréntesis y espacios dobles con comodines %)
+                        $nombreLimpio = str_replace(['(', ')', ' '], '%', $nombreCotizado);
+                        $nombreLimpio = preg_replace('/%+/', '%', $nombreLimpio);
+
+                        $insumo = \App\Models\Insumo::where('nombre', 'LIKE', "%{$nombreLimpio}%")->first();
+
+                        // Intento B: Mapeo exhaustivo por CATEGORÍAS (Tags exactos de la BD)
+                        if (!$insumo) {
+                            $tagDetectado = null;
+                            $nombreMinuscula = strtolower($nombreCotizado);
+
+                            // Mapeo contra los 8 tags reales de tu objeto JS / BD:
+                            if (str_contains($nombreMinuscula, 'base')) {
+                                $tagDetectado = 'base_baston';
+                            } elseif (str_contains($nombreMinuscula, 'lana') || str_contains($nombreMinuscula, 'cuerpo')) {
+                                $tagDetectado = 'lana';
+                            } elseif (str_contains($nombreMinuscula, 'garza')) {
+                                $tagDetectado = 'cinta_garza';
+                            } elseif (str_contains($nombreMinuscula, 'satin') || str_contains($nombreMinuscula, 'satín')) {
+                                $tagDetectado = 'cinta_satin';
+                            } elseif (str_contains($nombreMinuscula, 'gross')) {
+                                $tagDetectado = 'cinta_gross';
+                            } elseif (str_contains($nombreMinuscula, 'cortina')) {
+                                $tagDetectado = 'cortina_fiesta';
+                            } elseif (str_contains($nombreMinuscula, 'cincho')) {
+                                $tagDetectado = 'cinchos';
+                            } elseif (str_contains($nombreMinuscula, 'elástico') || str_contains($nombreMinuscula, 'elastico')) {
+                                $tagDetectado = 'elastico';
+                            }
+
+                            // Búsqueda dentro de la categoría detectada
+                            if ($tagDetectado) {
+                                // Caso 1: Insumos fijos de ensamblaje (cinchos, elástico)
+                                if (in_array($tagDetectado, ['cinchos', 'elastico'])) {
+                                    $insumo = \App\Models\Insumo::where('categoria', $tagDetectado)->first();
+                                } 
+                                // Caso 2: Insumos con variedad de color/diseño (bases, lanas, cintas, cortinas)
+                                else {
+                                    // Aislamos palabras clave del texto (ej. "roja", "azul", "dorada", "55cm")
+                                    $palabrasBasura = ['lazo', 'simple', 'flor', 'corte', 'cinta', 'cortina', 'base', 'cuerpo', 'c/', 'nombre', ':', '1', '2', '3'];
+                                    
+                                    // Limpiamos la cadena cotizada
+                                    $textoLimpio = str_ireplace($palabrasBasura, '', $nombreCotizado);
+                                    $palabrasClave = array_filter(explode(' ', trim($textoLimpio)));
+
+                                    $query = \App\Models\Insumo::where('categoria', $tagDetectado);
+                                    
+                                    // Buscamos que el insumo en el Kardex contenga al menos el atributo (color o tamaño)
+                                    foreach ($palabrasClave as $palabra) {
+                                        $palabraValida = trim($palabra);
+                                        if (strlen($palabraValida) >= 2) {
+                                            $query->where('nombre', 'LIKE', '%' . $palabraValida . '%');
+                                        }
+                                    }
+                                    $insumo = $query->first();
+                                }
+                            }
+                        }
+
+                        // Si la magia funcionó, amarramos permanentemente el insumo_id en la BD
                         if ($insumo) {
                             $item->insumo_id = $insumo->id;
                             $item->save();
