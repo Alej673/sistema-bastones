@@ -5,6 +5,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\InsumoController;
 use App\Http\Controllers\CotizadorController;
 use App\Http\Controllers\VentasController;
+use App\Http\Controllers\DashboardController;
 
 // ==========================================
 // REDIRECCIONES PRINCIPALES
@@ -67,6 +68,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/buscar-clientes-historial', [VentasController::class, 'buscarClientesAjax'])->name('clientes.buscar_ajax');
     // Ruta para consultar los materiales de un pedido por AJAX
     Route::get('/pedidos/{id}/detalles', [VentasController::class, 'obtenerDetalles'])->name('pedidos.detalles');
+    // Ruta principal del Dashboard
+    Route::get('/', [DashboardController::class, 'index'])->name('inicio');
+    // Rutas para las acciones del Dashboard
+    Route::post('/dashboard/alerta/descartar/{id}', [App\Http\Controllers\DashboardController::class, 'descartarAlerta']);
+    Route::post('/dashboard/stock/arreglar/{id}', [App\Http\Controllers\DashboardController::class, 'arreglarStock']);
 });
 
 require __DIR__.'/auth.php';

@@ -37,7 +37,7 @@
                 <h5 class="text-center mb-4 text-white fw-bold d-none d-lg-block brand-glow">Kardex Bastoneras</h5>
                 
                 <div class="sidebar-links">
-                    <a href="#" class="nav-link-glass">
+                    <a href="{{ route('inicio') }}" class="nav-link-glass {{ request()->routeIs('inicio') ? 'active' : '' }}">
                         <i class="fa-solid fa-house me-2"></i> Inicio
                     </a>
                     

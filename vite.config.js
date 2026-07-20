@@ -19,7 +19,8 @@ export default defineConfig({
                 'resources/css/ventas.css',
                 'resources/js/cotizador.js',      // ¡Agregado! (Muy importante para que funcione tu cotizador)
                 'resources/css/estilos_nav.css', 
-                'resources/js/historial.js',      // ¡Agregado! (Muy importante para que funcione tu historial)
+                'resources/js/historial.js',
+                'resources/css/inico.css',
             ],
             refresh: true,
         }),
