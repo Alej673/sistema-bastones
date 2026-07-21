@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso Seguro - Kardex Automatizado</title>
+    <title>Acceso - Arte Titi_Val</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
@@ -26,7 +26,6 @@
         }
 
         body {
-            /* Gradiente de fondo usando tus colores base y medio */
             background: linear-gradient(135deg, var(--color-fondo-base) 0%, var(--color-fondo-medio) 100%);
             height: 100vh;
             display: flex;
@@ -38,7 +37,6 @@
             position: relative;
         }
 
-        /* Esferas de fondo translúcidas para dar el brillo morado/fucsia al cristal */
         body::before, body::after {
             content: '';
             position: absolute;
@@ -50,7 +48,7 @@
         body::before {
             width: 450px;
             height: 450px;
-            background: rgba(168, 85, 247, 0.25); /* --color-morado translúcido */
+            background: rgba(168, 85, 247, 0.25);
             top: -100px;
             left: -150px;
         }
@@ -58,18 +56,17 @@
         body::after {
             width: 350px;
             height: 350px;
-            background: rgba(134, 25, 143, 0.3); /* --color-fucsia-oscuro translúcido */
+            background: rgba(134, 25, 143, 0.3);
             bottom: -50px;
             right: -100px;
         }
 
         /* 2. TARJETA DARK GLASSMORPHISM */
         .login-card {
-            /* Usamos el Fondo Medio con opacidad para el cristal */
             background: rgba(44, 21, 72, 0.4); 
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(192, 132, 252, 0.15); /* Borde sutil Morado Claro */
+            border: 1px solid rgba(192, 132, 252, 0.15);
             border-radius: 24px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5),
                         inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -83,7 +80,7 @@
         /* 3. TIPOGRAFÍA */
         .brand-title {
             font-family: 'Playfair Display', serif;
-            font-size: 28px;
+            font-size: 32px; /* Un poco más grande para el nuevo nombre */
             color: var(--color-texto);
             margin: 0 0 8px 0;
             font-weight: 700;
@@ -100,7 +97,7 @@
             letter-spacing: 1.5px;
         }
 
-        /* 4. CAMPOS DE ENTRADA NEUMORFISMO (Hundidos) */
+        /* 4. CAMPOS DE ENTRADA */
         .form-group {
             margin-bottom: 24px;
             text-align: left;
@@ -136,36 +133,34 @@
             font-size: 14px;
             border: 1px solid rgba(192, 132, 252, 0.05);
             border-radius: 12px;
-            /* Hundimiento: Fondo Base translúcido con sombra negra */
             background: rgba(27, 15, 40, 0.7); 
             box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.6), 
-                        inset -3px -3px 8px rgba(192, 132, 252, 0.03); /* Brillo morado claro al fondo */
+                        inset -3px -3px 8px rgba(192, 132, 252, 0.03);
             color: var(--color-texto);
             transition: all 0.3s ease;
             box-sizing: border-box;
         }
 
         .form-control::placeholder {
-            color: rgba(185, 168, 201, 0.4); /* Texto mutado con opacidad */
+            color: rgba(185, 168, 201, 0.4);
         }
 
         .form-control:focus {
             outline: none;
             background: rgba(27, 15, 40, 0.9);
-            border-color: var(--color-morado); /* Brillo morado al enfocar */
+            border-color: var(--color-morado);
             box-shadow: inset 6px 6px 12px rgba(0, 0, 0, 0.8), 
                         inset -2px -2px 6px rgba(192, 132, 252, 0.08);
         }
 
         .form-control:focus + .input-icon,
         .input-group:focus-within .input-icon {
-            color: var(--color-fucsia); /* Icono fucsia al hacer clic */
+            color: var(--color-fucsia);
             opacity: 1;
         }
 
-        /* VALIDACIÓN LARAVEL */
         .form-control.is-invalid {
-            border-color: rgba(248, 113, 113, 0.5); /* Color Peligro */
+            border-color: rgba(248, 113, 113, 0.5);
             box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.6), 
                         inset -3px -3px 8px rgba(248, 113, 113, 0.05);
             background: rgba(248, 113, 113, 0.05);
@@ -180,7 +175,7 @@
             padding-left: 4px;
         }
 
-        /* 5. BOTÓN DE ENVÍO NEUMORFISMO (Sobresalido) */
+        /* 5. BOTONES Y ENLACES */
         .btn-submit {
             background: var(--color-violeta-boton);
             color: #FFFFFF;
@@ -197,7 +192,6 @@
             justify-content: center;
             gap: 10px;
             margin-top: 15px;
-            /* Sombra exterior para sobresalir */
             box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), 
                         -2px -2px 8px rgba(192, 132, 252, 0.1);
         }
@@ -207,15 +201,13 @@
         }
 
         .btn-submit:active {
-            /* Efecto hundido al hacer clic */
             box-shadow: inset 4px 4px 10px rgba(0, 0, 0, 0.6), 
                         inset -2px -2px 6px rgba(0, 0, 0, 0.2);
             transform: translateY(2px);
         }
 
-        /* Checkbox oscuro */
         .remember-group {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             text-align: left;
             display: flex;
             align-items: center;
@@ -241,9 +233,29 @@
             height: 18px;
             cursor: pointer;
             border-radius: 4px;
-            /* Ajuste para que se vea bien en fondo oscuro */
             filter: invert(0.8) hue-rotate(180deg) brightness(1.2); 
             mix-blend-mode: screen;
+        }
+
+        /* NUEVO: ESTILOS PARA EL ENLACE DE REGISTRO */
+        .register-prompt {
+            margin-top: 25px;
+            font-size: 13px;
+            color: var(--color-texto-mutado);
+            border-top: 1px solid rgba(192, 132, 252, 0.1);
+            padding-top: 20px;
+        }
+
+        .register-prompt a {
+            color: var(--color-fucsia);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .register-prompt a:hover {
+            color: var(--color-morado-claro);
+            text-decoration: underline;
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
@@ -252,8 +264,8 @@
 
     <div class="login-card">
         
-        <h1 class="brand-title">Kardex Automatizado</h1>
-        <p class="brand-subtitle">Producción de Bastones para Cachiporreras</p>
+        <h1 class="brand-title">Arte Titi_Val</h1>
+        <p class="brand-subtitle">Portal de Clientes y Taller</p>
         
         <form method="POST" action="{{ route('login') }}">
             @csrf
@@ -286,9 +298,15 @@
             </div>
 
             <button type="submit" class="btn-submit">
-                Ingresar al Sistema <i class="fa-solid fa-arrow-right"></i>
+                Iniciar Sesión <i class="fa-solid fa-arrow-right"></i>
             </button>
             
+            <!-- NUEVO: ENLACE PARA CLIENTES NUEVOS -->
+            <div class="register-prompt">
+                ¿No tienes una cuenta para cotizar? <br>
+                <a href="{{ route('register') }}">Crea una cuenta aquí</a>
+            </div>
+
         </form>
     </div>
 

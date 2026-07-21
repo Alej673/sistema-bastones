@@ -46,6 +46,11 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        // Si es administrador, va al panel del taller. Si es cliente, va a su portal.
+        if ($user->role === 'admin') {
+            return redirect(route('dashboard', absolute: false));
+        }
+
+        return redirect(route('cliente.dashboard', absolute: false));
     }
 }

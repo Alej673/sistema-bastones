@@ -28,7 +28,12 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('insumos.index', absolute: false));
+        // Si es administrador, va al panel del taller. Si es cliente, va a su portal.
+        if ($request->user()->role === 'admin') {
+            return redirect()->intended(route('dashboard', absolute: false));
+        }
+
+        return redirect()->intended(route('cliente.dashboard', absolute: false));
     }
 
     /**
