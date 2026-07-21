@@ -88,6 +88,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         Route::post('/admin/catalogo', 'store')->name('admin.catalogo.store');
         Route::patch('/admin/catalogo/{id}/toggle', 'toggleActivo')->name('admin.catalogo.toggle');
         Route::delete('/admin/catalogo/{id}', 'destroy')->name('admin.catalogo.destroy');
+        Route::put('/admin/catalogo/{id}', 'update')->name('admin.catalogo.update');
     });
 });
 

@@ -64,4 +64,37 @@ class CatalogController extends Controller
 
         return back()->with('success', 'Bastón eliminado del catálogo.');
     }
+
+    public function update(Request $request, $id)
+    {
+        // 1. Validar los datos. Nota que la imagen es "nullable" (opcional)
+        $request->validate([
+            'titulo' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'imagen' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+        ]);
+
+        // 2. Buscar el ítem en la base de datos
+        $item = CatalogItem::findOrFail($id);
+        $item->titulo = $request->titulo;
+        $item->descripcion = $request->descripcion;
+
+        // 3. Si el usuario subió una imagen nueva...
+        if ($request->hasFile('imagen')) {
+            
+            // Opcional pero recomendado: Eliminar la imagen vieja del servidor
+            if ($item->imagen_path && Storage::disk('public')->exists($item->imagen_path)) {
+                Storage::disk('public')->delete($item->imagen_path);
+            }
+            
+            // Guardar la nueva y actualizar la ruta
+            $item->imagen_path = $request->file('imagen')->store('catalogo', 'public');
+        }
+
+        // 4. Guardar cambios
+        $item->save();
+
+        // 5. Retornar con el mensaje de éxito (que será capturado por tu SweetAlert)
+        return back()->with('success', '¡Modelo actualizado correctamente!');
+    }
 }
