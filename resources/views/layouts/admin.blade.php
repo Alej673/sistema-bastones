@@ -52,9 +52,19 @@
                     <a href="{{ route('ventas.index') }}" class="nav-link-glass">
                         <i class="fa-solid fa-chart-line me-2"></i> Ventas
                     </a>
+
+                    <!-- NUEVO: Enlace directo al Catálogo/Landing Page -->
+                    <a href="{{ route('admin.catalogo.index') }}" class="nav-link-glass {{ request()->routeIs('admin.catalogo.*') ? 'active' : '' }}">
+                        <i class="fa-solid fa-images me-2"></i> Gestión de Catálogo
+                    </a>
                 </div>
 
                 <div class="mt-auto pb-3">
+                    <a href="{{ route('home') }}" target="_blank" class="nav-link-glass text-warning mb-2">
+                        <i class="fa-solid fa-globe me-2"></i> Ver Sitio Web
+                        <i class="fa-solid fa-arrow-up-right-from-square ms-1" style="font-size: 10px;"></i>
+                    </a>
+
                     <hr class="border-secondary opacity-25"> 
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf

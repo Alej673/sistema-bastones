@@ -7,38 +7,36 @@ use App\Http\Controllers\CotizadorController;
 use App\Http\Controllers\VentasController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\QuoteRequestController;
+use App\Models\CatalogItem;
 
 // ==========================================
-// RUTAS PÚBLICAS Y DE CLIENTES EXTERNOS
+// 1. LA CARA DEL SISTEMA (Landing Page)
 // ==========================================
 Route::get('/', function () {
-    return view('welcome'); // Futura Landing Page del catálogo
+    // Buscar todos los bastones que tu mamá tenga marcados como "activos"
+    $bastones = CatalogItem::where('activo', true)->latest()->get();
+    
+    // Pasarle esos bastones a la vista welcome
+    return view('welcome', compact('bastones')); 
 })->name('home');
 
-// Ruta genérica para clientes (a donde irán después de loguearse)
+// ==========================================
+// 2. RUTAS DEL CLIENTE EXTERNO
+// ==========================================
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/mi-cuenta', function () {
-        return '
-            <div style="font-family: sans-serif; padding: 40px; text-align: center; background: #1b0f28; color: white; min-height: 100vh;">
-                <h1>¡Bienvenido a Arte Titi_Val!</h1>
-                <p>Aquí verás tus cotizaciones pronto.</p>
-                <form method="POST" action="'.route('logout').'" style="margin-top: 20px;">
-                    '.csrf_field().'
-                    <button type="submit" style="background: #a855f7; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
-                        Cerrar Sesión
-                    </button>
-                </form>
-            </div>
-        ';
+    
+    // Aquí construiremos más adelante una tabla bonita para que el cliente vea sus pedidos
+    Route::get('/mis-pedidos', function () {
+        return "Próximamente: Historial de pedidos del cliente.";
     })->name('cliente.dashboard');
 
-    // NUEVO: La ruta que recibe los datos del formulario de la landing page
+    // Recibe los datos del formulario de cotización
     Route::post('/cotizar', [QuoteRequestController::class, 'store'])->name('cotizacion.store');
 });
 
 
 // ==========================================
-// RUTAS PRIVADAS (Taller y Administración)
+// 3. RUTAS PRIVADAS (Taller y Administración)
 // ==========================================
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
@@ -81,6 +79,16 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::patch('/pedidos/{id}/estado', [VentasController::class, 'actualizarEstado'])->name('pedidos.estado');
     Route::get('/buscar-clientes-historial', [VentasController::class, 'buscarClientesAjax'])->name('clientes.buscar_ajax');
     Route::get('/pedidos/{id}/detalles', [VentasController::class, 'obtenerDetalles'])->name('pedidos.detalles');
+
+    // ------------------------------------------
+    // Módulo de Gestión del Catálogo Público
+    // ------------------------------------------
+    Route::controller(App\Http\Controllers\CatalogController::class)->group(function () {
+        Route::get('/admin/catalogo', 'index')->name('admin.catalogo.index');
+        Route::post('/admin/catalogo', 'store')->name('admin.catalogo.store');
+        Route::patch('/admin/catalogo/{id}/toggle', 'toggleActivo')->name('admin.catalogo.toggle');
+        Route::delete('/admin/catalogo/{id}', 'destroy')->name('admin.catalogo.destroy');
+    });
 });
 
 

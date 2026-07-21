@@ -1,0 +1,73 @@
+    :root {
+        --brand-purple: #8b5cf6;
+        --brand-purple-light: #a78bfa;
+        --brand-purple-dark: #7c3aed;
+        --card-bg: rgba(37, 24, 63, 0.85);
+        --card-border: rgba(139, 92, 246, 0.2);
+    }
+
+    /* Ya no hay glow, solo texto blanco normal */
+    .brand-glow-purple {
+        text-shadow: none;
+    }
+
+    .card-catalogo {
+        background: var(--card-bg) !important;
+        border: 1px solid var(--card-border) !important;
+    }
+    .card-header-purple {
+        color: var(--brand-purple-light) !important;
+        border-bottom: 1px solid var(--card-border) !important;
+    }
+    .form-control-dark {
+        background-color: rgba(15, 10, 26, 0.6);
+        border-color: var(--card-border);
+        color: #fff;
+    }
+    .form-control-dark:focus {
+        background-color: rgba(15, 10, 26, 0.8);
+        border-color: var(--brand-purple);
+        color: #fff;
+        box-shadow: 0 0 0 0.2rem rgba(139, 92, 246, 0.25);
+    }
+
+    /* Botón nativo "Seleccionar archivo" del input type=file */
+    .form-control-dark::file-selector-button {
+        background-color: var(--brand-purple-dark);
+        color: #fff;
+        border: none;
+        padding: 0.4rem 0.9rem;
+        margin-right: 1rem;
+        border-radius: 0.25rem;
+        transition: background-color 0.15s ease-in-out;
+    }
+    .form-control-dark::file-selector-button:hover {
+        background-color: #6d28d9;
+    }
+    /* Fallback para navegadores WebKit viejos */
+    .form-control-dark::-webkit-file-upload-button {
+        background-color: var(--brand-purple-dark);
+        color: #fff;
+        border: none;
+        padding: 0.4rem 0.9rem;
+        margin-right: 1rem;
+        border-radius: 0.25rem;
+    }
+
+    .btn-purple {
+        background-color: var(--brand-purple-dark);
+        border-color: var(--brand-purple-dark);
+        color: #fff;
+    }
+    .btn-purple:hover {
+        background-color: #6d28d9;
+        border-color: #6d28d9;
+        color: #fff;
+    }
+    .item-card {
+        background: rgba(15, 10, 26, 0.6) !important;
+        border: 1px solid var(--card-border) !important;
+    }
+    .item-card .card-title {
+        color: var(--brand-purple-light) !important;
+    }

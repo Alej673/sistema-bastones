@@ -21,6 +21,7 @@ export default defineConfig({
                 'resources/css/estilos_nav.css', 
                 'resources/js/historial.js',
                 'resources/css/inico.css',
+                'resources/css/formulario.css',
             ],
             refresh: true,
         }),
