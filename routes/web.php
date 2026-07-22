@@ -12,14 +12,21 @@ use App\Models\CatalogItem;
 // ==========================================
 // 1. LA CARA DEL SISTEMA (Landing Page)
 // ==========================================
-Route::get('/', function () {
-    // Buscar todos los bastones que tu mamá tenga marcados como "activos"
-    $bastones = CatalogItem::where('activo', true)->latest()->get();
-    
-    // Pasarle esos bastones a la vista welcome
-    return view('welcome', compact('bastones')); 
-})->name('home');
 
+Route::get('/', function () {
+    // 1. Carrusel (ya lo tienes)
+    $carruselItems = CatalogItem::where('activo', true)
+                                ->where('en_carrusel', true)
+                                ->get();
+
+    // 2. NUEVO: Solo los productos destacados (máximo 6)
+    $destacados = CatalogItem::where('activo', true)
+                             ->where('es_destacado', true)
+                             ->take(6) 
+                             ->get();
+
+    return view('welcome', compact('carruselItems', 'destacados'));
+})->name('home');
 // ==========================================
 // 2. RUTAS DEL CLIENTE EXTERNO
 // ==========================================
@@ -89,6 +96,8 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         Route::patch('/admin/catalogo/{id}/toggle', 'toggleActivo')->name('admin.catalogo.toggle');
         Route::delete('/admin/catalogo/{id}', 'destroy')->name('admin.catalogo.destroy');
         Route::put('/admin/catalogo/{id}', 'update')->name('admin.catalogo.update');
+        Route::patch('/admin/catalogo/{id}/carrusel', 'toggleCarrusel')->name('admin.catalogo.carrusel');
+        Route::patch('/admin/catalogo/{id}/destacado', 'toggleDestacado')->name('admin.catalogo.destacado');
     });
 });
 

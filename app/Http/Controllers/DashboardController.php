@@ -23,8 +23,9 @@ class DashboardController extends Controller
                             ->whereYear('created_at', $anioActual)
                             ->sum('costo_total');
 
-        $pedidosEnProduccion = Pedido::where('estado', 'En Producción')
-                                     ->orWhere('estado', 'En Produccion')->count(); 
+        $enProduccion = Pedido::where('estado', 'en_produccion')->count();
+        // $pedidosEnProduccion = Pedido::where('estado', 'En Producción')
+        //                              ->orWhere('estado', 'En Produccion')->count(); 
                                      
         $cotizacionesPendientes = Pedido::where('estado', 'Pendiente')->count();
 
@@ -83,7 +84,7 @@ class DashboardController extends Controller
         // Retornamos todo a la vista inicio.blade.php
         return view('Inicio.inicio', compact(
             'ingresosMes', 
-            'pedidosEnProduccion', 
+            'enProduccion', 
             'cotizacionesPendientes', 
             'actividadReciente',
             'alertasStock',

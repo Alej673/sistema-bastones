@@ -15,6 +15,12 @@ class CatalogItem extends Model
         'descripcion',
         'imagen_path',
         'activo',
+        'en_carrusel', 
+        'es_destacado',
+        'categoria',
+        'medida_cm',
+        'nivel_diseno',
+        'nivel_accesorios'
     ];
 
     // Le decimos a Laravel que 'activo' siempre debe ser tratado como booleano (true/false)

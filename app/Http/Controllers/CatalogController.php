@@ -8,24 +8,55 @@ use Illuminate\Support\Facades\Storage;
 
 class CatalogController extends Controller
 {
-    // 1. Mostrar la lista de bastones en el panel de tu mamá
-    public function index()
+    // 1. Mostrar la lista de bastones con Filtros y Paginación
+    public function index(Request $request)
     {
-        $items = CatalogItem::latest()->get();
-        return view('catalogo.formulario', compact('items')); // Crearemos esta vista en el siguiente paso
+        // Iniciamos el constructor de consultas
+        $query = CatalogItem::query();
+
+        // Filtro 1: Búsqueda por texto (Título)
+        if ($request->filled('buscar')) {
+            $query->where('titulo', 'LIKE', '%' . $request->buscar . '%');
+        }
+
+        // Filtro 2: Por Categoría
+        if ($request->filled('categoria') && $request->categoria !== 'todas') {
+            $query->where('categoria', $request->categoria);
+        }
+
+        // Filtro 3: Estados Especiales (Carrusel, Destacado, Ocultos)
+        if ($request->filled('estado')) {
+            if ($request->estado === 'carrusel') {
+                $query->where('en_carrusel', true);
+            } elseif ($request->estado === 'destacado') {
+                $query->where('es_destacado', true);
+            } elseif ($request->estado === 'oculto') {
+                $query->where('activo', false);
+            }
+        }
+
+        // Ejecutamos la consulta ordenando por los más nuevos y paginando de 9 en 9.
+        // withQueryString() asegura que al cambiar de página no se pierdan los filtros aplicados.
+        $items = $query->latest()->paginate(9)->withQueryString();
+
+        return view('catalogo.formulario', compact('items'));
     }
 
     // 2. Guardar un nuevo bastón con su foto
     public function store(Request $request)
     {
-        // Validar los datos y la imagen (máximo 2MB)
+        // Validar los datos
         $request->validate([
             'titulo' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
             'imagen' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'categoria' => 'required|string',
+            'medida_cm' => 'nullable|string',
+            'nivel_diseno' => 'nullable|string',
+            'nivel_accesorios' => 'nullable|string',
         ]);
 
-        // Guardar la foto en storage/app/public/catalogo
+        // Guardar la foto
         $rutaImagen = $request->file('imagen')->store('catalogo', 'public');
 
         // Registrar en la base de datos
@@ -34,11 +65,15 @@ class CatalogController extends Controller
             'descripcion' => $request->descripcion,
             'imagen_path' => $rutaImagen,
             'activo' => true,
+            'categoria' => $request->categoria,
+            // Magia aquí: Si viene nulo, le asignamos 'na' para que la BD no colapse
+            'medida_cm' => $request->medida_cm ?? 'na',
+            'nivel_diseno' => $request->nivel_diseno ?? 'na',
+            'nivel_accesorios' => $request->nivel_accesorios ?? 'na',
         ]);
 
-        return back()->with('success', '¡Bastón agregado al catálogo con éxito!');
+        return back()->with('success', '¡Artículo agregado al catálogo con éxito!');
     }
-
     // 3. Activar/Desactivar un bastón (Ocultarlo de la landing page)
     public function toggleActivo($id)
     {
@@ -53,48 +88,74 @@ class CatalogController extends Controller
     public function destroy($id)
     {
         $item = CatalogItem::findOrFail($id);
-        
+
         // Borrar la foto física del servidor
         if (Storage::disk('public')->exists($item->imagen_path)) {
             Storage::disk('public')->delete($item->imagen_path);
         }
-        
+
         // Borrar el registro de la BD
         $item->delete();
 
         return back()->with('success', 'Bastón eliminado del catálogo.');
     }
 
+    // 5. Actualizar un artículo existente
     public function update(Request $request, $id)
     {
-        // 1. Validar los datos. Nota que la imagen es "nullable" (opcional)
+        // 1. Validar los datos
         $request->validate([
             'titulo' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
             'imagen' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'categoria' => 'required|string',
+            'medida_cm' => 'nullable|string',
+            'nivel_diseno' => 'nullable|string',
+            'nivel_accesorios' => 'nullable|string',
         ]);
 
         // 2. Buscar el ítem en la base de datos
         $item = CatalogItem::findOrFail($id);
+        
+        // 3. Asignar los valores (con protección contra nulos)
         $item->titulo = $request->titulo;
         $item->descripcion = $request->descripcion;
+        $item->categoria = $request->categoria;
+        $item->medida_cm = $request->medida_cm ?? 'na';
+        $item->nivel_diseno = $request->nivel_diseno ?? 'na';
+        $item->nivel_accesorios = $request->nivel_accesorios ?? 'na';
 
-        // 3. Si el usuario subió una imagen nueva...
+        // 4. Si el usuario subió una imagen nueva...
         if ($request->hasFile('imagen')) {
-            
-            // Opcional pero recomendado: Eliminar la imagen vieja del servidor
             if ($item->imagen_path && Storage::disk('public')->exists($item->imagen_path)) {
                 Storage::disk('public')->delete($item->imagen_path);
             }
-            
-            // Guardar la nueva y actualizar la ruta
             $item->imagen_path = $request->file('imagen')->store('catalogo', 'public');
         }
 
-        // 4. Guardar cambios
+        // 5. Guardar cambios
         $item->save();
 
-        // 5. Retornar con el mensaje de éxito (que será capturado por tu SweetAlert)
-        return back()->with('success', '¡Modelo actualizado correctamente!');
+        return back()->with('success', '¡Artículo actualizado correctamente!');
+    }
+
+    // 6. Activar/Desactivar del Carrusel (Hero)
+    public function toggleCarrusel($id)
+    {
+        $item = CatalogItem::findOrFail($id);
+        $item->en_carrusel = !$item->en_carrusel;
+        $item->save();
+
+        return back()->with('success', 'Visibilidad en el carrusel actualizada.');
+    }
+
+    // 7. Activar/Desactivar de Productos Destacados
+    public function toggleDestacado($id)
+    {
+        $item = CatalogItem::findOrFail($id);
+        $item->es_destacado = !$item->es_destacado;
+        $item->save();
+
+        return back()->with('success', 'Estado de producto destacado actualizado.');
     }
 }

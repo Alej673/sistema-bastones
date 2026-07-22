@@ -31,7 +31,7 @@
             <div class="card card-kpi">
                 <div class="card-body">
                     <h6 class="kpi-titulo">En Producción</h6>
-                    <h3 class="kpi-valor color-morado">{{ $pedidosEnProduccion ?? 0 }}</h3>
+                    <h3 class="kpi-valor color-morado">{{ $enProduccion}}</h3>
                 </div>
             </div>
         </div>
