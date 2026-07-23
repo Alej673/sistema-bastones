@@ -64,16 +64,35 @@
         border-color: #6d28d9;
         color: #fff;
     }
+
+    /* ===== TARJETAS Y GLASSMORPHISM ===== */
     .item-card {
-        background: rgba(15, 10, 26, 0.6) !important;
-        border: 1px solid var(--card-border) !important;
+        /* Fondo semi-transparente para el efecto cristal */
+        background: rgba(30, 18, 50, 0.4) !important;
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 20px !important; /* Bordes bien redondeados */
+        overflow: hidden !important; /* CLAVE: Corta las esquinas de la foto para que no sobresalgan */
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
+
+    .item-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+    }
+
     .item-card .card-title {
         color: var(--brand-purple-light) !important;
     }
 
-    .item-card-wrapper {
-        position: relative;
+    /* Ajuste perfecto para las fotos */
+    .item-card .card-img-top {
+        height: 240px;
+        width: 100%;
+        object-fit: cover; /* Evita que la foto se estire o deforme */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .btn-edit-bubble {
@@ -381,3 +400,44 @@
     color: #6c757d;
     border-color: rgba(255, 255, 255, 0.05);
 }
+
+/* ===== EFECTO DE IMAGEN DIFUMINADA DE FONDO ===== */
+    .card-image-wrapper {
+        position: relative;
+        height: 240px;
+        width: 100%;
+        overflow: hidden;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        background-color: #0a0514; /* Color de fondo base muy oscuro */
+    }
+
+    /* La capa que hace el efecto borroso con la misma foto */
+    .card-image-wrapper .bg-blur {
+        position: absolute;
+        top: -10%; left: -10%;
+        width: 120%; height: 120%;
+        background-size: cover;
+        background-position: center;
+        filter: blur(15px);
+        opacity: 0.5; /* Ajusta este valor si quieres que el fondo brille más o menos */
+        z-index: 0;
+    }
+
+    /* Capa oscura sutil para que el fondo no compita con la foto principal */
+    .card-image-wrapper .bg-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(30, 18, 50, 0.4); 
+        z-index: 1;
+    }
+
+    /* La foto principal que ya NO se corta */
+    .item-card .card-img-top {
+        position: relative;
+        z-index: 2;
+        height: 100%;
+        width: 100%;
+        object-fit: contain; /* Clave: La imagen se ajusta sin cortarse */
+        padding: 8px; /* Un pequeño margen para que respire */
+        filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.5)); /* Sombrita para separar del fondo */
+    }

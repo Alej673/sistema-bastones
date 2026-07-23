@@ -47,7 +47,7 @@
                     <div class="col-md-3">
                         <label for="categoria" class="form-label text-light">Categoría</label>
                         <select name="categoria" id="categoria"
-                                class="form-select form-control-dark select2-tag"
+                                class="form-select form-control-dark select2-form"
                                 required data-placeholder="Elegir categoría...">
                             <option value="" disabled selected></option>
                             <option value="baston">Bastón Completo</option>
@@ -62,7 +62,7 @@
                     <div class="col-md-3">
                         <label for="medida_cm" class="form-label text-light">Medida Base</label>
                         <select name="medida_cm" id="medida_cm"
-                                class="form-select form-control-dark select2-tag"
+                                class="form-select form-control-dark select2-form"
                                 data-placeholder="Elegir medida...">
                             <option value="" selected disabled></option>
                             <option value="50">50 cm (Estándar)</option>
@@ -77,7 +77,7 @@
                     <div class="col-md-3">
                         <label for="nivel_diseno" class="form-label text-light">Nivel de Diseño</label>
                         <select name="nivel_diseno" id="nivel_diseno"
-                                class="form-select form-control-dark select2-tag"
+                                class="form-select form-control-dark select2-form"
                                 data-placeholder="Elegir diseño...">
                             <option value="" selected disabled></option>
                             <option value="basico">Básico</option>
@@ -91,7 +91,7 @@
                     <div class="col-md-3">
                         <label for="nivel_accesorios" class="form-label text-light">Volumen Accesorios</label>
                         <select name="nivel_accesorios" id="nivel_accesorios"
-                                class="form-select form-control-dark select2-tag"
+                                class="form-select form-control-dark select2-form"
                                 data-placeholder="Elegir accesorios...">
                             <option value="" selected disabled></option>
                             <option value="estandar">Estándar</option>
@@ -129,16 +129,16 @@
         <div class="card-body p-4">
 
             <!-- MOTOR DE BÚSQUEDA Y FILTROS -->
-            <form method="GET" action="{{ url()->current() }}" class="mb-4 p-3" style="background: rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+            <form id="form-filtros" method="GET" action="{{ url()->current() }}" class="mb-4 p-3" style="background: rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
                 <div class="row g-2">
                     <!-- Buscador de texto -->
                     <div class="col-md-4">
-                        <input type="text" name="buscar" class="form-control form-control-dark" placeholder="Buscar por nombre..." value="{{ request('buscar') }}">
+                        <input type="text" name="buscar" id="filtro_buscar" class="form-control form-control-dark" placeholder="Buscar por nombre..." value="{{ request('buscar') }}">
                     </div>
 
                     <!-- Filtro Categoría -->
                     <div class="col-md-3">
-                        <select name="categoria" id="filtro_categoria" class="form-select form-control-dark select2-tag" data-placeholder="Todas las categorías">
+                        <select name="categoria" id="filtro_categoria" class="form-select form-control-dark select2-filtro">
                             <option value="todas" {{ request('categoria', 'todas') == 'todas' ? 'selected' : '' }}>Todas las categorías</option>
                             <option value="baston" {{ request('categoria') == 'baston' ? 'selected' : '' }}>Bastones Completos</option>
                             <option value="lazo" {{ request('categoria') == 'lazo' ? 'selected' : '' }}>Lazos / Cintas</option>
@@ -149,7 +149,7 @@
 
                     <!-- Filtro Estados -->
                     <div class="col-md-3">
-                        <select name="estado" id="filtro_estado" class="form-select form-control-dark select2-tag" data-placeholder="Todos los estados">
+                        <select name="estado" id="filtro_estado" class="form-select form-control-dark select2-filtro">
                             <option value="todos" {{ request('estado', 'todos') == 'todos' ? 'selected' : '' }}>Todos los estados</option>
                             <option value="destacado" {{ request('estado') == 'destacado' ? 'selected' : '' }}>⭐ Destacados</option>
                             <option value="carrusel" {{ request('estado') == 'carrusel' ? 'selected' : '' }}>🖼️ En Carrusel</option>
@@ -160,19 +160,21 @@
                     <!-- Botones de Acción -->
                     <div class="col-md-2 d-flex gap-2">
                         <button type="submit" class="btn btn-purple w-100" title="Aplicar filtros"><i class="fa-solid fa-magnifying-glass"></i></button>
-                        <a href="{{ url()->current() }}" class="btn btn-outline-secondary w-100" title="Limpiar filtros"><i class="fa-solid fa-eraser"></i></a>
+                        <a href="{{ url()->current() }}" id="btn-limpiar-filtros" class="btn btn-outline-secondary w-100" title="Limpiar filtros"><i class="fa-solid fa-eraser"></i></a>
                     </div>
                 </div>
             </form>
             <!-- FIN MOTOR DE BÚSQUEDA -->
 
+            <!-- CONTENEDOR DINÁMICO (Para AJAX) -->
+            <div id="contenedor-resultados">
             <!-- CUADRÍCULA DE TARJETAS -->
             <div class="row g-4">
                 @forelse($items as $item)
                     <div class="col-md-6 col-lg-4">
-                        <div class="item-card-wrapper h-100">
+                        <div class="item-card-wrapper h-100 position-relative">
 
-                            <!-- Burbuja de edición (esquina, glassmorphism) -->
+                            <!-- Burbuja de edición -->
                             <button type="button" class="btn-edit-bubble"
                                     data-bs-toggle="modal"
                                     data-bs-target="#modalEditar"
@@ -189,31 +191,39 @@
                                 <i class="fa-solid fa-pen"></i>
                             </button>
 
-                            <div class="card item-card h-100 text-white" style="box-shadow: 0 5px 15px rgba(0,0,0,0.3); background-color: var(--card-bg);">
+                            <!-- TARJETA GLASSMORPHISM -->
+                            <div class="card item-card h-100 text-white">
 
-                                <div style="background-color: rgba(0,0,0,0.2); border-radius: 4px 4px 0 0; padding: 10px;">
-                                    <img src="{{ asset('storage/' . $item->imagen_path) }}" class="card-img-top" alt="{{ $item->titulo }}" style="height: 220px; width: 100%; object-fit: contain; opacity: 0.95;">
+                                <!-- NUEVO: Contenedor con efecto de fondo difuminado -->
+                                <div class="card-image-wrapper">
+                                    <!-- Fondo borroso usando la misma ruta de la imagen -->
+                                    <div class="bg-blur" style="background-image: url('{{ asset('storage/' . $item->imagen_path) }}');"></div>
+                                    <div class="bg-overlay"></div>
+                                    <!-- Imagen principal sin recortes -->
+                                    <img src="{{ asset('storage/' . $item->imagen_path) }}" class="card-img-top" alt="{{ $item->titulo }}">
                                 </div>
 
-                                <div class="card-body d-flex flex-column">
-                                    <h5 class="card-title fw-bold">{{ $item->titulo }}</h5>
-                                    <!-- INYECCIÓN DE TAGS VISUALES (Este es el que se te borró) -->
-                                    <div class="mb-2 mt-1">
-                                        <!-- Tag 1: Categoría Principal (Morado claro) -->
-                                        <span class="badge" style="background-color: rgba(147, 51, 234, 0.2); color: #d8b4fe; border: 1px solid rgba(147, 51, 234, 0.5); letter-spacing: 0.5px; font-weight: 500;">
+                                <div class="card-body d-flex flex-column p-4">
+                                    <h5 class="card-title fw-bold mb-3">{{ $item->titulo }}</h5>
+                                    
+                                    <div class="mb-3 mt-1">
+                                        <!-- Tag 1: Categoría Principal -->
+                                        <span class="badge" style="background-color: rgba(147, 51, 234, 0.25); color: #e9d5ff; border: 1px solid rgba(147, 51, 234, 0.5); letter-spacing: 0.5px; font-weight: 500; border-radius: 8px; padding: 0.4em 0.8em;">
                                             {{ strtoupper($item->categoria) }}
                                         </span>
                                         
-                                        <!-- Tag 2: Medida Base (Solo se muestra si es un bastón y tiene medida) -->
+                                        <!-- Tag 2: Medida Base -->
                                         @if(isset($item->medida_cm) && $item->medida_cm !== 'na' && $item->categoria === 'baston')
-                                            <span class="badge ms-1" style="background-color: rgba(255, 255, 255, 0.1); color: #ced4da; border: 1px solid rgba(255, 255, 255, 0.2); font-weight: 500;">
+                                            <span class="badge ms-1" style="background-color: rgba(255, 255, 255, 0.1); color: #f8f9fa; border: 1px solid rgba(255, 255, 255, 0.2); font-weight: 500; border-radius: 8px; padding: 0.4em 0.8em;">
                                                 {{ $item->medida_cm }} CM
                                             </span>
                                         @endif
                                     </div>
-                                    <p class="card-text small text-light opacity-75 flex-grow-1">{{ $item->descripcion ?? 'Sin descripción.' }}</p>
+                                    
+                                    <p class="card-text small text-light flex-grow-1" style="opacity: 0.85; line-height: 1.5;">{{ $item->descripcion ?? 'Sin descripción.' }}</p>
 
-                                    <div class="d-flex flex-wrap actions-row justify-content-between align-items-center mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.1);">
+                                    <!-- Bandejas de acciones -->
+                                    <div class="d-flex flex-wrap actions-row justify-content-between align-items-center mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.08);">
 
                                         <!-- BANDEJA 1: Carrusel + Destacado -->
                                         <div class="actions-tray">
@@ -270,12 +280,13 @@
             <div class="d-flex justify-content-center mt-5">
                 {{ $items->links('pagination::bootstrap-5') }}
             </div>
+            </div> <!-- FIN CONTENEDOR DINÁMICO -->
 
         </div>
     </div>
 </div>
 
-<!-- MODAL DE EDICIÓN -->
+<!-- MODAL DE EDICIÓN (Se mantiene sin cambios de estructura profunda, pero corregimos las clases select2) -->
 <div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content" style="background-color: #1b0f28; border: 1px solid var(--brand-purple-light);">
@@ -288,7 +299,6 @@
                 @csrf
                 @method('PUT')
                 <div class="modal-body">
-
                     <!-- Fila 1: Título y Foto -->
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
@@ -307,7 +317,7 @@
                         <div class="col-md-3">
                             <label for="edit_categoria" class="form-label text-light">Categoría</label>
                             <select name="categoria" id="edit_categoria"
-                                    class="form-select form-control-dark select2-tag"
+                                    class="form-select form-control-dark select2-modal"
                                     required data-placeholder="Elegir categoría...">
                                 <option value="" disabled></option>
                                 <option value="baston">Bastón Completo</option>
@@ -319,7 +329,7 @@
                         <div class="col-md-3">
                             <label for="edit_medida_cm" class="form-label text-light">Medida Base</label>
                             <select name="medida_cm" id="edit_medida_cm"
-                                    class="form-select form-control-dark select2-tag"
+                                    class="form-select form-control-dark select2-modal"
                                     data-placeholder="Elegir medida...">
                                 <option value=""></option>
                                 <option value="50">50 cm (Estándar)</option>
@@ -331,7 +341,7 @@
                         <div class="col-md-3">
                             <label for="edit_nivel_diseno" class="form-label text-light">Nivel Diseño</label>
                             <select name="nivel_diseno" id="edit_nivel_diseno"
-                                    class="form-select form-control-dark select2-tag"
+                                    class="form-select form-control-dark select2-modal"
                                     data-placeholder="Elegir diseño...">
                                 <option value=""></option>
                                 <option value="basico">Básico</option>
@@ -342,7 +352,7 @@
                         <div class="col-md-3">
                             <label for="edit_nivel_accesorios" class="form-label text-light">Accesorios</label>
                             <select name="nivel_accesorios" id="edit_nivel_accesorios"
-                                    class="form-select form-control-dark select2-tag"
+                                    class="form-select form-control-dark select2-modal"
                                     data-placeholder="Elegir accesorios...">
                                 <option value=""></option>
                                 <option value="estandar">Estándar</option>
@@ -375,52 +385,53 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
-
-        // 1. Guardar la posición del scroll justo antes de que la página muera/recargue
+        // Conservo tu script de scroll
         window.addEventListener('beforeunload', function() {
             sessionStorage.setItem('scrollPosition', window.scrollY);
         });
 
-        // 2. Restaurar la posición del scroll cuando la página vuelve a nacer
         window.addEventListener('load', function() {
             let scrollPosition = sessionStorage.getItem('scrollPosition');
-            
             if (scrollPosition !== null) {
-                // Mover la pantalla suavemente a la posición guardada
                 window.scrollTo({
                     top: parseInt(scrollPosition),
-                    behavior: 'instant' // Usamos instant para que no se vea el "salto", sino que aparezca ahí directamente
+                    behavior: 'instant'
                 });
-                
-                // Limpiar la memoria para que si entras otro día, empieces desde arriba
                 sessionStorage.removeItem('scrollPosition');
             }
         });
 
         document.addEventListener('DOMContentLoaded', function () {
 
-            // ===== Select2 para todos los tags FUERA del modal (formulario de subida + filtros) =====
-            $('.select2-tag').not('#modalEditar .select2-tag').each(function () {
-                $(this).select2({
+            // Inicializar Select2
+            function initSelect2() {
+                // 1. Formularios (Tienen botón clear)
+                $('.select2-form').select2({
                     width: '100%',
-                    placeholder: $(this).data('placeholder'),
+                    placeholder: function(){ $(this).data('placeholder'); },
                     allowClear: true,
                     minimumResultsForSearch: Infinity
                 });
-            });
 
-            // ===== Select2 para los tags DENTRO del modal (requiere dropdownParent) =====
-            $('#modalEditar .select2-tag').each(function () {
-                $(this).select2({
+                // 2. Filtros (NO tienen botón clear para evitar la 'X' fea)
+                $('.select2-filtro').select2({
+                    width: '100%',
+                    minimumResultsForSearch: Infinity
+                });
+
+                // 3. Modal (Requiere dropdownParent)
+                $('.select2-modal').select2({
                     width: '100%',
                     dropdownParent: $('#modalEditar'),
-                    placeholder: $(this).data('placeholder'),
+                    placeholder: function(){ $(this).data('placeholder'); },
                     allowClear: true,
                     minimumResultsForSearch: Infinity
                 });
-            });
+            }
 
-            // 1. MODAL DE ÉXITO (Al guardar, editar o eliminar)
+            initSelect2();
+
+            // Mensajes de éxito
             @if(session('success'))
                 Swal.fire({
                     icon: 'success',
@@ -434,42 +445,105 @@
                 });
             @endif
 
-            // Auto-submit del formulario de filtro al cambiar Categoría o Estado
-            // (usa ids únicos: filtro_categoria / filtro_estado, para no chocar
-            // con los otros selects "categoria" del formulario de subida y del modal)
+            // ==========================================
+            // LÓGICA AJAX PARA FILTROS ASINCRÓNICOS
+            // ==========================================
+            
+            // Disparar búsqueda AJAX al cambiar selects o enviar el form
             $('#filtro_categoria, #filtro_estado').on('change', function () {
-                this.form.submit();
+                ejecutarFiltroAjax();
             });
 
-            // 2. MODAL DE CONFIRMACIÓN PARA ELIMINAR
-            const botonesEliminar = document.querySelectorAll('.btn-eliminar');
+            $('#form-filtros').on('submit', function (e) {
+                e.preventDefault();
+                ejecutarFiltroAjax();
+            });
+            
+            // Limpiar filtros por AJAX
+            $('#btn-limpiar-filtros').on('click', function (e) {
+                e.preventDefault();
+                $('#filtro_buscar').val('');
+                $('#filtro_categoria').val('todas').trigger('change.select2');
+                $('#filtro_estado').val('todos').trigger('change.select2');
+                ejecutarFiltroAjax();
+            });
 
-            botonesEliminar.forEach(boton => {
-                boton.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const formulario = this.closest('.form-eliminar');
+            // Interceptar clic en paginación para hacerlo AJAX
+            $(document).on('click', '#contenedor-resultados .pagination a', function(e) {
+                e.preventDefault();
+                let url = $(this).attr('href');
+                ejecutarFiltroAjax(url);
+            });
 
-                    Swal.fire({
-                        title: '¿Eliminar este diseño?',
-                        text: "Se borrará del catálogo y de la landing page. Esta acción no se puede deshacer.",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        background: '#1b0f28',
-                        color: '#ffffff',
-                        confirmButtonColor: '#dc3545',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: '<i class="fa-solid fa-trash-can"></i> Sí, eliminar',
-                        cancelButtonText: 'Cancelar',
-                        customClass: {
-                            popup: 'border border-secondary'
-                        }
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            formulario.submit();
-                        }
+            function ejecutarFiltroAjax(urlPaginacion = null) {
+                let form = $('#form-filtros');
+                // Si viene de paginación, usamos esa URL; sino, usamos la del form + variables serializadas
+                let urlDestino = urlPaginacion ? urlPaginacion : (form.attr('action') + '?' + form.serialize());
+
+                // Efecto visual de cargando
+                $('#contenedor-resultados').css('opacity', '0.5');
+
+                $.ajax({
+                    url: urlDestino,
+                    type: 'GET',
+                    success: function(response) {
+                        // Extraemos solo el #contenedor-resultados de la respuesta (HTML)
+                        let nuevoContenido = $(response).find('#contenedor-resultados').html();
+                        
+                        // Reemplazamos el HTML y devolvemos opacidad
+                        $('#contenedor-resultados').html(nuevoContenido).css('opacity', '1');
+                        
+                        // Actualizar la URL del navegador sin recargar (para poder compartir el link)
+                        window.history.pushState(null, '', urlDestino);
+                        
+                        // Volvemos a vincular las alertas de SweetAlert a los botones nuevos que trajo el AJAX
+                        bindSweetAlertEliminar();
+                    },
+                    error: function() {
+                        $('#contenedor-resultados').css('opacity', '1');
+                        console.error('Error al cargar los datos.');
+                    }
+                });
+            }
+
+            // ==========================================
+            // CONFIRMACIÓN DE ELIMINAR
+            // ==========================================
+            function bindSweetAlertEliminar() {
+                const botonesEliminar = document.querySelectorAll('.btn-eliminar');
+                botonesEliminar.forEach(boton => {
+                    // Quitamos listeners previos si los hay (por seguridad en AJAX)
+                    boton.replaceWith(boton.cloneNode(true)); 
+                });
+                
+                document.querySelectorAll('.btn-eliminar').forEach(boton => {
+                    boton.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const formulario = this.closest('.form-eliminar');
+
+                        Swal.fire({
+                            title: '¿Eliminar este diseño?',
+                            text: "Se borrará del catálogo y de la landing page. Esta acción no se puede deshacer.",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            background: '#1b0f28',
+                            color: '#ffffff',
+                            confirmButtonColor: '#dc3545',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: '<i class="fa-solid fa-trash-can"></i> Sí, eliminar',
+                            cancelButtonText: 'Cancelar',
+                            customClass: { popup: 'border border-secondary' }
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                formulario.submit();
+                            }
+                        });
                     });
                 });
-            });
+            }
+
+            // Ejecutar al cargar la página
+            bindSweetAlertEliminar();
 
         });
 
@@ -482,7 +556,6 @@
             document.getElementById('edit_descripcion').value = descripcion;
             document.getElementById('edit_imagen').value = '';
 
-            // Con Select2 hay que usar jQuery .val() + trigger('change')
             $('#edit_categoria').val(categoria).trigger('change');
             $('#edit_medida_cm').val(medida || '').trigger('change');
             $('#edit_nivel_diseno').val(diseno || '').trigger('change');

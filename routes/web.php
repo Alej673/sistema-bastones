@@ -8,34 +8,68 @@ use App\Http\Controllers\VentasController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\QuoteRequestController;
 use App\Models\CatalogItem;
+use App\Http\Controllers\PublicCatalogController;
+use App\Models\Review;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\CatalogController;
+use Illuminate\Http\Request;
 
 // ==========================================
 // 1. LA CARA DEL SISTEMA (Landing Page)
 // ==========================================
 
-Route::get('/', function () {
-    // 1. Carrusel (ya lo tienes)
-    $carruselItems = CatalogItem::where('activo', true)
-                                ->where('en_carrusel', true)
-                                ->get();
+Route::get('/', function (Request $request) {
+    // 1. Carrusel y Destacados...
+    $carruselItems = CatalogItem::where('activo', true)->where('en_carrusel', true)->latest()->take(3)->get();
+    $destacados = CatalogItem::where('activo', true)->where('es_destacado', true)->take(6)->get();
+    $recientes = CatalogItem::where('activo', true)->latest()->take(6)->get();
+    
+    // 2. Comentarios (CON FILTRO Y PAGINACIÓN)
+    $queryComentarios = Review::with('user')->where('activo', true)->latest();
+    
+    // Si el cliente hizo clic en un filtro (ej. 5 estrellas)
+    if ($request->has('estrellas') && $request->estrellas != '') {
+        $queryComentarios->where('calificacion', $request->estrellas);
+    }
 
-    // 2. NUEVO: Solo los productos destacados (máximo 6)
-    $destacados = CatalogItem::where('activo', true)
-                             ->where('es_destacado', true)
-                             ->take(6) 
-                             ->get();
+    // Paginamos de 6 en 6. 
+    // fragment('comentarios') hace que al cambiar de página, el navegador baje automáticamente a esta sección.
+    $comentarios = $queryComentarios->paginate(6)->withQueryString()->fragment('comentarios');
 
-    return view('welcome', compact('carruselItems', 'destacados'));
+    return view('welcome', compact('carruselItems', 'destacados', 'recientes', 'comentarios'));
 })->name('home');
+
+// ==========================================
+// 1.5. CATÁLOGO PÚBLICO (Vitrinas y Categorías)
+// ==========================================
+Route::prefix('catalogo')->name('catalogo.')->group(function () {
+    // El Hub Principal (Vitrinas públicas) -> URL: /catalogo
+    Route::get('/', [PublicCatalogController::class, 'index'])->name('index');
+
+    // Vista dedicada por categoría -> URL: /catalogo/baston, /catalogo/lazo, etc.
+    Route::get('/{categoria}', [PublicCatalogController::class, 'showCategory'])->name('categoria');
+});
+
 // ==========================================
 // 2. RUTAS DEL CLIENTE EXTERNO
 // ==========================================
-Route::middleware(['auth', 'verified'])->group(function () {
-    
-    // Aquí construiremos más adelante una tabla bonita para que el cliente vea sus pedidos
+
+// 2.1 Rutas que solo requieren estar logueado (sin exigir correo verificado)
+Route::middleware(['auth'])->group(function () {
+
+    // Historial de pedidos del cliente
     Route::get('/mis-pedidos', function () {
         return "Próximamente: Historial de pedidos del cliente.";
     })->name('cliente.dashboard');
+
+    // Guardar comentarios/reseñas
+    Route::post('/comentarios', [ReviewController::class, 'store'])->name('comentarios.store');
+    // Ruta para procesar el Like (Toggle)
+    Route::post('/comentarios/{id}/like', [ReviewController::class, 'toggleLike'])->name('comentarios.like');
+});
+
+// 2.2 Rutas que además exigen correo verificado
+Route::middleware(['auth', 'verified'])->group(function () {
 
     // Recibe los datos del formulario de cotización
     Route::post('/cotizar', [QuoteRequestController::class, 'store'])->name('cotizacion.store');
@@ -90,7 +124,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // ------------------------------------------
     // Módulo de Gestión del Catálogo Público
     // ------------------------------------------
-    Route::controller(App\Http\Controllers\CatalogController::class)->group(function () {
+    Route::controller(CatalogController::class)->group(function () {
         Route::get('/admin/catalogo', 'index')->name('admin.catalogo.index');
         Route::post('/admin/catalogo', 'store')->name('admin.catalogo.store');
         Route::patch('/admin/catalogo/{id}/toggle', 'toggleActivo')->name('admin.catalogo.toggle');
