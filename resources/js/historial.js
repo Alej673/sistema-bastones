@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-// ==========================================================
+    // ==========================================================
     // 3. MANEJO DE CAMBIO DE ESTADO DE PEDIDOS
     // ==========================================================
     const botonesEstado = document.querySelectorAll('.cambiar-estado');
@@ -105,9 +105,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (data.success) {
                     let alertaHtml = '';
-                    let mostrarAlerta = false;
+                    let hayObservaciones = false;
 
-                    // Bloque Rojo: No encontrados (Error grave) - Cajita rojo pastel
+                    // 1. Bloque Rojo: No encontrados (Error grave) - Cajita rojo pastel
                     if (data.no_encontrados && data.no_encontrados.length > 0) {
                         alertaHtml += `
                             <div style="background-color: #fee2e2; border: 1px solid #fecaca; color: #dc2626; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
@@ -116,10 +116,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                     ${data.no_encontrados.map(item => `<li>${item}</li>`).join('')}
                                 </ul>
                             </div>`;
-                        mostrarAlerta = true;
+                        hayObservaciones = true;
                     }
 
-                    // Bloque Amarillo/Naranja: Quedaron en negativo (Advertencia) - Cajita ámbar pastel
+                    // 2. Bloque Amarillo/Naranja: Quedaron en negativo (Advertencia) - Cajita ámbar pastel
                     if (data.en_negativo && data.en_negativo.length > 0) {
                         alertaHtml += `
                             <div style="background-color: #fef3c7; border: 1px solid #fde68a; color: #d97706; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
@@ -128,10 +128,25 @@ document.addEventListener('DOMContentLoaded', () => {
                                     ${data.en_negativo.map(item => `<li>${item}</li>`).join('')}
                                 </ul>
                             </div>`;
-                        mostrarAlerta = true;
+                        hayObservaciones = true;
                     }
 
-                    if (mostrarAlerta) {
+                    // 3. Bloque Verde: SÍ se descontaron (Éxito) - Cajita verde pastel
+                    // Se inyecta AL PRINCIPIO de la alerta visual solo si hubo observaciones adicionales
+                    if (hayObservaciones && data.descontados && data.descontados.length > 0) {
+                        let bloqueVerde = `
+                            <div style="background-color: #dcfce7; border: 1px solid #bbf7d0; color: #15803d; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                                <strong style="font-size: 15px;"><i class="fa-solid fa-circle-check"></i> Descontados con Éxito:</strong>
+                                <ul style="text-align: left; margin-top: 8px; font-size: 13px; margin-bottom: 0;">
+                                    ${data.descontados.map(item => `<li>${item}</li>`).join('')}
+                                </ul>
+                            </div>`;
+                        
+                        alertaHtml = bloqueVerde + alertaHtml;
+                    }
+
+                    // DECISIÓN VISUAL: Modal de Observaciones vs Toast de Éxito
+                    if (hayObservaciones) {
                         await Swal.fire({
                             icon: 'warning',
                             title: '¡Pedido Realizado con Observaciones!',
@@ -148,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             customClass: { popup: 'border border-light shadow-sm' }
                         });
                     } else {
+                        // Si no hay observaciones, se muestra la alerta limpia original
                         await Swal.fire({
                             title: '¡Actualizado!',
                             text: `El pedido ahora está marcado como: ${textoEstado}`,
@@ -206,19 +222,74 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Consultar la base de datos de forma silenciosa
                     const response = await fetch(`/pedidos/${pedidoId}/detalles`);
                     const data = await response.json();
-                    
-                    let html = '';
+
+                let html = '';
                     if(data.materiales && data.materiales.length > 0) {
                         data.materiales.forEach(mat => {
-                            html += `<li class="list-group-item d-flex justify-content-between align-items-center" style="background-color: var(--color-fondo-base); color: var(--color-texto); border-color: var(--color-fondo-medio);">
-                                ${mat.nombre_material}
-                                <span class="badge" style="background-color: var(--color-morado);">${mat.cantidad_requerida}</span>
+                            let nombreLower = mat.nombre_material.toLowerCase();
+                            let cantidadNumerica = parseFloat(mat.cantidad_requerida);
+                            let textoCantidad = '';
+                            let nombreMostrar = mat.nombre_material;
+
+                            // 1. FLORES Y LAZOS (Con unidades físicas y metros)
+                            if (nombreLower.includes('flor') || nombreLower.includes('lazo')) {
+                                let unidadesFisicas = 0;
+                                if (nombreLower.includes('lazo simple')) {
+                                    unidadesFisicas = cantidadNumerica / 1.5;
+                                } else {
+                                    unidadesFisicas = cantidadNumerica / 1.0;
+                                }
+                                textoCantidad = `${Math.round(unidadesFisicas)} unid. (${cantidadNumerica.toFixed(1)}m)`;
+
+                            // 2. CORTINAS (Limpio y con la unidad de medida correcta)
+                            } else if (nombreLower.includes('cortina')) {
+                                // Ya no modificamos el nombreMostrar, porque la BD ya nos manda "Cortina de Lana: X"
+                                
+                                if (nombreLower.includes('lana')) {
+                                    // Si es cortina de lana, el número representa gramos.
+                                    let unidadesCortina = cantidadNumerica / 30;
+                                    
+                                    textoCantidad = unidadesCortina === 1 
+                                        ? '1 unidad' 
+                                        : `${Math.round(unidadesCortina)} unid.`;
+                                } else {
+                                    // Si es cortina de fiesta, el número representa unidades físicas.
+                                    textoCantidad = cantidadNumerica === 1 
+                                        ? '1 unidad' 
+                                        : `${Math.round(cantidadNumerica)} unid.`;
+                                }
+
+                            // 3. LANA PURA (Cuerpo principal -> Madejas aproximadas)
+                            } else if (nombreLower.includes('lana') && !nombreLower.includes('cortina')) {
+                                let madejas = Math.ceil(cantidadNumerica / 90);
+                                textoCantidad = `~${madejas} madejas`; 
+                                
+                            // 4. DISEÑO ESPECIAL (Traducción a dinero)
+                            } else if (nombreLower.includes('diseño') || nombreLower.includes('diseno')) {
+                                textoCantidad = `$${cantidadNumerica.toFixed(2)} extra`;
+                                
+                            // 5. CINTAS Y ELÁSTICOS (Metros y cm)
+                            } else if (nombreLower.includes('elástico') || nombreLower.includes('elastico') || nombreLower.includes('cinta')) {
+                                textoCantidad = cantidadNumerica < 1 
+                                    ? `${Math.round(cantidadNumerica * 100)} cm` 
+                                    : `${cantidadNumerica} m`;
+                                    
+                            // 6. POR DEFECTO (Bases, Cinchos, Apliques, etc.)
+                            } else {
+                                textoCantidad = cantidadNumerica === 1 
+                                    ? '1 unidad' 
+                                    : `${Math.round(cantidadNumerica)} unid.`;
+                            }
+
+                            // INYECCIÓN DEL HTML
+                            html += `<li class="list-group-item d-flex justify-content-between align-items-center" style="background-color: var(--color-fondo-base); color: var(--color-texto); border-color: var(--color-fondo-medio); padding: 12px 16px;">
+                                <span class="fw-medium">${nombreMostrar}</span>
+                                <span class="badge rounded-pill" style="background-color: var(--color-morado); font-size: 0.9rem; padding: 0.5em 0.8em; font-weight: 500; letter-spacing: 0.5px;">
+                                    ${textoCantidad}
+                                </span>
                             </li>`;
                         });
-                    } else {
-                        html = `<li class="list-group-item text-center text-muted" style="background-color: var(--color-fondo-base); border-color: var(--color-fondo-medio);">No hay insumos registrados</li>`;
                     }
-                    
                     // Inyectar el HTML y ocultar el texto de carga
                     document.getElementById('modal-lista-materiales').innerHTML = html;
                     document.getElementById('modal-loading').style.display = 'none';

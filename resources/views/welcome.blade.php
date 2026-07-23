@@ -27,11 +27,13 @@
                                 <div class="hero-slide-scrim"></div>
 
                                 <!-- Textos sobre la imagen -->
-                                <div class="carousel-caption hero-slide-caption d-none d-md-block">
-                                    <span class="hero-eyebrow"><i class="fa-solid fa-sparkles"></i> Eleccion del Editor</span>
-                                    <h3>{{ $item->titulo }}</h3>
+                                <div class="carousel-caption hero-slide-caption d-flex flex-column align-items-start justify-content-end text-start p-4">
+                                    <span class="hero-eyebrow mb-2">
+                                        <i class="fa-solid fa-sparkles"></i> Elección del Editor
+                                    </span>
+                                    <h3 class="hero-title mb-1">{{ $item->titulo }}</h3>
                                     @if($item->descripcion)
-                                        <p>{{ Str::limit($item->descripcion, 90) }}</p>
+                                        <p class="hero-desc mb-0">{{ Str::limit($item->descripcion, 90) }}</p>
                                     @endif
                                 </div>
                             </div>

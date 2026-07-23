@@ -95,13 +95,26 @@ class VentasController extends Controller
             $estadoAnterior = $pedido->estado;
             
             $materialesNoEncontrados = []; // Aquí guardaremos los "fantasmas"
-            $materialesEnNegativo = []; // NUEVO: Para controlar la deuda
+            $materialesEnNegativo = []; // Para controlar la deuda
+            $listaExitosos = [];
 
             // REGLA DE NEGOCIO BLINDADA: Solo descontar si pasa a 'realizado' 
             // Y comprobamos en la base de datos que NUNCA se haya descontado antes.
             if ($nuevoEstado === 'realizado' && $pedido->inventario_descontado == false) {
                 
                 foreach ($pedido->materiales as $item) {
+                    $nombreLower = strtolower($item->nombre_material);
+
+                    // =======================================================
+                    // ARQUITECTURA BYPASS: Ignorar mano de obra y servicios
+                    // =======================================================
+                    if (str_contains($nombreLower, 'aplique') || 
+                        str_contains($nombreLower, 'diseño') || 
+                        str_contains($nombreLower, 'diseno')) {
+                        // Saltamos este ítem; no afecta inventario ni genera alerta.
+                        continue;
+                    }
+
                     $insumo = null;
 
                     // 1. Intentar buscar por ID (si ya estaba enlazado desde la cotización)
@@ -109,11 +122,11 @@ class VentasController extends Controller
                         $insumo = \App\Models\Insumo::find($item->insumo_id);
                     }
                     
-                    // 2. LA MAGIA EVOLUCIONADA: Búsqueda Inteligente (Fusión Tag + Nombre)
+                    // 2. LA MAGIA EVOLUCIONADA: Búsqueda Inteligente (Fusión Tag + Nombre)[cite: 2]
                     if (!$insumo) {
                         $nombreCotizado = $item->nombre_material;
 
-                        // Intento A: Búsqueda flexible (Illa paréntesis y espacios dobles con comodines %)
+                        // Intento A: Búsqueda flexible (Illa paréntesis y espacios dobles con comodines %)[cite: 2]
                         $nombreLimpio = str_replace(['(', ')', ' '], '%', $nombreCotizado);
                         $nombreLimpio = preg_replace('/%+/', '%', $nombreLimpio);
 
@@ -185,6 +198,9 @@ class VentasController extends Controller
                         $insumo->stock_actual -= $item->cantidad_requerida;
                         $insumo->save();
 
+                        // NUEVO: Registramos el éxito para que el modal lo muestre en verde
+                        $listaExitosos[] = $item->nombre_material . ' (' . $item->cantidad_requerida . ')';
+
                         // LA NUEVA MAGIA: Si después de restar quedó en negativo, lo guardamos
                         if ($insumo->stock_actual < 0) {
                             $materialesEnNegativo[] = $insumo->nombre . ' (Quedó en ' . $insumo->stock_actual . ')';
@@ -217,6 +233,7 @@ class VentasController extends Controller
             // Retornamos la respuesta a JavaScript
             return response()->json([
                 'success' => true,
+                'descontados' => $listaExitosos,
                 'no_encontrados' => $materialesNoEncontrados,
                 'en_negativo' => $materialesEnNegativo
             ]);

@@ -85,11 +85,13 @@
             @foreach($pedido->materiales as $mat)
             <tr>
                 <td>{{ $mat->nombre_material }}</td>
-                <td>{{ $mat->cantidad_requerida }}</td>
-                <td>{{ $mat->stock_bodega }}</td>
+                <!-- Imprimimos las variables formateadas desde el controlador -->
+                <td>{{ $mat->requerido_visual }}</td>
+                <td>{{ $mat->stock_visual }}</td>
                 <td>
-                    @if($mat->falta_comprar > 0)
-                        <strong style="color: red;">¡Faltan {{ $mat->falta_comprar }}! (Comprar)</strong>
+                    <!-- Usamos el valor numérico para la lógica, pero imprimimos el visual -->
+                    @if($mat->falta_comprar_num > 0)
+                        <strong style="color: red;">¡Faltan {{ $mat->falta_visual }}! (Comprar)</strong>
                     @else
                         <strong style="color: green;">Stock Completo</strong>
                     @endif

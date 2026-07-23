@@ -102,7 +102,7 @@
             </td>
             <td>
                 <strong>Cantidad Total:</strong> <br>
-                {{ $pedido->cantidad_total_bastones }} Bastones de Gala
+                {{ $pedido->cantidad_total_bastones }} Bastones de cachiporreras
             </td>
         </tr>
     </table>

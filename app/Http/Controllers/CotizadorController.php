@@ -269,17 +269,20 @@ class CotizadorController extends Controller
     // GENERACIÓN DE REPORTES PDF (On-the-Fly)
     // =======================================================
 
+// =======================================================
+    // GENERACIÓN DE REPORTES PDF (On-the-Fly)
+    // =======================================================
+
     public function generarPdfReceta($id)
     {
         // 1. Buscamos el pedido y "cargamos" todos sus materiales asociados
         $pedido = \App\Models\Pedido::with('materiales')->findOrFail($id);
 
-        // 2. LA MAGIA: Calculamos cuánto falta comprar de cada insumo
+        // 2. LA MAGIA: Calculamos cuánto falta y traducimos formatos
         foreach ($pedido->materiales as $mat) {
             $stockActual = 0;
             $insumo = null;
 
-            // Buscamos el insumo por ID o por Nombre (igual que en el Soft Fail)
             if ($mat->insumo_id) {
                 $insumo = \App\Models\Insumo::find($mat->insumo_id);
             }
@@ -287,24 +290,66 @@ class CotizadorController extends Controller
                 $insumo = \App\Models\Insumo::where('nombre', $mat->nombre_material)->first();
             }
 
-            // Si el insumo existe en bodega, capturamos su stock real
             if ($insumo) {
                 $stockActual = $insumo->stock_actual;
             }
 
-            // Hacemos la resta: Requerido - Stock Actual
             $diferencia = $mat->cantidad_requerida - $stockActual;
+            $faltaComprarNumerico = $diferencia > 0 ? $diferencia : 0;
+
+            // --- TRADUCCIÓN HUMANA PARA EL PDF ---
+            $nombreLower = strtolower($mat->nombre_material);
+            $cantReq = (float) $mat->cantidad_requerida;
+            $stock = (float) $stockActual;
+            $falta = (float) $faltaComprarNumerico;
+
+            // Inicializamos las nuevas propiedades
+            $mat->requerido_visual = '';
+            $mat->stock_visual = '';
+            $mat->falta_visual = '';
+
+            // A. FLORES Y LAZOS
+            if (str_contains($nombreLower, 'flor') || str_contains($nombreLower, 'lazo')) {
+                $divisor = str_contains($nombreLower, 'lazo simple') ? 1.5 : 1.0;
+                $unidades = round($cantReq / $divisor);
+                $mat->requerido_visual = "{$unidades} unid. (" . number_format($cantReq, 1) . "m)";
+                $mat->stock_visual = number_format($stock, 1) . "m";
+                $mat->falta_visual = $falta > 0 ? number_format($falta, 1) . "m" : "0";
             
-            // Inyectamos nuevas propiedades "al vuelo" para que el PDF las use
-            $mat->stock_bodega = $stockActual;
-            $mat->falta_comprar = $diferencia > 0 ? $diferencia : 0;
+            // B. LANAS Y CORTINAS DE LANA (Madejas + Gramos)
+            } elseif (str_contains($nombreLower, 'lana')) {
+                // Sirve tanto para la lana del cuerpo como para "Cortina de Lana"
+                $madejasReq = ceil($cantReq / 90);
+                $madejasFalta = ceil($falta / 90);
+                
+                $mat->requerido_visual = "~{$madejasReq} madejas (" . round($cantReq) . "g)";
+                $mat->stock_visual = round($stock) . "g";
+                $mat->falta_visual = $falta > 0 ? "~{$madejasFalta} madejas (" . round($falta) . "g)" : "0";
+
+            // C. CINTAS Y ELÁSTICOS (Metros / Centímetros)
+            } elseif (str_contains($nombreLower, 'elástico') || str_contains($nombreLower, 'elastico') || str_contains($nombreLower, 'cinta')) {
+                $mat->requerido_visual = $cantReq < 1 ? round($cantReq * 100) . " cm" : number_format($cantReq, 1) . " m";
+                $mat->stock_visual = $stock < 1 && $stock > 0 ? round($stock * 100) . " cm" : number_format($stock, 1) . " m";
+                $mat->falta_visual = $falta < 1 && $falta > 0 ? round($falta * 100) . " cm" : ($falta > 0 ? number_format($falta, 1) . " m" : "0");
+
+            // D. DISEÑOS ESPECIALES (Ganancia)
+            } elseif (str_contains($nombreLower, 'diseño') || str_contains($nombreLower, 'diseno')) {
+                $mat->requerido_visual = "$" . number_format($cantReq, 2) . " extra";
+                $mat->stock_visual = "N/A";
+                $mat->falta_visual = "0";
+
+            // E. POR DEFECTO (Cinchos, Bases, Cortinas de Fiesta, Apliques)
+            } else {
+                $mat->requerido_visual = round($cantReq) . " unid.";
+                $mat->stock_visual = round($stock) . " unid.";
+                $mat->falta_visual = $falta > 0 ? round($falta) . " unid." : "0";
+            }
+
+            // Guardamos el numérico crudo solo para la condición if() en Blade
+            $mat->falta_comprar_num = $faltaComprarNumerico; 
         }
 
-        // 3. Cargamos la vista de Blade de la RECETA y le pasamos los datos
-        // Asegúrate de importar la clase Pdf arriba si no está: use Barryvdh\DomPDF\Facade\Pdf;
         $pdf = Pdf::loadView('reportes.receta', compact('pedido'));
-
-        // 4. stream() abre el PDF en el navegador
         return $pdf->stream('Receta_Bodega_Pedido_' . $pedido->id . '.pdf');
     }
 

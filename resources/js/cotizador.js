@@ -651,7 +651,7 @@ $(document).ready(function () {
 
                     agregarAlCarrito({
                         insumo_id: insumoBD?.id ?? null,
-                        nombre_material: nombreMaterial,
+                        nombre_material: 'Cortina de Lana: ' + nombreMaterial,
                         cantidad_requerida: gramosPorCortinaLana,
                         subtotal_calculado: costoCalculado,
                     });
@@ -724,8 +724,8 @@ $(document).ready(function () {
 
                     agregarAlCarrito({
                         insumo_id: insumoBD?.id ?? null,
-                        nombre_material: nombreMaterial,
-                        cantidad_requerida: cortinasPorColor,
+                        nombre_material: 'Cortina de Fiesta: ' + nombreMaterial, // <-- AQUÍ ESTÁ EL CAMBIO
+                        cantidad_requerida: gramosPorCortinaLana,
                         subtotal_calculado: costoCalculado,
                     });
                 });
@@ -1087,18 +1087,25 @@ $(document).ready(function () {
                 // D. Mostramos el modal de éxito.
                 $('#modalExito').modal('show');
 
+                // E. Bloqueamos el botón principal (el que abre el modal) para que no
+                // se pueda reabrir y generar la misma cotización dos veces.
+                // Guardamos su texto original para restaurarlo solo en el reseteo.
+                const btnPrincipal = $('#btnGuardarCotizacion');
+                if (!btnPrincipal.data('texto-original')) {
+                    btnPrincipal.data('texto-original', btnPrincipal.html());
+                }
+                btnPrincipal.prop('disabled', true).html('<i class="fa-solid fa-check"></i> Cotización guardada');
+
                 setTimeout(function () {
-                    // Quitamos foco para evitar el "outline" amarillo del navegador.
                     if (document.activeElement) {
                         document.activeElement.blur();
                     }
 
-                    // Ocultamos el éxito y mostramos el panel de exportación
-                    // (botones de PDF / enviar por correo).
                     $('#modalExito').modal('hide');
                     $('#panelExportar').removeClass('d-none').hide().slideDown();
 
-                    btnGuardar.prop('disabled', false).html(textoOriginal);
+                    // NOTA: btnGuardar (el del modal) y btnGuardarCotizacion se quedan
+                    // deshabilitados a propósito. Solo resetearFormulario() los libera.
                 }, 1800);
             },
             error: function (xhr) {
@@ -1125,6 +1132,11 @@ $(document).ready(function () {
     // Deja el formulario listo para cotizar un pedido nuevo desde cero.
     // =======================================================
     function resetearFormulario() {
+        // Reactivamos los botones de guardado que quedaron bloqueados
+        // tras la cotización anterior.
+        const btnPrincipal = $('#btnGuardarCotizacion');
+        btnPrincipal.prop('disabled', false).html(btnPrincipal.data('texto-original') || btnPrincipal.html());
+
         $('#inputCantidad').val('');
         $('#selectTamano').val('').trigger('change');
         $('#selectCantidadColores').val('1').trigger('change');
