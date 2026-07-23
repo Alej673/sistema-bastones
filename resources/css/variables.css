@@ -1,0 +1,26 @@
+:root {
+    /* 1. PALETA BASE (Lila Pastel) */
+    --bg-base: #eaddff;       
+    
+    /* 2. SOMBRAS NEUMÓRFICAS */
+    /* Cambiamos el blanco puro por un blanco al 45% de opacidad para un efecto mate/hueso */
+    --shadow-light: rgba(255, 255, 255, 0.45);      
+    --shadow-dark: #c7badb;       
+
+    /* 3. ACENTOS */
+    --accent-purple: #9333ea;
+    --accent-hover: #7e22ce;
+    --accent-active: #6b21a8;
+
+    /* 4. TEXTOS */
+    --text-main: #3b0764;         
+    --text-muted: #7e57c2;        
+    
+    /* 5. ALERTAS */
+    --color-error: #ef4444;
+    --neon-glow: rgba(167, 112, 219, 0.55);
+
+    --bg-elevated: #f0e7ff; 
+
+    --color-dinero: #3efcff;
+}

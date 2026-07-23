@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-    // ==========================================================
+// ==========================================================
     // 3. MANEJO DE CAMBIO DE ESTADO DE PEDIDOS
     // ==========================================================
     const botonesEstado = document.querySelectorAll('.cambiar-estado');
@@ -76,12 +76,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     text: 'Esta acción descontará físicamente los materiales del inventario general. ¿Deseas continuar?',
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#4ade80',
-                    cancelButtonColor: '#2c1548',
+                    confirmButtonColor: '#16a34a', // Verde oscuro limpio (éxito)
+                    cancelButtonColor: '#9ca3af',  // Gris neutro pastel
                     confirmButtonText: 'Sí, descontar stock',
                     cancelButtonText: 'Cancelar',
-                    background: '#1b0f28',
-                    color: '#f5eaff'
+                    background: '#ffffff',         // Fondo blanco
+                    color: 'var(--text-main, #3b0764)', // Texto principal oscuro
+                    customClass: { popup: 'border border-light shadow-sm' }
                 });
 
                 if (!confirmacion.isConfirmed) return; // Si cancela, detenemos el proceso
@@ -106,24 +107,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     let alertaHtml = '';
                     let mostrarAlerta = false;
 
-                    // Bloque Rojo: No encontrados (Error grave)
+                    // Bloque Rojo: No encontrados (Error grave) - Cajita rojo pastel
                     if (data.no_encontrados && data.no_encontrados.length > 0) {
                         alertaHtml += `
-                            <div style="color: #ef4444; margin-bottom: 15px;">
-                                <strong style="font-size: 16px;">⚠️ No Descontados (No existen):</strong>
-                                <ul style="text-align: left; margin-top: 8px; font-size: 14px;">
+                            <div style="background-color: #fee2e2; border: 1px solid #fecaca; color: #dc2626; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                                <strong style="font-size: 15px;"><i class="fa-solid fa-triangle-exclamation"></i> No Descontados (No existen):</strong>
+                                <ul style="text-align: left; margin-top: 8px; font-size: 13px; margin-bottom: 0;">
                                     ${data.no_encontrados.map(item => `<li>${item}</li>`).join('')}
                                 </ul>
                             </div>`;
                         mostrarAlerta = true;
                     }
 
-                    // Bloque Amarillo/Naranja: Quedaron en negativo (Advertencia)
+                    // Bloque Amarillo/Naranja: Quedaron en negativo (Advertencia) - Cajita ámbar pastel
                     if (data.en_negativo && data.en_negativo.length > 0) {
                         alertaHtml += `
-                            <div style="color: #f59e0b; margin-bottom: 15px;">
-                                <strong style="font-size: 16px;">⚠️ Stock en Negativo (Deuda):</strong>
-                                <ul style="text-align: left; margin-top: 8px; font-size: 14px;">
+                            <div style="background-color: #fef3c7; border: 1px solid #fde68a; color: #d97706; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                                <strong style="font-size: 15px;"><i class="fa-solid fa-boxes-stacked"></i> Stock en Negativo (Deuda):</strong>
+                                <ul style="text-align: left; margin-top: 8px; font-size: 13px; margin-bottom: 0;">
                                     ${data.en_negativo.map(item => `<li>${item}</li>`).join('')}
                                 </ul>
                             </div>`;
@@ -134,27 +135,29 @@ document.addEventListener('DOMContentLoaded', () => {
                         await Swal.fire({
                             icon: 'warning',
                             title: '¡Pedido Realizado con Observaciones!',
-                            html: `<div style="color: var(--color-texto); font-size: 15px; margin-bottom: 15px;">
+                            html: `<div style="color: var(--text-main, #3b0764); font-size: 15px; margin-bottom: 15px; font-weight: 500;">
                                     El estado se actualizó, pero revisa el inventario:
                                 </div>
                                 ${alertaHtml}
-                                <div style="color: var(--color-texto-mutado); font-size: 13px; margin-top: 15px;">
+                                <div style="color: var(--text-muted, #7e57c2); font-size: 13px; margin-top: 15px;">
                                     Puedes corregir esto más tarde en el Dashboard o Inventario.
                                 </div>`,
-                            background: 'var(--color-fondo-medio)',
-                            color: '#fff',
-                            confirmButtonColor: 'var(--color-violeta-boton)'
+                            background: '#ffffff',
+                            color: 'var(--text-main, #3b0764)',
+                            confirmButtonColor: 'var(--accent-purple, #9333ea)',
+                            customClass: { popup: 'border border-light shadow-sm' }
                         });
                     } else {
                         await Swal.fire({
                             title: '¡Actualizado!',
                             text: `El pedido ahora está marcado como: ${textoEstado}`,
                             icon: 'success',
-                            confirmButtonColor: '#7c3aed',
-                            background: '#1b0f28',
-                            color: '#f5eaff',
+                            confirmButtonColor: 'var(--accent-purple, #9333ea)',
+                            background: '#ffffff',
+                            color: 'var(--text-main, #3b0764)',
                             timer: 2000,
-                            showConfirmButton: false
+                            showConfirmButton: false,
+                            customClass: { popup: 'border border-light shadow-sm' }
                         });
                     }
 
@@ -170,9 +173,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     title: 'Error de Sistema',
                     text: error.message,
                     icon: 'error',
-                    confirmButtonColor: '#f87171',
-                    background: '#1b0f28',
-                    color: '#f5eaff'
+                    confirmButtonColor: '#dc2626', // Rojo oscuro para el botón de error
+                    background: '#ffffff',
+                    color: 'var(--text-main, #3b0764)',
+                    customClass: { popup: 'border border-light shadow-sm' }
                 });
             }
         });

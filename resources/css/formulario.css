@@ -1,443 +1,381 @@
-    :root {
-        --brand-purple: #8b5cf6;
-        --brand-purple-light: #a78bfa;
-        --brand-purple-dark: #7c3aed;
-        --card-bg: rgba(37, 24, 63, 0.85);
-        --card-border: rgba(139, 92, 246, 0.2);
-    }
+/* ========================================================
+   FORMULARIO.CSS - REFACTORIZADO A "SOFT UI / PASTEL"
+   ======================================================== */
 
-    /* Ya no hay glow, solo texto blanco normal */
-    .brand-glow-purple {
-        text-shadow: none;
-    }
+/* Ya no hay glow, solo texto normal */
+.brand-glow-purple {
+    text-shadow: none;
+    color: var(--accent-purple);
+}
 
-    .card-catalogo {
-        background: var(--card-bg) !important;
-        border: 1px solid var(--card-border) !important;
-    }
-    .card-header-purple {
-        color: var(--brand-purple-light) !important;
-        border-bottom: 1px solid var(--card-border) !important;
-    }
-    .form-control-dark {
-        background-color: rgba(15, 10, 26, 0.6);
-        border-color: var(--card-border);
-        color: #fff;
-    }
-    .form-control-dark:focus {
-        background-color: rgba(15, 10, 26, 0.8);
-        border-color: var(--brand-purple);
-        color: #fff;
-        box-shadow: 0 0 0 0.2rem rgba(139, 92, 246, 0.25);
-    }
+/* ===== TARJETAS PRINCIPALES ===== */
+.card-catalogo {
+    background: var(--bg-elevated) !important;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    box-shadow: 4px 4px 15px var(--shadow-dark), -4px -4px 15px var(--shadow-light) !important;
+    border-radius: 16px;
+}
+.card-header-purple {
+    color: var(--text-main) !important;
+    border-bottom: 1px solid rgba(199, 186, 219, 0.4) !important;
+    font-weight: 600;
+}
 
-    /* Botón nativo "Seleccionar archivo" del input type=file */
-    .form-control-dark::file-selector-button {
-        background-color: var(--brand-purple-dark);
-        color: #fff;
-        border: none;
-        padding: 0.4rem 0.9rem;
-        margin-right: 1rem;
-        border-radius: 0.25rem;
-        transition: background-color 0.15s ease-in-out;
-    }
-    .form-control-dark::file-selector-button:hover {
-        background-color: #6d28d9;
-    }
-    /* Fallback para navegadores WebKit viejos */
-    .form-control-dark::-webkit-file-upload-button {
-        background-color: var(--brand-purple-dark);
-        color: #fff;
-        border: none;
-        padding: 0.4rem 0.9rem;
-        margin-right: 1rem;
-        border-radius: 0.25rem;
-    }
+/* ===== INPUTS (Mantenemos la clase -dark para no romper tu HTML, pero el estilo es claro) ===== */
+.form-control-dark {
+    background-color: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(199, 186, 219, 0.6);
+    color: var(--text-main);
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+}
+.form-control-dark:focus {
+    background-color: #ffffff;
+    border-color: var(--accent-purple);
+    color: var(--text-main);
+    box-shadow: 0 0 0 0.2rem rgba(147, 51, 234, 0.15);
+}
+.form-control-dark::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
 
-    .btn-purple {
-        background-color: var(--brand-purple-dark);
-        border-color: var(--brand-purple-dark);
-        color: #fff;
-    }
-    .btn-purple:hover {
-        background-color: #6d28d9;
-        border-color: #6d28d9;
-        color: #fff;
-    }
+/* Botón nativo "Seleccionar archivo" del input type=file */
+.form-control-dark::file-selector-button {
+    background-color: var(--accent-purple);
+    color: #fff;
+    border: none;
+    padding: 0.4rem 0.9rem;
+    margin-right: 1rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.15s ease-in-out;
+}
+.form-control-dark::file-selector-button:hover {
+    background-color: var(--accent-hover);
+}
+.form-control-dark::-webkit-file-upload-button {
+    background-color: var(--accent-purple);
+    color: #fff;
+    border: none;
+    padding: 0.4rem 0.9rem;
+    margin-right: 1rem;
+    border-radius: 0.25rem;
+}
 
-    /* ===== TARJETAS Y GLASSMORPHISM ===== */
-    .item-card {
-        /* Fondo semi-transparente para el efecto cristal */
-        background: rgba(30, 18, 50, 0.4) !important;
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 20px !important; /* Bordes bien redondeados */
-        overflow: hidden !important; /* CLAVE: Corta las esquinas de la foto para que no sobresalgan */
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
+/* Botón principal */
+.btn-purple {
+    background-color: var(--accent-purple);
+    border-color: var(--accent-purple);
+    color: #fff;
+    box-shadow: 2px 2px 6px var(--shadow-dark);
+}
+.btn-purple:hover {
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 3px 3px 8px var(--shadow-dark);
+}
 
-    .item-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
-    }
+/* ===== TARJETAS DEL CATÁLOGO (Items) ===== */
+.item-card {
+    background: var(--bg-elevated) !important;
+    border: 1px solid rgba(255, 255, 255, 0.7) !important;
+    border-radius: 20px !important;
+    overflow: hidden !important;
+    box-shadow: 6px 6px 16px var(--shadow-dark), -6px -6px 16px var(--shadow-light);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.item-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 8px 8px 22px var(--shadow-dark), -8px -8px 22px var(--shadow-light);
+}
+.item-card .card-title {
+    color: var(--text-main) !important;
+    font-weight: 700;
+}
 
-    .item-card .card-title {
-        color: var(--brand-purple-light) !important;
-    }
+/* Botón flotante de editar en la tarjeta */
+.btn-edit-bubble {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 5;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(5px);
+    color: var(--accent-purple);
+    box-shadow: 2px 2px 6px var(--shadow-dark);
+    transition: all 0.2s ease;
+}
+.btn-edit-bubble:hover {
+    background: var(--accent-purple);
+    border-color: var(--accent-purple);
+    color: #ffffff;
+    transform: scale(1.08);
+    box-shadow: 3px 3px 8px var(--shadow-dark);
+}
 
-    /* Ajuste perfecto para las fotos */
-    .item-card .card-img-top {
-        height: 240px;
-        width: 100%;
-        object-fit: cover; /* Evita que la foto se estire o deforme */
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
+/* ===== BANDEJA NEUMÓRFICA DE ACCIONES ===== */
+.actions-row {
+    gap: 0.6rem;
+}
+.actions-tray {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px;
+    border-radius: 18px;
+    background: var(--bg-base);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    /* Sombra interna para hundir la bandeja */
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), 
+                inset -3px -3px 6px var(--shadow-light);
+}
 
-    .btn-edit-bubble {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        z-index: 5;
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(10px) saturate(140%);
-        -webkit-backdrop-filter: blur(10px) saturate(140%);
-        color: #ffffff;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-        transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-    }
+.btn-action {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    background: transparent;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+}
+.btn-action:hover {
+    color: var(--accent-hover);
+    background: rgba(255, 255, 255, 0.5);
+    box-shadow: 1px 1px 3px var(--shadow-dark);
+}
+.btn-action:active {
+    transform: translateY(1px);
+}
 
-    .btn-edit-bubble:hover {
-        background: rgba(147, 51, 234, 0.35);
-        border-color: rgba(192, 132, 252, 0.6);
-        transform: scale(1.08);
-        box-shadow: 0 6px 18px rgba(147, 51, 234, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    }
+/* Estados activos (Encendido) - Tonos pastel */
+.btn-action.is-on-info {
+    color: #0284c7;
+    background: #e0f2fe;
+    box-shadow: 0 2px 4px rgba(2, 132, 199, 0.15);
+}
+.btn-action.is-on-warning {
+    color: #d97706;
+    background: #fef3c7;
+    box-shadow: 0 2px 4px rgba(217, 119, 6, 0.15);
+}
+.btn-action.is-on-success {
+    color: #16a34a;
+    background: #dcfce7;
+    box-shadow: 0 2px 4px rgba(22, 163, 74, 0.15);
+}
+.btn-action.is-danger {
+    color: var(--color-error);
+}
+.btn-action.is-danger:hover {
+    color: #fff;
+    background: var(--color-error);
+    box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3);
+}
 
-    .btn-edit-bubble i {
-        font-size: 14px;
-    }
+/* ===== MODAL ESTILIZADO ===== */
+#modalEditar .modal-content {
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid #ffffff;
+    background: var(--bg-base);
+    box-shadow: 0 20px 45px rgba(59, 7, 100, 0.15);
+    color: var(--text-main);
+}
+#modalEditar .modal-header {
+    border-bottom: 1px solid rgba(199, 186, 219, 0.4);
+    padding: 1.5rem 1.75rem 1.25rem;
+    align-items: flex-start;
+}
+#modalEditar .modal-header-icon {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 12px;
+    background: #f3e8ff; /* Fondo morado clarito */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-purple);
+    margin-right: 0.85rem;
+    font-size: 18px;
+    box-shadow: 2px 2px 5px var(--shadow-dark);
+}
+#modalEditar .modal-title-group .modal-title {
+    font-size: 1.15rem;
+    margin-bottom: 2px;
+    font-weight: 700;
+}
+#modalEditar .modal-title-group small {
+    color: var(--text-muted);
+}
+#modalEditar .modal-body {
+    padding: 1.75rem;
+}
+#modalEditar .form-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.4rem;
+    color: var(--text-main);
+}
+#modalEditar .form-text {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+#modalEditar .modal-footer {
+    border-top: 1px solid rgba(199, 186, 219, 0.4);
+    padding: 1.25rem 1.75rem;
+}
+#modalEditar .btn-purple {
+    border-radius: 10px;
+    padding: 0.55rem 1.4rem;
+}
+#modalEditar .btn-secondary {
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--text-main);
+    border: 1px solid rgba(199, 186, 219, 0.8);
+    box-shadow: 2px 2px 5px var(--shadow-dark);
+}
+#modalEditar .btn-secondary:hover {
+    background: #f8f9fa;
+    color: var(--accent-purple);
+}
 
-    /* ===== Bandeja neumórfica de acciones ===== */
-    .actions-row {
-        gap: 0.6rem;
-    }
-
-    .actions-tray {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px;
-        border-radius: 18px;
-        background: rgba(0, 0, 0, 0.22);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.45),
-                    inset -2px -2px 5px rgba(255, 255, 255, 0.03);
-    }
-
-    .btn-action {
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 13px;
-        background: rgba(255, 255, 255, 0.04);
-        color: rgba(255, 255, 255, 0.5);
-        box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.5),
-                    inset -2px -2px 4px rgba(255, 255, 255, 0.04);
-        transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
-    }
-
-    .btn-action:hover {
-        color: #fff;
-        transform: translateY(-1px);
-    }
-
-    .btn-action:active {
-        transform: translateY(0);
-    }
-
-    /* estado activo = "encendido", efecto embutido con brillo de color */
-    .btn-action.is-on-info {
-        color: #7dd3fc;
-        background: linear-gradient(145deg, rgba(56, 189, 248, 0.28), rgba(14, 165, 233, 0.1));
-        box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.35), 0 0 10px rgba(56, 189, 248, 0.35),
-                    inset 1px 1px 2px rgba(255, 255, 255, 0.15);
-    }
-
-    .btn-action.is-on-warning {
-        color: #fde047;
-        background: linear-gradient(145deg, rgba(250, 204, 21, 0.28), rgba(217, 119, 6, 0.1));
-        box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.35), 0 0 10px rgba(250, 204, 21, 0.35),
-                    inset 1px 1px 2px rgba(255, 255, 255, 0.15);
-    }
-
-    .btn-action.is-on-success {
-        color: #4ade80;
-        background: linear-gradient(145deg, rgba(74, 222, 128, 0.28), rgba(21, 128, 61, 0.1));
-        box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.35), 0 0 10px rgba(74, 222, 128, 0.35),
-                    inset 1px 1px 2px rgba(255, 255, 255, 0.15);
-    }
-
-    .btn-action.is-danger {
-        color: #fca5a5;
-    }
-
-    .btn-action.is-danger:hover {
-        color: #fff;
-        background: linear-gradient(145deg, rgba(248, 113, 113, 0.35), rgba(185, 28, 28, 0.15));
-        box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.4), 0 0 10px rgba(248, 113, 113, 0.4),
-                    inset 1px 1px 2px rgba(255, 255, 255, 0.15);
-    }
-
-    /* ===== Modal estilizado ===== */
-    #modalEditar .modal-content {
-        border-radius: 18px;
-        overflow: hidden;
-        border: 1px solid rgba(147, 51, 234, 0.35);
-        background: linear-gradient(180deg, #1f1230 0%, #170c26 100%);
-        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
-    }
-
-    #modalEditar .modal-header {
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        padding: 1.5rem 1.75rem 1.25rem;
-        align-items: flex-start;
-    }
-
-    #modalEditar .modal-header-icon {
-        width: 42px;
-        height: 42px;
-        min-width: 42px;
-        border-radius: 12px;
-        background: rgba(147, 51, 234, 0.18);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--brand-purple-light, #c084fc);
-        margin-right: 0.85rem;
-        font-size: 18px;
-    }
-
-    #modalEditar .modal-title-group .modal-title {
-        font-size: 1.15rem;
-        margin-bottom: 2px;
-    }
-
-    #modalEditar .modal-title-group small {
-        color: rgba(255, 255, 255, 0.55);
-    }
-
-    #modalEditar .modal-body {
-        padding: 1.75rem;
-    }
-
-    #modalEditar .form-label {
-        font-size: 0.85rem;
-        font-weight: 600;
-        letter-spacing: 0.02em;
-        margin-bottom: 0.4rem;
-    }
-
-    #modalEditar .form-control-dark {
-        background-color: rgba(0, 0, 0, 0.28);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        color: #fff;
-        padding: 0.65rem 0.9rem;
-    }
-
-    #modalEditar .form-control-dark:focus {
-        border-color: var(--brand-purple, #9333ea);
-        box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.25);
-        background-color: rgba(0, 0, 0, 0.35);
-    }
-
-    #modalEditar .form-text {
-        font-size: 0.78rem;
-    }
-
-    #modalEditar .modal-footer {
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        padding: 1.25rem 1.75rem;
-    }
-
-    #modalEditar .btn-purple {
-        border-radius: 10px;
-        padding: 0.55rem 1.4rem;
-    }
-
-    #modalEditar .btn-secondary {
-        border-radius: 10px;
-        background: transparent;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    #modalEditar .btn-secondary:hover {
-        background: rgba(255, 255, 255, 0.08);
-    }
-
-/* ===== Select2 tematizado ===== */
+/* ===== SELECT2 ESTILIZADO PARA LIGHT THEME ===== */
 .select2-container--default .select2-selection--single {
-    background-color: rgba(15, 10, 26, 0.6);
-    border: 1px solid var(--card-border);
+    background-color: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(199, 186, 219, 0.6);
     border-radius: 0.375rem;
     height: calc(2.375rem + 2px);
     display: flex;
     align-items: center;
 }
-
 .select2-container--default .select2-selection--single .select2-selection__rendered {
-    color: #fff;
+    color: var(--text-main);
     line-height: normal;
     padding-left: 0.75rem;
 }
-
 .select2-container--default .select2-selection--single .select2-selection__placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-muted);
 }
-
-.select2-container--default .select2-selection--single .select2-selection__arrow {
-    height: 100%;
-}
-
 .select2-container--focus .select2-selection--single,
 .select2-container--open .select2-selection--single {
-    border-color: var(--brand-purple) !important;
-    box-shadow: 0 0 0 0.2rem rgba(139, 92, 246, 0.25);
+    background-color: #ffffff;
+    border-color: var(--accent-purple) !important;
+    box-shadow: 0 0 0 0.2rem rgba(147, 51, 234, 0.15);
 }
-
 .select2-dropdown {
-    background-color: #1f1230;
-    border: 1px solid var(--card-border);
+    background-color: #ffffff;
+    border: 1px solid rgba(199, 186, 219, 0.6);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
-
 .select2-search--dropdown .select2-search__field {
-    background-color: rgba(15, 10, 26, 0.6);
-    color: #fff;
-    border: 1px solid var(--card-border);
+    background-color: #f8f9fa;
+    color: var(--text-main);
+    border: 1px solid rgba(199, 186, 219, 0.6);
 }
-
 .select2-results__option {
-    color: #e5e5e5;
+    color: var(--text-main);
 }
-
 .select2-results__option--highlighted[aria-selected] {
-    background-color: var(--brand-purple-dark) !important;
+    background-color: var(--accent-purple) !important;
     color: #fff !important;
 }
-
-/* Dentro del modal, el dropdown de select2 necesita más z-index */
 #modalEditar .select2-container {
     width: 100% !important;
 }
-
-/* Botón "x" para limpiar selección */
 .select2-container--default .select2-selection--single .select2-selection__clear {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-muted);
     margin-right: 8px;
     font-size: 1.1rem;
 }
-
-.select2-container--default .select2-selection--single .select2-selection__clear:hover {
-    color: #fff;
-}
-
-/* Flecha del dropdown (reemplaza el triángulo gris nativo) */
 .select2-container--default .select2-selection--single .select2-selection__arrow b {
-    border-color: rgba(255, 255, 255, 0.5) transparent transparent transparent;
+    border-color: var(--text-muted) transparent transparent transparent;
 }
-
 .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
-    border-color: transparent transparent rgba(255, 255, 255, 0.5) transparent;
+    border-color: transparent transparent var(--accent-purple) transparent;
 }
-
-/* Evita que el texto se monte con el botón de limpiar */
 .select2-container--default .select2-selection--single .select2-selection__rendered {
     padding-right: 40px;
 }
 
-/* Estilos para la paginación de Laravel en modo Dark */
+/* ===== PAGINACIÓN ===== */
 .pagination {
     margin-bottom: 0;
     gap: 5px;
 }
-
 .pagination .page-link {
-    background-color: rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: #e2e8f0;
+    background-color: var(--bg-elevated);
+    border: 1px solid rgba(199, 186, 219, 0.4);
+    color: var(--text-main);
     border-radius: 6px !important;
+    box-shadow: 2px 2px 4px var(--shadow-dark);
 }
-
 .pagination .page-item.active .page-link {
-    background-color: var(--brand-purple-light, #9333ea);
-    border-color: var(--brand-purple-light, #9333ea);
+    background-color: var(--accent-purple);
+    border-color: var(--accent-purple);
     color: #ffffff;
     font-weight: bold;
-    box-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
+    box-shadow: 2px 2px 6px rgba(147, 51, 234, 0.4);
 }
-
 .pagination .page-link:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.2);
+    background-color: #ffffff;
+    color: var(--accent-purple);
 }
-
 .pagination .page-item.disabled .page-link {
-    background-color: rgba(0, 0, 0, 0.1);
-    color: #6c757d;
-    border-color: rgba(255, 255, 255, 0.05);
+    background-color: transparent;
+    color: #a78bfa; /* Morado muy claro para deshabilitados */
+    box-shadow: none;
+    border-color: transparent;
 }
 
 /* ===== EFECTO DE IMAGEN DIFUMINADA DE FONDO ===== */
-    .card-image-wrapper {
-        position: relative;
-        height: 240px;
-        width: 100%;
-        overflow: hidden;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        background-color: #0a0514; /* Color de fondo base muy oscuro */
-    }
-
-    /* La capa que hace el efecto borroso con la misma foto */
-    .card-image-wrapper .bg-blur {
-        position: absolute;
-        top: -10%; left: -10%;
-        width: 120%; height: 120%;
-        background-size: cover;
-        background-position: center;
-        filter: blur(15px);
-        opacity: 0.5; /* Ajusta este valor si quieres que el fondo brille más o menos */
-        z-index: 0;
-    }
-
-    /* Capa oscura sutil para que el fondo no compita con la foto principal */
-    .card-image-wrapper .bg-overlay {
-        position: absolute;
-        inset: 0;
-        background: rgba(30, 18, 50, 0.4); 
-        z-index: 1;
-    }
-
-    /* La foto principal que ya NO se corta */
-    .item-card .card-img-top {
-        position: relative;
-        z-index: 2;
-        height: 100%;
-        width: 100%;
-        object-fit: contain; /* Clave: La imagen se ajusta sin cortarse */
-        padding: 8px; /* Un pequeño margen para que respire */
-        filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.5)); /* Sombrita para separar del fondo */
-    }
+.card-image-wrapper {
+    position: relative;
+    height: 240px;
+    width: 100%;
+    overflow: hidden;
+    border-bottom: 1px solid rgba(199, 186, 219, 0.3);
+    background-color: var(--bg-elevated); /* Fondo claro en lugar de negro */
+}
+.card-image-wrapper .bg-blur {
+    position: absolute;
+    top: -10%; left: -10%;
+    width: 120%; height: 120%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(15px);
+    opacity: 0.35; /* Un poco menos opaco para que no ensucie el color pastel */
+    z-index: 0;
+}
+.card-image-wrapper .bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(234, 221, 255, 0.4); /* Capa lila en lugar de capa negra */
+    z-index: 1;
+}
+.item-card .card-img-top {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+    padding: 8px;
+    /* La sombra se hace más suave para adaptarse al modo claro */
+    filter: drop-shadow(0px 8px 12px rgba(59, 7, 100, 0.2)); 
+}

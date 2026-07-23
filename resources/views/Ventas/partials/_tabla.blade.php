@@ -1,8 +1,8 @@
 <div class="card border-0 shadow-sm card-panel">
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover table-borderless align-middle mb-0" style="color: #f5eaff;">
-                <thead style="border-bottom: 2px solid #5b21b6;">
+            <table class="table table-hover table-borderless align-middle mb-0">
+                <thead>
                     <tr>
                         <th class="ps-4 pb-3 pt-3">N° Doc</th>
                         <th>Fecha</th>
@@ -31,7 +31,7 @@
         <!-- =========================================
             PAGINACIÓN
             ========================================= -->
-        <div class="d-flex justify-content-between align-items-center mt-3">
+        <div class="d-flex justify-content-between align-items-center mt-3 px-3 pb-3">
             <div class="text-lavanda small">
                 Mostrando {{ $pedidos->firstItem() ?? 0 }} a {{ $pedidos->lastItem() ?? 0 }} de {{ $pedidos->total() }} pedidos
             </div>

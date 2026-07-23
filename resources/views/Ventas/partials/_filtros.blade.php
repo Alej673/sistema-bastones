@@ -35,11 +35,11 @@
             </div>
 
             <div class="col-md-2 d-flex gap-2">
-                <button type="submit" class="btn fw-bold flex-grow-1" style="background-color: var(--color-violeta-boton); color: #ffffff;">Filtrar</button>
+                <button type="submit" class="btn fw-bold flex-grow-1 btn-accion">Filtrar</button>
                 
                 <!-- 5. Botón para limpiar filtros (solo aparece si hay filtros aplicados) -->
                 @if(request()->hasAny(['buscar', 'fecha', 'estado']))
-                    <a href="{{ route('ventas.index') }}" class="btn btn-outline-secondary fw-bold border-0" style="color: var(--color-texto-mutado);" title="Limpiar filtros">✖</a>
+                    <a href="{{ route('ventas.index') }}" class="btn fw-bold border-0 btn-accion-secundaria" title="Limpiar filtros">✖</a>
                 @endif
             </div>
         </form>

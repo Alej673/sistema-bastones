@@ -1,0 +1,267 @@
+/* =========================================
+   ESTILOS NEUMORFISMO - LOGIN & REGISTER
+   ========================================= */
+
+:root {
+    /* 1. PALETA BASE (Lila Pastel de tus tarjetas de inventario) */
+    --bg-base: #eaddff;       
+    
+    /* 2. SOMBRAS NEUMÓRFICAS (Calculadas específicamente para este lila) */
+    --shadow-light: #e2e2e2;      /* Luz pura para resaltar el relieve */
+    --shadow-dark: #c7badb;       /* Sombra lila oscurecida para la profundidad */
+
+    /* 3. ACENTOS (Morado vibrante de tus botones principales) */
+    --accent-purple: #9333ea;
+    --accent-hover: #7e22ce;
+    --accent-active: #6b21a8;
+
+    /* 4. TEXTOS (Morados oscuros para contraste perfecto y no cansar la vista) */
+    --text-main: #3b0764;         /* Morado casi negro para títulos y textos ingresados */
+    --text-muted: #7e57c2;        /* Morado medio para labels e íconos */
+    
+    /* 5. ALERTAS */
+    --color-error: #ef4444;
+}
+
+body {
+    background-color: var(--bg-base);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+}
+
+/* -----------------------------------------
+   TARJETA (Relieve hacia afuera - Outset)
+----------------------------------------- */
+.login-card {
+    background-color: var(--bg-base);
+    border-radius: 30px;
+    /* Sombra oscura abajo a la derecha, sombra blanca arriba a la izquierda */
+    box-shadow: 12px 12px 24px var(--shadow-dark),
+                -12px -12px 24px var(--shadow-light);
+    width: 100%;
+    max-width: 420px;
+    padding: 50px 45px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+/* -----------------------------------------
+   TIPOGRAFÍA
+----------------------------------------- */
+.brand-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    color: var(--text-main);
+    margin: 0 0 8px 0;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.brand-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0 0 40px 0;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.form-group {
+    margin-bottom: 24px;
+    text-align: left;
+}
+
+.form-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    font-weight: 600;
+    padding-left: 8px;
+}
+
+/* -----------------------------------------
+   INPUTS (Hundidos - Inset Shadow)
+----------------------------------------- */
+.input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 18px;
+    font-size: 14px;
+    color: var(--text-muted);
+    transition: color 0.3s ease;
+}
+
+.form-control {
+    width: 100%;
+    padding: 15px 15px 15px 45px;
+    font-size: 14px;
+    border: none; /* En neumorfismo no se usan bordes sólidos */
+    border-radius: 15px;
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    /* Sombra interna para dar el efecto de hueco */
+    box-shadow: inset 6px 6px 12px var(--shadow-dark), 
+                inset -6px -6px 12px var(--shadow-light);
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.form-control::placeholder {
+    color: #b0acbe;
+}
+
+/* Estado Focus del Input */
+.form-control:focus {
+    outline: none;
+    /* Al hacer focus, el "hueco" se hace ligeramente más profundo */
+    box-shadow: inset 8px 8px 16px var(--shadow-dark), 
+                inset -8px -8px 16px var(--shadow-light);
+}
+
+.form-control:focus + .input-icon,
+.input-group:focus-within .input-icon {
+    color: var(--accent-purple);
+}
+
+/* -----------------------------------------
+   BOTÓN (Relieve hacia afuera, se hunde al clickear)
+----------------------------------------- */
+.btn-submit {
+    background-color: var(--accent-purple);
+    color: #ffffff;
+    border: none;
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 15px;
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    /* Botón flotante */
+    box-shadow: 6px 6px 12px var(--shadow-dark), 
+                -6px -6px 12px var(--shadow-light);
+}
+
+.btn-submit:hover {
+    background-color: var(--accent-hover);
+}
+
+.btn-submit:active {
+    background-color: var(--accent-active);
+    /* Al presionar, la sombra cambia a interna (Inset) simulando un botón real */
+    box-shadow: inset 4px 4px 10px rgba(0, 0, 0, 0.15);
+    transform: scale(0.98);
+}
+
+/* -----------------------------------------
+   CHECKBOX & ENLACES
+----------------------------------------- */
+.remember-group {
+    margin-bottom: 25px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 8px;
+}
+
+.remember-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+input[type="checkbox"] {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background-color: var(--bg-base);
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), 
+                inset -3px -3px 6px var(--shadow-light);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+input[type="checkbox"]:checked {
+    background-color: var(--accent-purple);
+    box-shadow: none;
+}
+
+input[type="checkbox"]:checked::after {
+    content: '✓';
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.register-prompt {
+    margin-top: 30px;
+    font-size: 16px;
+    color: var(--text-muted);
+}
+
+.register-prompt a {
+    color: var(--accent-purple);
+    text-decoration: none;
+    font-weight: 700;
+    display: inline-block;
+    margin-top: 8px;
+    transition: color 0.3s ease;
+}
+
+.register-prompt a:hover {
+    color: var(--accent-active);
+}
+
+/* Mensajes de error */
+.error-message {
+    color: var(--color-error);
+    font-size: 11px;
+    margin-top: 8px;
+    display: block;
+    font-weight: 600;
+    padding-left: 8px;
+}
+.form-control.is-invalid {
+    box-shadow: inset 4px 4px 10px rgba(255, 118, 117, 0.2), 
+                inset -4px -4px 10px var(--shadow-light);
+}
+
+.login-prompt {
+    margin-top: 15px;
+    font-size: 16px;
+    color: var(--text-muted);
+}
+
+.login-prompt a {
+    color: var(--accent-purple);
+    text-decoration: none;
+    font-weight: 700;
+    display: inline-block;
+    margin-top: 5px;
+    transition: color 0.3s ease;
+}
+
+.login-prompt a:hover {
+    color: var(--accent-active);
+}

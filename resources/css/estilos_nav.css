@@ -1,40 +1,24 @@
 /* ==========================================================================
-   PALETA GLOBAL SYNTHWAVE / DARK NEUMORPHIC
+   PALETA GLOBAL NEUMORFISMO PASTEL (KARDEX ADMIN)
    ========================================================================== */
-:root {
-    --color-morado: #a855f7;
-    --color-morado-claro: #c084fc;
-    --color-morado-oscuro: #5b21b6;
-    --color-violeta-boton: #7c3aed;
-    --color-fucsia: #e879f9;
-    --color-fucsia-oscuro: #86198f;
-    
-    --color-fondo-medio: #2c1548;
-    --color-fondo-base: #1b0f28;
-    
-    --color-texto: #f5eaff;
-    --color-texto-mutado: #b9a8c9;
-    --color-borde-glass: rgba(192, 132, 252, 0.15);
-}
 
 /* Fondo general de la aplicación */
 body.theme-synthwave {
-    background: linear-gradient(135deg, var(--color-fondo-base) 0%, var(--color-fondo-medio) 100%);
-    background-attachment: fixed;
-    color: var(--color-texto);
+    background-color: var(--bg-base);
+    color: var(--text-main);
     font-family: 'Inter', sans-serif;
     min-height: 100vh;
 }
 
 /* ==========================================================================
-   MENÚ LATERAL (SIDEBAR)
+   MENÚ LATERAL (SIDEBAR NEUMÓRFICO)
    ========================================================================== */
 .sidebar-glass {
-    background: rgba(27, 15, 40, 0.85);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border-right: 1px solid var(--color-borde-glass);
-    color: var(--color-texto);
+    background-color: var(--bg-base);
+    /* En lugar de borde, usamos una sombra hacia la derecha para separar el menú */
+    border-right: none;
+    box-shadow: 8px 0 20px var(--shadow-dark);
+    color: var(--text-main);
 }
 
 /* Fijar menú en escritorio */
@@ -48,67 +32,96 @@ body.theme-synthwave {
     }
 }
 
-/* Fijar menú en escritorio */
-@media (min-width: 992px) {
-    .sidebar-glass { 
-        height: 100vh; 
-        position: sticky; 
-        top: 0; 
-        overflow-y: auto; 
-    }
+/* Logo / Título de Kardex */
+.brand-glow {
+    color: var(--text-main) !important;
+    font-family: 'Playfair Display', serif; /* Para mantener coherencia con el login */
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-shadow: none; /* Quitamos el neón oscuro */
 }
 
-/* Logo / Título con efecto Neón sutil */
-.brand-glow {
-    color: var(--color-texto);
-    text-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
-    letter-spacing: 2px;
+.offcanvas-title {
+    color: var(--text-main) !important;
 }
 
 /* Enlaces del menú */
 .nav-link-glass {
-    color: var(--color-texto-mutado);
+    color: var(--text-muted);
     text-decoration: none;
-    padding: 12px 20px;
+    padding: 14px 20px;
     display: block;
-    border-radius: 8px;
-    margin: 0 10px 8px 10px;
+    border-radius: 12px;
+    margin: 0 10px 12px 10px;
     transition: all 0.3s ease;
-    border: 1px solid transparent;
+    border: none;
+    background-color: var(--bg-base);
 }
 
+/* Efecto al pasar el mouse (Se levanta ligeramente) */
 .nav-link-glass:hover {
-    color: var(--color-texto);
-    background: rgba(168, 85, 247, 0.1); /* Fondo morado translúcido */
-    border-color: rgba(168, 85, 247, 0.2);
-    transform: translateX(3px); /* Pequeño salto a la derecha al pasar el mouse */
+    color: var(--accent-purple);
+    box-shadow: 4px 4px 10px var(--shadow-dark), 
+               -4px -4px 10px var(--shadow-light);
+    transform: translateY(-2px);
 }
 
-/* Enlace Activo */
+/* Enlace Activo (Se hunde simulando botón presionado) */
 .nav-link-glass.active {
-    color: #ffffff;
-    background: var(--color-violeta-boton);
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+    color: var(--accent-purple);
+    font-weight: 600;
+    box-shadow: inset 4px 4px 8px var(--shadow-dark), 
+                inset -4px -4px 8px var(--shadow-light);
+    transform: translateY(0);
 }
 
-/* Botón Cerrar Sesión */
+/* Opciones de la parte inferior (Sitio web y Cerrar sesión) */
+.nav-link-glass.text-warning {
+    color: var(--accent-purple) !important; 
+}
+
+.btn-logout {
+    color: var(--color-error) !important;
+}
+
 .btn-logout:hover {
-    background: rgba(248, 113, 113, 0.1);
-    border-color: rgba(248, 113, 113, 0.2);
-    color: #f87171 !important;
+    background-color: var(--bg-base);
+    color: var(--color-error) !important;
+    box-shadow: 4px 4px 10px rgba(239, 68, 68, 0.2), 
+               -4px -4px 10px var(--shadow-light);
 }
 
 /* ==========================================================================
    CABECERA MÓVIL
    ========================================================================== */
 .mobile-header {
-    background: var(--color-fondo-base);
-    border-bottom: 1px solid var(--color-borde-glass);
+    background-color: var(--bg-base);
+    border-bottom: none;
+    box-shadow: 0 4px 12px var(--shadow-dark);
     z-index: 1040;
 }
 
+.mobile-header h5 {
+    color: var(--text-main) !important;
+}
+
+/* Botón de hamburguesa en móvil */
 .glass-btn-mobile {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: var(--bg-base);
+    border: none;
+    color: var(--text-main) !important;
+    box-shadow: 3px 3px 6px var(--shadow-dark), 
+               -3px -3px 6px var(--shadow-light);
+    border-radius: 8px;
+    padding: 6px 12px;
+}
+
+.glass-btn-mobile:active {
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), 
+                inset -3px -3px 6px var(--shadow-light);
+}
+
+hr.border-secondary {
+    border-color: var(--shadow-dark) !important;
+    opacity: 0.5;
 }

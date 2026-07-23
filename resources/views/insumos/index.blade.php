@@ -4,13 +4,13 @@
 
 {{-- Inyectamos el CSS exclusivo de esta vista --}}
 @push('css')
-    @vite(['resources/css/inventario.css'])
+    @vite(['resources/css/variables.css', 'resources/css/inventario.css'])
 @endpush
 
 @section('contenido')
 <div class="dark-glass-kardex pb-5">
 
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-4 border-bottom" style="border-color: rgba(232,121,249,0.14) !important;">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-4 border-bottom" style="border-color: var(--shadow-dark) !important;">
         <h2 class="h3">Gestión de Inventario y Kardex</h2>
         <div>
             <button class="btn glass-btn-primary fw-bold px-4 py-2" data-bs-toggle="modal" data-bs-target="#modalNuevoInsumo">
@@ -22,7 +22,7 @@
     {{-- TABLA DE STOCK ACTUAL --}}
     <div class="card glass-card mb-4 border-0">
         <div class="card-header glass-card-header d-flex justify-content-between align-items-center py-3 flex-wrap gap-2">
-            <span class="fw-bold fs-5" style="color: #f5eaff;">Stock Actual de Materia Prima</span>
+            <span class="fw-bold fs-5" style="color: var(--accent-purple);">Stock Actual de Materia Prima</span>
             <div style="flex-grow: 1; max-width: 350px; display: flex; justify-content: flex-end;">
                 <input type="text" id="buscadorInventario" class="form-control form-control-sm glass-input buscador-animado" placeholder="🔍 Buscar material...">
             </div>
@@ -107,7 +107,7 @@
                 </table>
             </div>
             @if($insumos->isEmpty())
-                <div class="alert text-center m-4 text-muted" style="background: rgba(168,85,247,0.04); border: 1px dashed rgba(232,121,249,0.15);">
+                <div class="alert text-center m-4 text-muted" style="background: rgba(147, 51, 234, 0.05); border: 1px dashed var(--shadow-dark);">
                     Aún no hay insumos registrados en el taller. Haz clic en "Nuevo Insumo" para empezar.
                 </div>
             @endif
@@ -116,7 +116,7 @@
 
     {{-- TABLA DE ÚLTIMOS MOVIMIENTOS --}}
     <div class="card glass-card mb-4 border-0">
-        <div class="card-header glass-card-header py-3 fw-bold" style="color: #f5eaff !important;">
+        <div class="card-header glass-card-header py-3 fw-bold">
             Últimos 15 Movimientos Registrados
         </div>
         <div class="card-body p-0">
@@ -154,7 +154,7 @@
                         @empty
                         <tr>
                             <td colspan="5">
-                                <div class="alert text-center m-3 text-muted" style="background: rgba(168,85,247,0.04);">Aún no hay movimientos recientes.</div>
+                                <div class="alert text-center m-3 text-muted" style="background: rgba(147, 51, 234, 0.05);">Aún no hay movimientos recientes.</div>
                             </td>
                         </tr>
                         @endforelse
@@ -167,9 +167,9 @@
     {{-- MODAL: NUEVO INSUMO --}}
     <div class="modal fade" id="modalNuevoInsumo" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content glass-card" style="background: rgba(38, 18, 56, 0.96) !important;">
+            <div class="modal-content glass-card">
                 <div class="modal-header border-bottom-0 pb-0">
-                    <h5 class="modal-title fw-bold text-white">📦 Ingreso de Compras</h5>
+                    <h5 class="modal-title fw-bold" style="color: var(--text-main);">📦 Ingreso de Compras</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <form action="{{ route('insumos.store') }}" method="POST">
@@ -202,7 +202,7 @@
                             <input type="text" name="nombre" id="inputNombreInsumo" class="form-control glass-input" placeholder="Ej. Lana Roja Neón" required>
                         </div>
 
-                        <div id="opcionesBaston" class="row g-2 mb-3 d-none p-3 rounded" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(232, 121, 249, 0.35);">
+                        <div id="opcionesBaston" class="row g-2 mb-3 d-none p-3 rounded" style="background: rgba(147, 51, 234, 0.05); border: 1px solid var(--shadow-dark);">
                             <div class="col-6">
                                 <label class="form-label text-secondary small fw-bold mb-1">Color del Bastón</label>
                                 <div class="custom-select" id="customColorBaston">
@@ -234,7 +234,7 @@
                                 </div>
                             </div>
                             <div class="col-12 mt-2">
-                                <small class="fw-bold" style="color: var(--color-morado-claro);">El nombre se generará automáticamente arriba.</small>
+                                <small class="fw-bold" style="color: var(--accent-purple);">El nombre se generará automáticamente arriba.</small>
                             </div>
                         </div>
 
@@ -267,9 +267,9 @@
     {{-- MODAL: AJUSTE DE STOCK --}}
     <div class="modal fade" id="modalAjusteStock" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content glass-card" style="background: rgba(38, 18, 56, 0.96) !important;">
+            <div class="modal-content glass-card">
                 <div class="modal-header border-bottom-0 pb-0">
-                    <h5 class="modal-title fw-bold text-white" id="tituloAjuste">Ajustar Stock</h5>
+                    <h5 class="modal-title fw-bold" style="color: var(--text-main);" id="tituloAjuste">Ajustar Stock</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <form id="formAjusteStock" method="POST">
@@ -279,7 +279,7 @@
                         <p class="text-muted small mb-3" id="subtituloAjuste">Material: ...</p>
                         <div class="mb-2">
                             <label id="labelMover" class="form-label text-secondary small fw-bold mb-1">Cantidad comercial</label>
-                            <input type="number" name="cantidad_movimiento" class="form-control glass-input fw-bold text-center fs-5 text-white" placeholder="Ej. 1" min="1" step="1" required>
+                            <input type="number" name="cantidad_movimiento" class="form-control glass-input fw-bold text-center fs-5" style="color: var(--text-main);" placeholder="Ej. 1" min="1" step="1" required>
                         </div>
                         <input type="hidden" name="tipo_movimiento" id="tipoMovimiento">
                     </div>
@@ -295,9 +295,9 @@
     {{-- MODAL: EDITAR NOMBRE --}}
     <div class="modal fade" id="modalEditarInsumo" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content glass-card" style="background: rgba(38, 18, 56, 0.96) !important;">
+            <div class="modal-content glass-card">
                 <div class="modal-header border-bottom-0 pb-0">
-                    <h5 class="modal-title fw-bold text-white">✏️ Corregir Nombre</h5>
+                    <h5 class="modal-title fw-bold" style="color: var(--text-main);">✏️ Corregir Nombre</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <form id="formEditarInsumo" method="POST">
@@ -320,13 +320,13 @@
 
     {{-- OVERLAY: CONFIRMAR BORRADO --}}
     <div id="overlayConfirmarBorrado" role="dialog" aria-modal="true" aria-labelledby="tituloBorrado">
-        <div id="tarjetaConfirmarBorrado" class="glass-card" style="background: rgba(38, 18, 56, 0.96) !important;">
+        <div id="tarjetaConfirmarBorrado" class="glass-card">
             <div class="text-center mb-3">
                 <div style="font-size: 2.5rem; line-height: 1;">🗑️</div>
-                <h5 class="fw-bold mt-2 mb-0 text-white" id="tituloBorrado">Eliminar insumo</h5>
+                <h5 class="fw-bold mt-2 mb-0" style="color: var(--text-main);" id="tituloBorrado">Eliminar insumo</h5>
             </div>
             <p class="text-center text-muted small mb-4" id="mensajeBorrado">
-                ¿Seguro que deseas eliminar <strong id="nombreInsumoABorrar" class="text-white"></strong>?
+                ¿Seguro que deseas eliminar <strong style="color: var(--text-main);" id="nombreInsumoABorrar"></strong>?
                 <br>Esta acción no se puede deshacer.
             </p>
             <div class="d-flex gap-2">
@@ -334,7 +334,7 @@
                 <form id="formConfirmarBorrado" method="POST" class="flex-fill">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn fw-bold w-100 text-white" style="background: rgba(248, 113, 113, 0.2); border: 1px solid rgba(248, 113, 113, 0.4); box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);">
+                    <button type="submit" class="btn fw-bold w-100" style="background: rgba(239, 68, 68, 0.12); color: var(--color-error); border: 1px solid rgba(239, 68, 68, 0.3); box-shadow: inset 2px 2px 5px var(--shadow-dark);">
                         Sí, eliminar
                     </button>
                 </form>
@@ -352,15 +352,15 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // 1. ALERTA DE ÉXITO 
+            // 1. ALERTA DE ÉXITO
             @if(session('success'))
                 Swal.fire({
                     icon: 'success',
                     title: '¡Operación Exitosa!',
                     text: '{{ session("success") }}',
-                    background: '#1b0f28', // Fondo mate sólido
-                    color: '#f5eaff', 
-                    confirmButtonColor: '#a855f7' // Tu morado base
+                    background: '#eaddff',
+                    color: '#3b0764',
+                    confirmButtonColor: '#9333ea'
                 });
             @endif
 
@@ -376,9 +376,9 @@
                             @endforeach
                         </ul>
                     `,
-                    background: '#1b0f28', // Fondo mate sólido
-                    color: '#f5eaff',
-                    confirmButtonColor: '#f87171' // Peligro (semántico)
+                    background: '#eaddff',
+                    color: '#3b0764',
+                    confirmButtonColor: '#ef4444'
                 }).then((result) => {
                     // Volver a abrir el modal después de que cierre la alerta
                     var myModal = new bootstrap.Modal(document.getElementById('modalNuevoInsumo'));

@@ -2,15 +2,15 @@
 
 @push('css')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    @vite(['resources/css/ventas.css'])
+    @vite(['resources/css/variables.css', 'resources/css/ventas.css'])
 @endpush
 
 @section('contenido')
-<div class="container-fluid py-4" style="background-color: #1b0f28; min-height: 100vh; color: #f5eaff;">
+<div class="container-fluid py-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="color-texto fw-bold mb-0">Historial de Ventas y Cotizaciones</h2>
-        <span class="badge" style="background-color: #5b21b6;">Módulo Operativo</span>
+        <h2 class="fw-bold mb-0" style="color: var(--text-main);">Historial de Ventas y Cotizaciones</h2>
+        <span class="badge" style="background-color: var(--accent-purple); color: #fff;">Módulo Operativo</span>
     </div>
 
     @include('Ventas.partials._kpis')
@@ -22,10 +22,10 @@
     <!-- Modal de Vista Rápida de Materiales -->
     <div class="modal fade" id="modalDetallePedido" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="background-color: var(--color-fondo-medio); border: 1px solid var(--color-morado-oscuro);">
+        <div class="modal-content card-panel" style="background-color: var(--bg-elevated) !important;">
           <div class="modal-header border-0">
             <h5 class="modal-title fw-bold text-accent">Materiales del Pedido <span id="modal-pedido-id"></span></h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body p-0">
              <div class="text-center p-4 text-lavanda" id="modal-loading">

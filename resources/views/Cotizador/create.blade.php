@@ -7,8 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
-    @vite('resources/css/cotizador.css')
-    @vite('resources/css/estilos.css')
+    @vite(['resources/css/variables.css', 'resources/css/cotizador.css'])
 @endpush
 
 @section('contenido')
@@ -29,7 +28,7 @@
         <div class="col-lg-5 mb-4">
             <div class="card glass-card shadow-sm mb-3">
 
-                <div class="card-header glass-card-header fw-bold py-3 text-white">
+                <div class="card-header glass-card-header fw-bold py-3">
                     Configuración del Pedido
                 </div>
 
@@ -91,7 +90,7 @@
                                 <div class="border glass-border rounded p-3 mb-3">
                                     <div class="form-check form-switch mb-2">
                                         <input class="form-check-input glass-switch" type="checkbox" id="swCortinaLana">
-                                        <label class="form-check-label fw-bold text-white" for="swCortinaLana">Incluir Cortina de Lana</label>
+                                        <label class="form-check-label fw-bold" for="swCortinaLana">Incluir Cortina de Lana</label>
                                     </div>
                                     <div id="cajaCortinaLana" class="mt-2 d-none">
                                         <label class="form-label text-muted small mb-1">Cantidad de Colores (Lana)</label>
@@ -108,7 +107,7 @@
                                 <div class="border glass-border rounded p-3">
                                     <div class="form-check form-switch mb-2">
                                         <input class="form-check-input glass-switch" type="checkbox" id="swCortinaFiesta">
-                                        <label class="form-check-label fw-bold text-white" for="swCortinaFiesta">Incluir Cortinas de Fiesta</label>
+                                        <label class="form-check-label fw-bold" for="swCortinaFiesta">Incluir Cortinas de Fiesta</label>
                                     </div>
                                     <div id="cajaCortinaFiesta" class="mt-2 d-none">
                                         <label class="form-label text-muted small mb-1">Cantidad de Colores (Fiesta)</label>
@@ -134,7 +133,7 @@
                                 <div class="border glass-border rounded p-2 mb-2">
                                     <div class="form-check form-switch">
                                         <input class="form-check-input glass-switch" type="checkbox" id="swLazoSimple">
-                                        <label class="form-check-label fw-bold text-white" for="swLazoSimple">Lazo Simple (1.5m)</label>
+                                        <label class="form-check-label fw-bold" for="swLazoSimple">Lazo Simple (1.5m)</label>
                                     </div>
                                     <div id="cajaLazoSimple" class="mt-2 d-none">
                                         <select class="form-select glass-select select2-ajax-cintas" name="cinta_lazo_simple">
@@ -146,7 +145,7 @@
                                 <div class="border glass-border rounded p-2 mb-2">
                                     <div class="form-check form-switch">
                                         <input class="form-check-input glass-switch" type="checkbox" id="swLazoFlor">
-                                        <label class="form-check-label fw-bold text-white" for="swLazoFlor">Flores (1.0m c/u)</label>
+                                        <label class="form-check-label fw-bold" for="swLazoFlor">Flores (1.0m c/u)</label>
                                     </div>
                                     <div id="cajaLazoFlor" class="mt-2 d-none">
                                         <label class="form-label text-muted small mb-1">Cantidad de Flores</label>
@@ -164,7 +163,7 @@
                                 <div class="border glass-border rounded p-2 mb-2">
                                     <div class="form-check form-switch">
                                         <input class="form-check-input glass-switch" type="checkbox" id="swLazoNombre">
-                                        <label class="form-check-label fw-bold text-white" for="swLazoNombre">Lazo c/ Nombre (1.0m + $0.70)</label>
+                                        <label class="form-check-label fw-bold" for="swLazoNombre">Lazo c/ Nombre (1.0m + $0.70)</label>
                                     </div>
                                     <div id="cajaLazoNombre" class="mt-2 d-none">
                                         <select class="form-select glass-select select2-ajax-cintas" name="cinta_lazo_nombre">
@@ -178,7 +177,7 @@
                                 <div class="border glass-border rounded p-2 mb-2">
                                     <div class="form-check form-switch">
                                         <input class="form-check-input glass-switch" type="checkbox" id="swApliques">
-                                        <label class="form-check-label fw-bold text-white" for="swApliques">Incluir Apliques ($0.50 c/u)</label>
+                                        <label class="form-check-label fw-bold" for="swApliques">Incluir Apliques ($0.50 c/u)</label>
                                     </div>
                                     <div id="cajaApliques" class="mt-2 d-none">
                                         <label class="form-label text-muted small mb-0">Cantidad de apliques por bastón</label>
@@ -197,7 +196,7 @@
                                 <div class="border glass-border rounded p-3">
                                     <div class="form-check form-switch mb-2">
                                         <input class="form-check-input glass-switch" type="checkbox" id="swDisenoPersonalizado">
-                                        <label class="form-check-label fw-bold text-white" for="swDisenoPersonalizado">
+                                        <label class="form-check-label fw-bold" for="swDisenoPersonalizado">
                                             <i class="fa-solid"></i> Incluir Diseño Especial en Lana
                                         </label>
                                     </div>
@@ -231,7 +230,7 @@
                 
                 <div class="card glass-card shadow-sm mb-3 card-vista-previa">
                     <div class="card-header glass-card-header fw-bold py-3 d-flex justify-content-between align-items-center">
-                        <span class="text-white"><i class="fa-solid fa-boxes-stacked"></i> Vista Previa: Impacto en Inventario</span>
+                        <span><i class="fa-solid fa-boxes-stacked"></i> Vista Previa: Impacto en Inventario</span>
                         <span id="lblResumenBastones" class="badge glass-badge-warning">0 Bastones</span>
                     </div>
                     
@@ -263,19 +262,19 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center border-bottom glass-border pb-2 mb-2">
                             <span class="text-muted fw-bold">Costo Base Materiales:</span>
-                            <span class="fs-5 fw-bold text-white" id="txtCostoMateriales">$ 0.00</span>
+                            <span class="fs-5 fw-bold" id="txtCostoMateriales">$ 0.00</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center border-bottom glass-border pb-2 mb-2">
                             <span class="text-muted fw-bold">Extras:</span>
-                            <span class="fs-5 fw-bold text-white" id="txtCostoManoObra">$ 0.00</span>
+                            <span class="fs-5 fw-bold" id="txtCostoManoObra">$ 0.00</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <span class="text-secondary fw-bold">Mano de Obra (Ganancia Base):</span>
-                            <span class="fs-5 fw-bold text-white" id="txtGananciaFija">$ 0.00</span>
+                            <span class="fs-5 fw-bold" id="txtGananciaFija">$ 0.00</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mt-3">
-                            <span class="fw-bold fs-5 text-success">COSTO TOTAL PRODUCCIÓN:</span>
-                            <span class="fs-3 fw-bold text-success" id="txtCostoTotal">$ 0.00</span>
+                            <span class="fw-bold fs-5" style="color: #16a34a;">COSTO TOTAL PRODUCCIÓN:</span>
+                            <span class="fs-3 fw-bold" style="color: #16a34a;" id="txtCostoTotal">$ 0.00</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mt-1">
                             <span class="text-muted small">Costo sugerido por unidad:</span>
@@ -295,11 +294,11 @@
 
                             <div class="d-flex align-items-center gap-3 mb-4">
                                 <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
-                                     style="width:44px; height:44px; min-width:44px; background: rgba(74, 222, 128, 0.15); border: 1px solid rgba(74, 222, 128, 0.3);">
-                                    <i class="fa-solid fa-check" style="font-size:17px; color: #4ade80;"></i>
+                                     style="width:44px; height:44px; min-width:44px; background: rgba(22, 163, 74, 0.12); border: 1px solid rgba(22, 163, 74, 0.3);">
+                                    <i class="fa-solid fa-check" style="font-size:17px; color: #16a34a;"></i>
                                 </div>
                                 <div>
-                                    <p class="fw-semibold text-white mb-0" style="font-size:15px;">
+                                    <p class="fw-semibold mb-0" style="font-size:15px;">
                                         Pedido guardado &mdash; #<span id="txtNumeroCotizacionExport">---</span>
                                     </p>
                                     <p class="text-muted mb-0" style="font-size:13px;">¿Qué deseas hacer ahora?</p>
@@ -309,12 +308,12 @@
                             <div class="d-grid gap-2">
                                 <div class="row g-2">
                                     <div class="col-12 col-md-6">
-                                        <a href="#" target="_blank" class="btn glass-btn-action w-100 py-2" id="btnPdfReceta" style="color: #f87171 !important;">
+                                        <a href="#" target="_blank" class="btn glass-btn-action w-100 py-2" id="btnPdfReceta" style="color: var(--color-error) !important;">
                                             <i class="fa-solid fa-clipboard-list me-2"></i> Receta Bodega
                                         </a>
                                     </div>
                                     <div class="col-12 col-md-6">
-                                        <a href="#" target="_blank" class="btn glass-btn-action w-100 py-2" id="btnPdfNota" style="color: var(--color-fucsia) !important;">
+                                        <a href="#" target="_blank" class="btn glass-btn-action w-100 py-2" id="btnPdfNota" style="color: var(--accent-purple) !important;">
                                             <i class="fa-solid fa-file-invoice-dollar me-2"></i> Nota de Venta
                                         </a>
                                     </div>
@@ -341,15 +340,15 @@
     </div>{{-- /row --}}
 
     {{-- ==========================================
-         MODALES CON ESTILO GLASSMORPHISM
+         MODALES CON ESTILO NEUMÓRFICO PASTEL
     ========================================== --}}
 
     {{-- MODAL: ENVIAR COTIZACIÓN POR CORREO --}}
     <div class="modal fade" id="modalEnviarCorreo" tabindex="-1" aria-labelledby="modalCorreoLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content glass-card" style="background: rgba(38, 18, 56, 0.96) !important;">
+            <div class="modal-content glass-card">
                 <div class="modal-header glass-card-header border-bottom-0 pb-0">
-                    <h5 class="modal-title fw-bold text-white" id="modalCorreoLabel"><i class="fa-solid fa-envelope" style="color: var(--color-fucsia);"></i> Enviar Nota de Venta</h5>
+                    <h5 class="modal-title fw-bold" id="modalCorreoLabel"><i class="fa-solid fa-envelope" style="color: var(--accent-purple);"></i> Enviar Nota de Venta</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
@@ -372,9 +371,9 @@
     {{-- MODAL: DATOS DEL CLIENTE (PRE-GUARDADO) --}}
     <div class="modal fade" id="modalDatosCliente" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
-            <div class="modal-content glass-card" style="background: rgba(38, 18, 56, 0.96) !important;">
+            <div class="modal-content glass-card">
                 <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
-                    <h6 class="modal-title fw-bold text-white"><i class="fa-solid fa-user-tag me-2" style="color: var(--color-fucsia);"></i> Finalizar Pedido</h6>
+                    <h6 class="modal-title fw-bold"><i class="fa-solid fa-user-tag me-2" style="color: var(--accent-purple);"></i> Finalizar Pedido</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body px-4 py-3">
@@ -400,15 +399,15 @@
     {{-- MODAL DE ÉXITO --}}
     <div class="modal fade" id="modalExito" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 360px;">
-            <div class="modal-content glass-card" style="background: rgba(38, 18, 56, 0.96) !important;">
+            <div class="modal-content glass-card">
                 <div class="modal-body text-center px-4 py-4">
                     <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
-                         style="width:40px; height:40px; background: rgba(74, 222, 128, 0.15); border: 1px solid rgba(74, 222, 128, 0.3);">
-                        <i class="fa-solid fa-check" style="font-size:16px; color: #4ade80;"></i>
+                         style="width:40px; height:40px; background: rgba(22, 163, 74, 0.12); border: 1px solid rgba(22, 163, 74, 0.3);">
+                        <i class="fa-solid fa-check" style="font-size:16px; color: #16a34a;"></i>
                     </div>
-                    <p class="fw-semibold text-white mb-1" style="font-size:15px;">Pedido guardado</p>
+                    <p class="fw-semibold mb-1" style="font-size:15px;">Pedido guardado</p>
                     <p class="text-muted mb-0" style="font-size:13px; line-height:1.6;">
-                        El pedido <strong class="text-white">#<span id="modalNumCotizacion"></span></strong>
+                        El pedido <strong>#<span id="modalNumCotizacion"></span></strong>
                         fue registrado exitosamente.
                     </p>
                 </div>
@@ -419,7 +418,7 @@
     {{-- MODAL DE VALIDACIÓN (El JS inyecta colores, pero este es su HTML base) --}}
     <div class="modal fade" id="modalValidacion" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 360px;">
-            <div class="modal-content glass-card" style="background: rgba(38, 18, 56, 0.96) !important;">
+            <div class="modal-content glass-card">
                 <div class="px-4 pt-4 pb-0">
                     <div class="d-flex align-items-start gap-3">
                         <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
@@ -427,7 +426,7 @@
                             <i class="fa-solid fa-triangle-exclamation" style="font-size:15px;"></i>
                         </div>
                         <div>
-                            <p class="fw-semibold mb-1 text-white" id="modalValidacionTitulo"
+                            <p class="fw-semibold mb-1" id="modalValidacionTitulo"
                                style="font-size:15px; line-height:1.3;">Faltan campos obligatorios</p>
                             <p class="text-muted mb-0" style="font-size:13px;">
                                 Completa lo siguiente antes de guardar
@@ -448,17 +447,17 @@
     {{-- MODAL: CORREO ENVIADO CON ÉXITO --}}
     <div class="modal fade" id="modalCorreoExito" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 360px;">
-            <div class="modal-content glass-card" style="background: rgba(38, 18, 56, 0.96) !important;">
+            <div class="modal-content glass-card">
                 <div class="modal-body text-center px-4 py-4">
                     <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
-                         style="width:40px; height:40px; background: rgba(232, 121, 249, 0.15); border: 1px solid rgba(232, 121, 249, 0.3);">
-                        <i class="fa-solid fa-paper-plane" style="font-size:15px; color: var(--color-fucsia);"></i>
+                         style="width:40px; height:40px; background: rgba(147, 51, 234, 0.12); border: 1px solid rgba(147, 51, 234, 0.3);">
+                        <i class="fa-solid fa-paper-plane" style="font-size:15px; color: var(--accent-purple);"></i>
                     </div>
-                    <p class="fw-semibold text-white mb-1" style="font-size:15px;">Correo enviado</p>
+                    <p class="fw-semibold mb-1" style="font-size:15px;">Correo enviado</p>
                     <p class="text-muted mb-4" style="font-size:13px; line-height:1.6;">
                         La nota de venta fue despachada correctamente al cliente.
                     </p>
-                    <button type="button" class="btn glass-btn-action w-100 rounded-3 py-2" data-bs-dismiss="modal" style="color: var(--color-fucsia) !important;">
+                    <button type="button" class="btn glass-btn-action w-100 rounded-3 py-2" data-bs-dismiss="modal" style="color: var(--accent-purple) !important;">
                         <i class="fa-solid fa-check me-2"></i> Entendido
                     </button>
                 </div>

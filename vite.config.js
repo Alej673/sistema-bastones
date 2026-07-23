@@ -12,17 +12,18 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
-                'resources/css/estilos.css',
                 'resources/css/inventario.css',
                 'resources/js/inventario.js',
                 'resources/css/cotizador.css',
                 'resources/css/ventas.css',
-                'resources/js/cotizador.js',      // ¡Agregado! (Muy importante para que funcione tu cotizador)
+                'resources/js/cotizador.js',   
                 'resources/css/estilos_nav.css', 
                 'resources/js/historial.js',
                 'resources/css/inico.css',
                 'resources/css/formulario.css',
                 'resources/css/welcome.css',
+                'resources/css/auth-neumorphism.css',
+                'resources/css/variables.css'
             ],
             refresh: true,
         }),

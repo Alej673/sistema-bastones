@@ -1,64 +1,75 @@
 /* =========================================
-   PALETA GLOBAL DEL MÓDULO (fuente única de verdad)
+   VENTAS.CSS — NEUMORFISMO PASTEL
+   Requiere que variables.css se cargue ANTES que este archivo.
+   Ya no se define paleta local: todo usa las variables globales de :root.
    ========================================= */
-:root {
-    --color-morado: #a855f7;
-    --color-morado-claro: #c084fc;
-    --color-morado-oscuro: #5b21b6;
-    --color-violeta-boton: #7c3aed;
-    --color-fucsia: #e879f9;
-    --color-fucsia-oscuro: #86198f;
-    --color-fondo-medio: #2c1548;
-    --color-fondo-base: #1b0f28;
-    --color-texto: #f5eaff;
-    --color-texto-mutado: #b9a8c9;
-    --color-exito: #4ade80;
-    --color-peligro: #f87171;
-}
 
 /* =========================================
-   BASE: forzamos el fondo oscuro sobre los
-   componentes Bootstrap que compiten en especificidad
+   BASE: tarjetas y superficies
    ========================================= */
 .card-panel {
-    background-color: var(--color-fondo-medio) !important;
+    background-color: var(--bg-base) !important;
     border-radius: 12px;
     border: 0 !important;
-    color: var(--color-texto);
+    box-shadow: 6px 6px 14px var(--shadow-dark), -4px -4px 10px rgba(255, 255, 255, 0.35) !important;
+    color: var(--text-main);
 }
 
 .input-dark {
-    background-color: var(--color-fondo-base) !important;
-    color: var(--color-texto) !important;
+    background-color: var(--bg-base) !important;
+    color: var(--text-main) !important;
     border: 0 !important;
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px rgba(255, 255, 255, 0.4) !important;
+    border-radius: 8px;
 }
 
 .input-dark::placeholder {
-    color: var(--color-texto-mutado) !important;
-    opacity: 1;
+    color: var(--text-muted) !important;
+    opacity: 0.7;
 }
 
 .input-dark:focus {
-    background-color: var(--color-fondo-base) !important;
-    color: var(--color-texto) !important;
-    box-shadow: 0 0 0 0.2rem rgba(168, 85, 247, 0.35) !important;
+    background-color: var(--bg-base) !important;
+    color: var(--text-main) !important;
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px rgba(255, 255, 255, 0.4), 0 0 0 2px var(--neon-glow) !important;
 }
 
 .input-dark::-webkit-calendar-picker-indicator {
-    filter: invert(1);
+    filter: none;
     cursor: pointer;
 }
 
-.text-lavanda { color: var(--color-texto-mutado) !important; }
-.text-accent  { color: var(--color-morado-claro) !important; }
+.text-lavanda { color: var(--text-muted) !important; }
+.text-accent  { color: var(--accent-purple) !important; }
 
 .btn-accion {
-    background-color: var(--color-morado) !important;
+    background-color: var(--accent-purple) !important;
     color: #fff !important;
+    border: none !important;
+    box-shadow: 4px 4px 10px var(--shadow-dark), -2px -2px 6px rgba(255, 255, 255, 0.35) !important;
+    transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
 }
+.btn-accion:hover {
+    background-color: var(--accent-hover) !important;
+    box-shadow: 0 0 12px var(--neon-glow), 4px 4px 10px var(--shadow-dark) !important;
+    transform: translateY(-1px);
+}
+.btn-accion:active {
+    background-color: var(--accent-active) !important;
+    transform: translateY(1px);
+    box-shadow: inset 3px 3px 8px rgba(0,0,0,0.2), inset -2px -2px 6px rgba(255,255,255,0.3) !important;
+}
+
 .btn-accion-secundaria {
-    background-color: var(--color-fucsia) !important;
-    color: var(--color-fondo-base) !important;
+    background-color: var(--bg-base) !important;
+    color: var(--accent-purple) !important;
+    border: none !important;
+    box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px rgba(255, 255, 255, 0.35) !important;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.btn-accion-secundaria:hover {
+    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px rgba(255, 255, 255, 0.35) !important;
+    transform: translateY(-1px);
 }
 
 /* =========================================
@@ -66,27 +77,27 @@
    ========================================= */
 .table {
     background-color: transparent !important;
-    color: var(--color-texto) !important;
+    color: var(--text-main) !important;
     --bs-table-bg: transparent;
-    --bs-table-color: var(--color-texto);
+    --bs-table-color: var(--text-main);
 }
 
 .table th, .table td {
     background-color: transparent !important;
-    border-bottom: 1px solid var(--color-fondo-medio) !important;
+    border-bottom: 1px solid var(--shadow-dark) !important;
     vertical-align: middle;
-    color: var(--color-texto) !important;
+    color: var(--text-main) !important;
 }
 
 .table thead th {
-    color: var(--color-morado-claro) !important;
-    border-bottom: 2px solid var(--color-morado-oscuro) !important;
+    color: var(--text-muted) !important;
+    border-bottom: 2px solid var(--shadow-dark) !important;
     font-weight: 600;
 }
 
 .table-hover tbody tr:hover td,
 .table-hover tbody tr:hover th {
-    background-color: var(--color-fondo-medio) !important;
+    background-color: rgba(147, 51, 234, 0.08) !important;
 }
 
 /* =========================================
@@ -102,145 +113,301 @@
 }
 
 /* 1. Pendiente */
-.badge-estado.pendiente { 
-    background-color: rgba(192, 132, 252, 0.2) !important; 
-    color: var(--color-morado-claro) !important; 
+.badge-estado.pendiente {
+    background-color: rgba(147, 51, 234, 0.12) !important;
+    color: var(--accent-purple) !important;
 }
 
 /* 2. En Producción */
-.badge-estado.en_produccion { 
-    background-color: rgba(232, 121, 249, 0.2) !important; 
-    color: var(--color-fucsia) !important; 
+.badge-estado.en_produccion {
+    background-color: rgba(217, 119, 6, 0.12) !important;
+    color: #d97706 !important;
 }
 
 /* 3. Realizado (Entregado) */
-.badge-estado.realizado { 
-    background-color: rgba(74, 222, 128, 0.2) !important; 
-    color: var(--color-exito) !important; 
+.badge-estado.realizado {
+    background-color: rgba(22, 163, 74, 0.12) !important;
+    color: #16a34a !important;
 }
 
 /* 4. Cancelado */
-.badge-estado.cancelado { 
-    background-color: rgba(248, 113, 113, 0.2) !important; 
-    color: var(--color-peligro) !important; 
+.badge-estado.cancelado {
+    background-color: rgba(239, 68, 68, 0.12) !important;
+    color: var(--color-error) !important;
 }
 
 /* Menú desplegable del estado */
 .dropdown-menu-dark {
-    background-color: var(--color-fondo-medio) !important;
-    border-color: var(--color-morado-oscuro) !important;
+    background-color: var(--bg-elevated) !important;
+    border: 1px solid rgba(199, 186, 219, 0.4) !important;
+    box-shadow: 4px 4px 10px var(--shadow-dark), -3px -3px 8px rgba(255, 255, 255, 0.3) !important;
 }
 
 /* =========================================
-   ESTILOS PARA SELECT2 (DARK MODE ERP)
+   SELECT2 (NEUMORFISMO PASTEL)
    ========================================= */
 
-/* 1. Contenedor principal (El botón que se ve antes de hacer clic) */
 .select2-container--default .select2-selection--single {
-    background-color: var(--color-fondo-base) !important;
-    border: 1px solid var(--color-fondo-base) !important;
+    background-color: var(--bg-base) !important;
+    border: none !important;
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px rgba(255, 255, 255, 0.4) !important;
     height: 38px !important;
     display: flex;
     align-items: center;
-    border-radius: 6px;
+    border-radius: 8px;
 }
 
-/* 2. Texto del ítem seleccionado */
 .select2-container--default .select2-selection--single .select2-selection__rendered {
-    color: var(--color-texto) !important;
+    color: var(--text-main) !important;
     padding-left: 12px;
 }
 
-/* 3. Texto del Placeholder */
 .select2-container--default .select2-selection--single .select2-selection__placeholder {
-    color: var(--color-texto-mutado) !important;
+    color: var(--text-muted) !important;
 }
 
-/* 4. La flechita de la derecha */
 .select2-container--default .select2-selection--single .select2-selection__arrow {
     height: 36px !important;
 }
 .select2-container--default .select2-selection--single .select2-selection__arrow b {
-    border-color: var(--color-texto-mutado) transparent transparent transparent !important;
+    border-color: var(--accent-purple) transparent transparent transparent !important;
 }
 
-/* 5. El menú desplegable (donde salen las opciones) */
 .select2-dropdown {
-    background-color: var(--color-fondo-medio) !important;
-    border: 1px solid var(--color-morado-oscuro) !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    background-color: var(--bg-elevated) !important;
+    border: 1px solid rgba(199, 186, 219, 0.4) !important;
+    border-radius: 10px !important;
+    box-shadow: 4px 4px 10px var(--shadow-dark), -3px -3px 8px rgba(255, 255, 255, 0.3) !important;
 }
 
-/* 6. La caja de texto donde escribes (el buscador) */
 .select2-search--dropdown .select2-search__field {
-    background-color: var(--color-fondo-base) !important;
-    color: var(--color-texto) !important;
-    border: 1px solid var(--color-morado-oscuro) !important;
-    border-radius: 4px;
+    background-color: var(--bg-base) !important;
+    color: var(--text-main) !important;
+    border: none !important;
+    box-shadow: inset 2px 2px 5px var(--shadow-dark) !important;
+    border-radius: 6px;
     padding: 6px;
 }
 
-/* 7. Quitar el borde azul por defecto al hacer focus en el buscador */
 .select2-search--dropdown .select2-search__field:focus {
     outline: none !important;
-    border-color: var(--color-morado-claro) !important;
+    box-shadow: inset 2px 2px 5px var(--shadow-dark), 0 0 0 2px var(--neon-glow) !important;
 }
 
-/* 8. Los textos de las sugerencias */
 .select2-results__option {
-    color: var(--color-texto-mutado) !important;
-}   
+    color: var(--text-muted) !important;
+}
 
-/* 9. Efecto Hover (pasar el mouse) y opción seleccionada */
 .select2-container--default .select2-results__option--highlighted[aria-selected],
 .select2-container--default .select2-results__option[aria-selected=true] {
-    background-color: var(--color-morado-oscuro) !important;
-    color: var(--color-texto) !important;
-}       
+    background-color: rgba(147, 51, 234, 0.16) !important;
+    color: var(--accent-purple) !important;
+}
 
 /* =========================================
    CORRECCIÓN SELECT2 EN INPUT-GROUP BOOTSTRAP
    ========================================= */
-/* Forzar al contenedor de Select2 a usar el espacio sobrante en la misma línea */
 .input-group > .select2-container {
     flex: 1 1 auto !important;
-    width: 1% !important; 
+    width: 1% !important;
 }
 
-/* Quitar el borde redondeado izquierdo para que se pegue perfectamente al ícono de la lupa */
 .input-group > .select2-container .select2-selection--single {
     border-top-left-radius: 0 !important;
     border-bottom-left-radius: 0 !important;
 }
 
 /* =========================================
-   PAGINACIÓN (DARK MODE)
+   PAGINACIÓN
    ========================================= */
 .pagination {
     margin-bottom: 0;
 }
 
 .page-item .page-link {
-    background-color: var(--color-fondo-base) !important;
-    border-color: var(--color-fondo-medio) !important;
-    color: var(--color-texto-mutado) !important;
-    box-shadow: none !important;
+    background-color: var(--bg-base) !important;
+    border: none !important;
+    color: var(--text-muted) !important;
+    box-shadow: 2px 2px 5px var(--shadow-dark), -2px -2px 5px rgba(255, 255, 255, 0.35) !important;
 }
 
 .page-item .page-link:hover {
-    background-color: var(--color-fondo-medio) !important;
-    color: var(--color-morado-claro) !important;
+    color: var(--accent-purple) !important;
+    box-shadow: 3px 3px 7px var(--shadow-dark), -3px -3px 7px rgba(255, 255, 255, 0.4) !important;
 }
 
 .page-item.active .page-link {
-    background-color: var(--color-morado) !important;
-    border-color: var(--color-morado) !important;
+    background-color: var(--accent-purple) !important;
     color: #ffffff !important;
     font-weight: bold;
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2) !important;
 }
 
 .page-item.disabled .page-link {
-    background-color: var(--color-fondo-base) !important;
-    color: #6b7280 !important; /* Gris oscuro para indicar deshabilitado */
-    opacity: 0.6;
+    background-color: var(--bg-base) !important;
+    color: var(--text-muted) !important;
+    opacity: 0.5;
+    box-shadow: none !important;
+}
+
+/* =========================================
+   HOVER — TARJETAS KPI
+   ========================================= */
+.card-kpi {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    cursor: default;
+}
+
+.card-kpi:hover {
+    transform: translateY(-3px);
+    box-shadow: 8px 8px 18px var(--shadow-dark), -6px -6px 14px rgba(255, 255, 255, 0.4) !important;
+}
+
+/* =========================================
+   BOTONES DE ACCIÓN EN TABLA (Ver / Nota / Receta)
+   ========================================= */
+.btn-ver-detalle,
+.btn-accion-secundaria,
+.btn-accion {
+    width: 34px;
+    height: 34px;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px !important;
+    font-size: 0.95rem;
+    line-height: 1;
+    /* Transiciones más suaves para el hover */
+    transition: all 0.2s ease-in-out;
+}
+
+/* --- Ver Detalle (Fondo Celeste Suave) --- */
+.btn-ver-detalle {
+    background-color: #e0f2fe !important; /* Celeste muy claro */
+    color: #0284c7 !important;
+    border: 1px solid #bae6fd !important;
+    box-shadow: 0 2px 4px rgba(2, 132, 199, 0.15) !important;
+}
+.btn-ver-detalle:hover {
+    background-color: #bae6fd !important; /* Celeste un poco más oscuro al pasar el mouse */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(2, 132, 199, 0.25) !important;
+}
+.btn-ver-detalle:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(2, 132, 199, 0.15) !important;
+}
+
+/* --- Nota de Venta (Fondo Morado Claro) --- */
+.btn-accion-secundaria {
+    background-color: #f3e8ff !important; /* Morado muy claro */
+    color: var(--accent-purple) !important;
+    border: 1px solid #d8b4fe !important;
+    box-shadow: 0 2px 4px rgba(147, 51, 234, 0.15) !important;
+}
+.btn-accion-secundaria:hover {
+    background-color: #e9d5ff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(147, 51, 234, 0.25) !important;
+}
+.btn-accion-secundaria:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(147, 51, 234, 0.15) !important;
+}
+
+/* --- Receta Interna (Morado Sólido - Acción Principal) --- */
+.btn-accion {
+    background-color: var(--accent-purple) !important;
+    color: #ffffff !important;
+    border: 1px solid var(--accent-purple) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+}
+.btn-accion:hover {
+    background-color: var(--accent-hover) !important;
+    border-color: var(--accent-hover) !important;
+    box-shadow: 0 4px 10px var(--neon-glow) !important;
+    transform: translateY(-2px);
+}
+.btn-accion:active {
+    background-color: var(--accent-active) !important;
+    transform: translateY(0);
+    box-shadow: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   DROPDOWN DE ESTADO — legibilidad corregida
+   -------------------------------------------------------------------------- */
+.dropdown-menu-dark {
+    padding: 6px;
+}
+
+.dropdown-menu-dark .dropdown-item {
+    color: var(--text-main) !important;
+    border-radius: 8px;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.9rem;
+    transition: background-color 0.12s ease;
+}
+
+.dropdown-menu-dark .dropdown-item:hover,
+.dropdown-menu-dark .dropdown-item:focus {
+    background-color: rgba(147, 51, 234, 0.1) !important;
+    color: var(--accent-purple) !important;
+}
+
+.dropdown-menu-dark .dropdown-item.text-success {
+    color: #16a34a !important;
+}
+.dropdown-menu-dark .dropdown-item.text-success:hover {
+    background-color: rgba(22, 163, 74, 0.1) !important;
+}
+
+.dropdown-menu-dark .dropdown-item.text-danger {
+    color: var(--color-error) !important;
+}
+.dropdown-menu-dark .dropdown-item.text-danger:hover {
+    background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+.dropdown-menu-dark .dropdown-divider {
+    border-color: var(--shadow-dark);
+    margin: 4px 0;
+}
+
+/* El botón trigger del dropdown (badge-estado con caret) */
+.badge-estado.dropdown-toggle {
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.badge-estado.dropdown-toggle:disabled {
+    opacity: 0.7;
+    cursor: default;
+}
+
+/* =========================================
+   MODAL DETALLE DE PEDIDO — Lista de Materiales
+   ========================================= */
+#modal-lista-materiales .list-group-item {
+    background-color: transparent !important;
+    border-color: var(--shadow-dark) !important;
+    color: var(--text-main) !important;
+    padding: 0.85rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#modal-lista-materiales .list-group-item:first-child {
+    border-top: none !important;
+}
+
+/* La cantidad/valor a la derecha de cada material */
+#modal-lista-materiales .list-group-item span,
+#modal-lista-materiales .list-group-item strong,
+#modal-lista-materiales .list-group-item b {
+    color: var(--accent-purple) !important;
+    font-weight: 700;
 }

@@ -48,10 +48,10 @@ function buscarInsumoPorId(id) {
 }
 
 // =======================================================
-// 4. MODAL DE ALERTA / VALIDACIÓN (reutilizable)
+// 4. MODAL DE ALERTA / VALIDACIÓN (reutilizable) - TEMA CLARO / PASTEL
 // =======================================================
 /**
- * Pinta y muestra el modal #modalValidacion con estilo Dark Neumorphic Glass.
+ * Pinta y muestra el modal #modalValidacion con estilo Soft UI Pastel.
  * Se usa tanto para validaciones de formulario como para errores de red.
  *
  * @param {string|string[]} contenido  Un mensaje único, o un arreglo de
@@ -61,41 +61,45 @@ function buscarInsumoPorId(id) {
  */
 function mostrarAlerta(contenido, titulo = 'Faltan campos obligatorios', tipo = 'warning') {
 
-    // Paleta de cada variante del modal (color, ícono, texto del botón).
+    // Paleta de cada variante del modal adaptada a tonos pastel
     const config = {
         warning: {
             icono: 'fa-triangle-exclamation',
-            color: '#facc15', // Amarillo neón
-            fondo: 'rgba(250, 204, 21, 0.15)',
-            borde: 'rgba(250, 204, 21, 0.3)',
+            color: '#d97706', // Ámbar oscuro (legible)
+            fondo: '#fef3c7', // Ámbar muy claro (fondo)
+            borde: '#fde68a',
             texto: '<i class="fa-solid fa-pen-to-square me-1"></i> Entendido',
         },
         danger: {
             icono: 'fa-circle-xmark',
-            color: '#f87171', // Rojo/Coral neón
-            fondo: 'rgba(248, 113, 113, 0.15)',
-            borde: 'rgba(248, 113, 113, 0.3)',
+            color: '#dc2626', // Rojo oscuro
+            fondo: '#fee2e2', // Rojo muy claro
+            borde: '#fecaca',
             texto: '<i class="fa-solid fa-rotate-right me-1"></i> Cerrar e intentar de nuevo',
         },
         info: {
             icono: 'fa-circle-info',
-            color: '#e879f9', // Fucsia del tema
-            fondo: 'rgba(232, 121, 249, 0.15)',
-            borde: 'rgba(232, 121, 249, 0.3)',
+            color: '#9333ea', // Morado de tu marca
+            fondo: '#f3e8ff', // Morado muy claro
+            borde: '#d8b4fe',
             texto: '<i class="fa-solid fa-check me-1"></i> Entendido',
         }
     };
 
     const c = config[tipo] || config.warning;
 
-    // ---- Ícono circular con resplandor ----
+    // Colores de texto globales basados en tu variables.css
+    const textoPrincipal = '#3b0764'; // --text-main
+    const textoSecundario = '#7e57c2'; // --text-muted
+
+    // ---- Ícono circular (sin resplandor neón, sombra suave) ----
     const iconoEl = $('#modalValidacion .fa-solid').first();
 
     iconoEl.attr('class', `fa-solid ${c.icono}`)
         .css({
             color: c.color,
             fontSize: '20px',
-            filter: `drop-shadow(0 0 4px ${c.color})` // Leve resplandor
+            filter: 'none' // Quitamos el resplandor neón
         });
 
     iconoEl.parent()
@@ -109,7 +113,7 @@ function mostrarAlerta(contenido, titulo = 'Faltan campos obligatorios', tipo = 
             minWidth: '48px',
             background: c.fondo,
             border: `1px solid ${c.borde}`,
-            boxShadow: '0 4px 12px rgba(0,0,0,.2)',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.05)', // Sombra ligera
             marginTop: '2px'
         });
 
@@ -118,28 +122,28 @@ function mostrarAlerta(contenido, titulo = 'Faltan campos obligatorios', tipo = 
         .text(titulo)
         .css({
             fontSize: '18px',
-            fontWeight: '600',
+            fontWeight: '700',
             letterSpacing: '-0.2px',
-            color: '#f5eaff' // Texto principal claro
+            color: textoPrincipal
         });
 
-    $('#modalValidacionTitulo').next('p').css('color', '#b9a8c9');
+    $('#modalValidacionTitulo').next('p').css('color', textoSecundario);
 
-    // ---- Lista de mensajes (una tarjeta "hundida" por cada mensaje) ----
+    // ---- Lista de mensajes (tarjetas elevadas en lugar de hundidas) ----
     const lista = $('#listaValidacion');
     lista.empty();
 
     const estiloItemLista = `
-        background: rgba(20, 10, 32, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.04);
-        box-shadow: inset 3px 3px 6px rgba(0,0,0,0.4);
-        color: #f5eaff;
+        background: #ffffff;
+        border: 1px solid rgba(199, 186, 219, 0.4);
+        box-shadow: 0 2px 4px rgba(59, 7, 100, 0.05);
+        color: ${textoPrincipal};
     `;
 
     if (Array.isArray(contenido)) {
-        // Caso: lista de campos faltantes (validación de formulario)
+        // Caso: lista de campos faltantes
         lista.append(`
-            <div class="small mb-3" style="color: #b9a8c9;">
+            <div class="small mb-3" style="color: ${textoSecundario};">
                 Se encontraron
                 <strong style="color: ${c.color};">${contenido.length}</strong>
                 campo${contenido.length > 1 ? 's' : ''}
@@ -157,7 +161,7 @@ function mostrarAlerta(contenido, titulo = 'Faltan campos obligatorios', tipo = 
                         height:8px;
                         border-radius:50%;
                         background:${c.color};
-                        box-shadow: 0 0 6px ${c.color};
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                         flex-shrink:0;
                     "></div>
 
@@ -169,7 +173,7 @@ function mostrarAlerta(contenido, titulo = 'Faltan campos obligatorios', tipo = 
         });
 
     } else {
-        // Caso: mensaje único (ej. error de red)
+        // Caso: mensaje único
         lista.append(`
             <li class="d-flex align-items-start gap-3 rounded-3 px-3 py-3"
                 style="${estiloItemLista}">
@@ -178,18 +182,17 @@ function mostrarAlerta(contenido, titulo = 'Faltan campos obligatorios', tipo = 
                    style="
                         color:${c.color};
                         margin-top:3px;
-                        filter: drop-shadow(0 0 3px ${c.color});
                    ">
                 </i>
 
-                <span style="font-size:13px; line-height: 1.5;">
+                <span style="font-size:13px; line-height: 1.5; font-weight: 500;">
                     ${contenido}
                 </span>
             </li>
         `);
     }
 
-    // ---- Botón de cierre (estilos en línea porque el HTML base no trae clases) ----
+    // ---- Botón de cierre ----
     $('#modalValidacion .modal-footer .btn, #modalValidacion .px-4.pb-4 .btn')
         .attr('class', 'btn w-100 rounded-3')
         .css({
@@ -199,32 +202,32 @@ function mostrarAlerta(contenido, titulo = 'Faltan campos obligatorios', tipo = 
             fontSize: '13px',
             fontWeight: '600',
             padding: '10px',
-            boxShadow: '3px 3px 6px rgba(0,0,0,0.3)',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)', // Sombra tradicional
             transition: 'all 0.2s ease'
         })
         .html(c.texto)
-        // Hover manual porque los estilos se aplicaron en línea (no vía clase CSS)
+        // Hover manual para elevar el botón suavemente
         .on('mouseenter', function() {
             $(this).css({
                 transform: 'translateY(-1px)',
-                boxShadow: '5px 5px 12px rgba(0,0,0,0.4)'
+                boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
             });
         })
         .on('mouseleave', function() {
             $(this).css({
                 transform: 'translateY(0)',
-                boxShadow: '3px 3px 6px rgba(0,0,0,0.3)'
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
             });
         });
 
-    // ---- Fondo del modal (glassmorphism), sin pisar la clase .glass-card ----
+    // ---- Fondo del modal (Blanco limpio en lugar de cristal oscuro) ----
     $('#modalValidacion .modal-content').css({
-        background: 'rgba(38, 18, 56, 0.96)',
-        border: '1px solid rgba(232, 121, 249, 0.14)',
+        background: '#ffffff',
+        border: '1px solid rgba(199, 186, 219, 0.4)',
         borderRadius: '16px',
         overflow: 'hidden',
-        boxShadow: '0 20px 40px rgba(0,0,0,.5)',
-        backdropFilter: 'blur(15px)'
+        boxShadow: '0 20px 45px rgba(59, 7, 100, 0.15)', // Sombra morada difuminada
+        backdropFilter: 'none' // Ya no necesitamos el blur intenso del modo oscuro
     });
 
     // ---- Mostrar ----

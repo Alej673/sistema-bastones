@@ -1,4 +1,4 @@
-<tr style="border-bottom: 1px solid #1b0f28;">
+<tr>
     <td class="ps-4 fw-bold text-accent">#{{ str_pad($pedido->id, 4, '0', STR_PAD_LEFT) }}</td>
     
     <td class="text-lavanda">{{ $pedido->created_at->format('d/m/Y H:i') }}</td>
@@ -10,7 +10,7 @@
     <td class="text-lavanda">{{ $pedido->cantidad_total_bastones }} Bastones</td>
     
     <!-- 3. CORRECCIÓN: variable costo_total -->
-    <td class="fw-bold" style="color: #4ade80;">$ {{ number_format($pedido->costo_total, 2) }}</td>
+    <td class="fw-bold" style="color: #16a34a;">$ {{ number_format($pedido->costo_total, 2) }}</td>
     
     <td>
         <div class="dropdown">
@@ -24,18 +24,18 @@
                     {{ $pedido->estado == 'realizado' ? 'disabled' : '' }}>
                 {{ ucfirst(str_replace('_', ' ', $pedido->estado)) }}
             </button>
-            <ul class="dropdown-menu dropdown-menu-dark shadow" style="background-color: #2c1548; border-color: #5b21b6;">
+            <ul class="dropdown-menu dropdown-menu-dark shadow">
                 <li><a class="dropdown-item cambiar-estado" href="#" data-id="{{ $pedido->id }}" data-estado="pendiente">Cotizado (Pendiente)</a></li>
                 <li><a class="dropdown-item cambiar-estado" href="#" data-id="{{ $pedido->id }}" data-estado="en_produccion">En Producción</a></li>
                 <li><a class="dropdown-item cambiar-estado text-success" href="#" data-id="{{ $pedido->id }}" data-estado="realizado">Marcar Realizado</a></li>
-                <li><hr class="dropdown-divider" style="border-color: #5b21b6;"></li>
+                <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item cambiar-estado text-danger" href="#" data-id="{{ $pedido->id }}" data-estado="cancelado">Cancelar Pedido</a></li>
             </ul>
         </div>
     </td>
     <td class="pe-4 text-end">
         <!-- Nuevo botón de Vista Rápida -->
-        <button class="btn btn-sm btn-ver-detalle me-1" style="background-color: #38bdf8; color: #0f172a;" title="Ver Materiales" data-id="{{ $pedido->id }}">👁️</button>
+        <button class="btn btn-sm btn-ver-detalle me-1" title="Ver Materiales" data-id="{{ $pedido->id }}">👁️</button>
         <button class="btn btn-sm btn-accion-secundaria" title="Nota de Venta" onclick="window.open('{{ route('pedidos.pdf_nota', $pedido->id) }}', '_blank')">📄</button>
         <button class="btn btn-sm btn-accion" title="Receta Interna" onclick="window.open('{{ route('pedidos.pdf_receta', $pedido->id) }}', '_blank')">📋</button>
     </td>

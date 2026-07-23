@@ -11,15 +11,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    @vite(['resources/css/estilos_nav.css'])
+    @vite(['resources/css/estilos_nav.css', 'resources/css/variables.css'])
 
     @stack('css')
 </head>
 <body class="theme-synthwave">
 
 <div class="d-lg-none mobile-header p-3 d-flex justify-content-between align-items-center shadow-sm sticky-top">
-    <h5 class="mb-0 fw-bold text-white">Taller Admin</h5>
-    <button class="btn btn-outline-light btn-sm glass-btn-mobile" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+    <h5 class="mb-0 fw-bold">Taller Admin</h5>
+    <button class="btn btn-sm glass-btn-mobile" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
         <i class="fa-solid fa-bars"></i> Menú
     </button>
 </div>
@@ -29,12 +29,12 @@
         
         <nav class="col-lg-2 offcanvas-lg offcanvas-start sidebar-glass pt-3" tabindex="-1" id="sidebarMenu">
             <div class="offcanvas-header d-lg-none border-bottom border-secondary mb-3">
-                <h5 class="offcanvas-title text-white fw-bold">Taller Admin</h5>
+                <h5 class="offcanvas-title fw-bold">Taller Admin</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu"></button>
             </div>
             
             <div class="offcanvas-body d-flex flex-column h-100">
-                <h5 class="text-center mb-4 text-white fw-bold d-none d-lg-block brand-glow">Kardex Bastoneras</h5>
+                <h5 class="text-center mb-4 fw-bold d-none d-lg-block brand-glow">Kardex Bastoneras</h5>
                 
                 <div class="sidebar-links">
                     <a href="{{ route('inicio') }}" class="nav-link-glass {{ request()->routeIs('inicio') ? 'active' : '' }}">
