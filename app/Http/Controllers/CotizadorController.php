@@ -268,88 +268,150 @@ class CotizadorController extends Controller
     // =======================================================
     // GENERACIÓN DE REPORTES PDF (On-the-Fly)
     // =======================================================
-
-// =======================================================
-    // GENERACIÓN DE REPORTES PDF (On-the-Fly)
-    // =======================================================
-
     public function generarPdfReceta($id)
     {
-        // 1. Buscamos el pedido y "cargamos" todos sus materiales asociados
         $pedido = \App\Models\Pedido::with('materiales')->findOrFail($id);
 
-        // 2. LA MAGIA: Calculamos cuánto falta y traducimos formatos
+        $costoTotalMateriales = 0;
+        $costoDisenoPersonalizado = 0;
+        $esPedidoGrande = $pedido->cantidad_total_bastones >= 12;
+
         foreach ($pedido->materiales as $mat) {
             $stockActual = 0;
+            $precioUnitario = 0;
             $insumo = null;
+            $esDiseno = str_contains(strtolower($mat->nombre_material), 'diseño') 
+                     || str_contains(strtolower($mat->nombre_material), 'diseno');
 
-            if ($mat->insumo_id) {
-                $insumo = \App\Models\Insumo::find($mat->insumo_id);
-            }
-            if (!$insumo) {
-                $insumo = \App\Models\Insumo::where('nombre', $mat->nombre_material)->first();
-            }
-
-            if ($insumo) {
-                $stockActual = $insumo->stock_actual;
+            if (!$esDiseno) {
+                if ($mat->insumo_id) {
+                    $insumo = \App\Models\Insumo::find($mat->insumo_id);
+                }
+                if (!$insumo) {
+                    $insumo = \App\Models\Insumo::where('nombre', $mat->nombre_material)->first();
+                }
+                if ($insumo) {
+                    $stockActual = $insumo->stock_actual;
+                }
             }
 
             $diferencia = $mat->cantidad_requerida - $stockActual;
             $faltaComprarNumerico = $diferencia > 0 ? $diferencia : 0;
 
-            // --- TRADUCCIÓN HUMANA PARA EL PDF ---
             $nombreLower = strtolower($mat->nombre_material);
             $cantReq = (float) $mat->cantidad_requerida;
             $stock = (float) $stockActual;
             $falta = (float) $faltaComprarNumerico;
 
-            // Inicializamos las nuevas propiedades
+            // 1. OBTENCIÓN DEL PRECIO (Real del Kardex vs Fantasma del JS)
+            if (!$esDiseno) {
+                if ($insumo && $insumo->costo_unitario > 0) {
+                    $precioUnitario = $insumo->costo_unitario;
+                } else {
+                    if (str_contains($nombreLower, 'base')) {
+                        if (str_contains($nombreLower, 'dorado')) {
+                            $precioUnitario = $esPedidoGrande ? 5.00 : 5.50;
+                        } else {
+                            $precioUnitario = $esPedidoGrande ? 4.50 : 5.00;
+                        }
+                    } elseif (str_contains($nombreLower, 'lana')) {
+                        $precioUnitario = 0.0127;
+                    } elseif (str_contains($nombreLower, 'garza')) {
+                        $precioUnitario = 0.11;
+                    } elseif (str_contains($nombreLower, 'satin') || str_contains($nombreLower, 'satín')) {
+                        $precioUnitario = 0.16;
+                    } elseif (str_contains($nombreLower, 'gross')) {
+                        $precioUnitario = 0.15;
+                    } elseif (str_contains($nombreLower, 'cortina')) {
+                        $precioUnitario = $esPedidoGrande ? 0.50 : 1.00;
+                    } elseif (str_contains($nombreLower, 'elástico') || str_contains($nombreLower, 'elastico')) {
+                        $precioUnitario = 0.09;
+                    } elseif (str_contains($nombreLower, 'cincho')) {
+                        $precioUnitario = 0.02;
+                    }
+                }
+            }
+
             $mat->requerido_visual = '';
             $mat->stock_visual = '';
             $mat->falta_visual = '';
+            $mat->es_diseno = $esDiseno;
 
-            // A. FLORES Y LAZOS
+            // --- LÓGICA VISUAL DE BODEGA ---
             if (str_contains($nombreLower, 'flor') || str_contains($nombreLower, 'lazo')) {
                 $divisor = str_contains($nombreLower, 'lazo simple') ? 1.5 : 1.0;
                 $unidades = round($cantReq / $divisor);
                 $mat->requerido_visual = "{$unidades} unid. (" . number_format($cantReq, 1) . "m)";
                 $mat->stock_visual = number_format($stock, 1) . "m";
                 $mat->falta_visual = $falta > 0 ? number_format($falta, 1) . "m" : "0";
-            
-            // B. LANAS Y CORTINAS DE LANA (Madejas + Gramos)
             } elseif (str_contains($nombreLower, 'lana')) {
-                // Sirve tanto para la lana del cuerpo como para "Cortina de Lana"
                 $madejasReq = ceil($cantReq / 90);
                 $madejasFalta = ceil($falta / 90);
-                
                 $mat->requerido_visual = "~{$madejasReq} madejas (" . round($cantReq) . "g)";
                 $mat->stock_visual = round($stock) . "g";
                 $mat->falta_visual = $falta > 0 ? "~{$madejasFalta} madejas (" . round($falta) . "g)" : "0";
-
-            // C. CINTAS Y ELÁSTICOS (Metros / Centímetros)
+            } elseif (str_contains($nombreLower, 'cortina')) {
+                // NUEVO: cada paquete de cortina rinde 4 unidades, igual criterio que las madejas de lana
+                $paquetesReq   = ceil($cantReq / 4);
+                $paquetesFalta = ceil($falta / 4);
+                $mat->requerido_visual = "~{$paquetesReq} paquetes (" . round($cantReq) . " unid.)";
+                $mat->stock_visual = round($stock) . " unid.";
+                $mat->falta_visual = $falta > 0 ? "~{$paquetesFalta} paquetes (" . round($falta) . " unid.)" : "0";
             } elseif (str_contains($nombreLower, 'elástico') || str_contains($nombreLower, 'elastico') || str_contains($nombreLower, 'cinta')) {
                 $mat->requerido_visual = $cantReq < 1 ? round($cantReq * 100) . " cm" : number_format($cantReq, 1) . " m";
                 $mat->stock_visual = $stock < 1 && $stock > 0 ? round($stock * 100) . " cm" : number_format($stock, 1) . " m";
                 $mat->falta_visual = $falta < 1 && $falta > 0 ? round($falta * 100) . " cm" : ($falta > 0 ? number_format($falta, 1) . " m" : "0");
-
-            // D. DISEÑOS ESPECIALES (Ganancia)
-            } elseif (str_contains($nombreLower, 'diseño') || str_contains($nombreLower, 'diseno')) {
+            } elseif ($esDiseno) {
                 $mat->requerido_visual = "$" . number_format($cantReq, 2) . " extra";
                 $mat->stock_visual = "N/A";
                 $mat->falta_visual = "0";
-
-            // E. POR DEFECTO (Cinchos, Bases, Cortinas de Fiesta, Apliques)
             } else {
                 $mat->requerido_visual = round($cantReq) . " unid.";
                 $mat->stock_visual = round($stock) . " unid.";
                 $mat->falta_visual = $falta > 0 ? round($falta) . " unid." : "0";
             }
 
-            // Guardamos el numérico crudo solo para la condición if() en Blade
-            $mat->falta_comprar_num = $faltaComprarNumerico; 
+            // 2. CÁLCULO FINANCIERO
+            $subtotal = 0;
+
+            if ($esDiseno) {
+                $precioDiseno = 1.50;
+                if (str_contains($nombreLower, 'intermedio')) $precioDiseno = 2.00;
+                if (str_contains($nombreLower, 'premium')) $precioDiseno = 3.00;
+
+                $subtotal = $cantReq * $precioDiseno;
+
+                $mat->precio_unitario_visual = "N/A";
+                $mat->requerido_visual = "$" . number_format($subtotal, 2) . " extra";
+                $mat->stock_visual = "N/A";
+                $mat->falta_visual = "0";
+                $mat->falta_comprar_num = 0;
+
+                $costoDisenoPersonalizado += $subtotal;
+
+            } elseif (str_contains($nombreLower, 'aplique')) {
+                $precioUnitario = 0.50;
+                $subtotal = $cantReq * $precioUnitario;
+                $mat->precio_unitario_visual = "$" . number_format($precioUnitario, 2);
+                $mat->falta_comprar_num = $faltaComprarNumerico;
+            } else {
+                $subtotal = $cantReq * $precioUnitario;
+                $mat->precio_unitario_visual = "$" . number_format($precioUnitario, 4);
+                $mat->falta_comprar_num = $faltaComprarNumerico;
+            }
+
+            $mat->subtotal_visual = "$" . number_format($subtotal, 2);
+            $costoTotalMateriales += $subtotal;
         }
 
-        $pdf = Pdf::loadView('reportes.receta', compact('pedido'));
+        // 3. CÁLCULO DE MANO DE OBRA Y GRAN TOTAL
+        $costoManoObra = 3.00 * $pedido->cantidad_total_bastones;
+        $costoTotalProduccion = $costoTotalMateriales + $costoManoObra;
+
+        $pdf = Pdf::loadView('reportes.receta', compact(
+            'pedido', 'costoTotalMateriales', 'costoManoObra', 'costoTotalProduccion', 'costoDisenoPersonalizado'
+        ));
+
         return $pdf->stream('Receta_Bodega_Pedido_' . $pedido->id . '.pdf');
     }
 

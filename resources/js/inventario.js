@@ -12,6 +12,34 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // 1.5 Leemos la URL buscando el parámetro (ej. ?buscar=Lana%20verde)
+    const urlParams = new URLSearchParams(window.location.search);
+    const terminoBusqueda = urlParams.get('buscar');
+
+    if (terminoBusqueda) {
+        // Buscamos el input EXACTO por su ID
+        const inputBuscador = document.getElementById('buscadorInventario');
+        
+        if (inputBuscador) {
+            //Escribimos la palabra automáticamente
+            inputBuscador.value = terminoBusqueda;
+            
+            //Simulamos el "keyup" para engañar a tu función original y que filtre la tabla
+            inputBuscador.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+
+            //EFECTO VISUAL: Resaltamos el buscador con un "glow" usando tu variable de acento
+            inputBuscador.style.transition = "box-shadow 0.4s ease, border-color 0.4s ease";
+            inputBuscador.style.borderColor = "var(--accent-purple, #9333ea)";
+            inputBuscador.style.boxShadow = "0 0 0 5px rgba(147, 51, 234, 0.25)";
+            
+            // Hacemos que el brillo desaparezca suavemente después de 2 segundos
+            setTimeout(() => {
+                inputBuscador.style.borderColor = "";
+                inputBuscador.style.boxShadow = "";
+            }, 2000);
+        }
+    }
+
     // 2. SELECT PERSONALIZADO
     function crearSelectPersonalizado(idContenedor) {
         const cont = document.getElementById(idContenedor);
@@ -78,6 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
         'lana': { cant: 'Cant. de Madejas compradas', alert: 'Avisar cuando queden (Madejas):' },
         'cinta_garza': { cant: 'Cant. de Rollos comprados', alert: 'Avisar cuando queden (Rollos):' },
         'cinta_satin': { cant: 'Cant. de Rollos comprados', alert: 'Avisar cuando queden (Rollos):' },
+        'cinta_gross': { cant: 'Cant. de Rollos comprados', alert: 'Avisar cuando queden (Rollos):' },
         'cortina_fiesta': { cant: 'Cant. de Paquetes comprados', alert: 'Avisar cuando queden (Paquetes):' },
         'elastico': { cant: 'Cant. de Piezas (10m) compradas', alert: 'Avisar cuando queden (Piezas):' },
         'cinchos': { cant: 'Cant. de Paquetes (100u) compr.', alert: 'Avisar cuando queden (Paquetes):' },

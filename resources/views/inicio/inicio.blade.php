@@ -186,9 +186,9 @@
                                     </div>
                                     <span class="alert-item-subtitle">Actual: {{ $insumo->stock_actual }} | Mín: {{ $insumo->stock_minimo }}</span>
                                 </div>
-                                <a href="{{ route('insumos.index') }}" class="btn-neu-icon"  title="Ir al Kardex">
-                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                </a>
+                                    <a href="{{ route('insumos.index', ['buscar' => $insumo->nombre]) }}" class="btn-neu-icon" title="Ver en Kardex">
+                                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    </a>
                             </div>
                         @empty
                             <div class="small fst-italic text-center py-3" style="color: var(--text-muted);">Inventario óptimo.</div>

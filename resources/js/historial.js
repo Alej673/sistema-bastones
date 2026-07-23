@@ -264,9 +264,18 @@ document.addEventListener('DOMContentLoaded', () => {
                                 let madejas = Math.ceil(cantidadNumerica / 90);
                                 textoCantidad = `~${madejas} madejas`; 
                                 
-                            // 4. DISEÑO ESPECIAL (Traducción a dinero)
+                            // 4. DISEÑO ESPECIAL (Mapeo de niveles a dinero)
                             } else if (nombreLower.includes('diseño') || nombreLower.includes('diseno')) {
-                                textoCantidad = `$${cantidadNumerica.toFixed(2)} extra`;
+                                let precioDiseno = 1.50; // Por defecto: Básico
+                                
+                                if (nombreLower.includes('intermedio')) {
+                                    precioDiseno = 2.00;
+                                } else if (nombreLower.includes('premium')) {
+                                    precioDiseno = 3.00;
+                                }
+                                
+                                let totalDiseno = cantidadNumerica * precioDiseno;
+                                textoCantidad = `$${totalDiseno.toFixed(2)} extra`;
                                 
                             // 5. CINTAS Y ELÁSTICOS (Metros y cm)
                             } else if (nombreLower.includes('elástico') || nombreLower.includes('elastico') || nombreLower.includes('cinta')) {

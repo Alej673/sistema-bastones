@@ -386,5 +386,38 @@
                 });
             @endif
         });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Leemos la URL buscando el parámetro (ej. ?buscar=Lana%20verde)
+            const urlParams = new URLSearchParams(window.location.search);
+            const terminoBusqueda = urlParams.get('buscar');
+
+            if (terminoBusqueda) {
+                // 2. Buscamos el input inteligentemente por su placeholder (viendo tu imagen)
+                const inputBuscador = document.querySelector('input[placeholder="Buscar material..."]');
+                
+                if (inputBuscador) {
+                    // 3. Escribimos la palabra automáticamente
+                    inputBuscador.value = terminoBusqueda;
+                    
+                    // 4. Forzamos el evento para que la tabla se filtre 
+                    // (El bubbles:true asegura que cualquier librería JS detecte el cambio)
+                    inputBuscador.dispatchEvent(new Event('input', { bubbles: true }));
+                    inputBuscador.dispatchEvent(new Event('keyup', { bubbles: true }));
+                    inputBuscador.dispatchEvent(new Event('change', { bubbles: true }));
+
+                    // 5. EFECTO VISUAL: Resaltamos el buscador con un "glow" morado/lila
+                    inputBuscador.style.transition = "box-shadow 0.4s ease, border-color 0.4s ease";
+                    inputBuscador.style.borderColor = "var(--color-morado, #9333ea)";
+                    inputBuscador.style.boxShadow = "0 0 0 5px rgba(147, 51, 234, 0.25)";
+                    
+                    // Hacemos que el brillo desaparezca suavemente después de 2 segundos
+                    setTimeout(() => {
+                        inputBuscador.style.borderColor = "";
+                        inputBuscador.style.boxShadow = "";
+                    }, 2000);
+                }
+            }
+        });
     </script>
 @endpush
