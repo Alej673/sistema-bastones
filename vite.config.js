@@ -23,7 +23,8 @@ export default defineConfig({
                 'resources/css/formulario.css',
                 'resources/css/welcome.css',
                 'resources/css/auth-neumorphism.css',
-                'resources/css/variables.css'
+                'resources/css/variables.css',
+                'resources/js/catalogo.js',
             ],
             refresh: true,
         }),

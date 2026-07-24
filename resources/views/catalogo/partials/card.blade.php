@@ -36,13 +36,15 @@
             <!-- Botones con validación de sesión -->
             <div class="mt-auto">
                 @guest
-                    <a href="{{ route('login') }}" class="btn w-100 rounded-pill shadow-sm btn-titi-action" style="font-weight: 600; font-family: 'Inter', sans-serif; padding: 10px 0;">
-                        <i class="fa-solid fa-lock me-2"></i> Regístrate para Cotizar
-                    </a>
+                    <!-- Invitado: Directo a WhatsApp -->
+                    <button onclick="enviarWhatsAppDirecto('{{ $item->titulo }}')" class="btn w-100 rounded-pill shadow-sm btn-titi-action" style="font-weight: 600; font-family: 'Inter', sans-serif; padding: 10px 0;">
+                        <i class="fa-brands fa-whatsapp me-2"></i> Consultar Modelo
+                    </button>
                 @endguest
 
                 @auth
-                    <button onclick="abrirCotizador('{{ $item->titulo }}')" class="btn w-100 rounded-pill shadow-sm btn-titi-action" style="font-weight: 600; font-family: 'Inter', sans-serif; padding: 10px 0;">
+                    <!-- Logueado: Abre el Modal de Consulta Rápida -->
+                    <button onclick="abrirConsultaRapida('{{ $item->titulo }}', '{{ $item->nivel_diseno ?? 'Básico' }}', '{{ $item->medida_cm ?? '50 cm' }}', '{{ asset('storage/' . $item->imagen_path) }}')" class="btn w-100 rounded-pill shadow-sm btn-titi-action" style="font-weight: 600; font-family: 'Inter', sans-serif; padding: 10px 0;">
                         <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Personalizar Modelo
                     </button>
                 @endauth
