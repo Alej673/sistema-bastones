@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Storage;
 
 class CatalogController extends Controller
 {
+    // Límites de saturación para no llenar de más la landing page
+    const LIMITE_CARRUSEL = 3;
+    const LIMITE_DESTACADOS = 6;
+
     // 1. Mostrar la lista de bastones con Filtros y Paginación
     public function index(Request $request)
     {
@@ -39,7 +43,23 @@ class CatalogController extends Controller
         // withQueryString() asegura que al cambiar de página no se pierdan los filtros aplicados.
         $items = $query->latest()->paginate(9)->withQueryString();
 
-        return view('catalogo.formulario', compact('items'));
+        // Totales GLOBALES (no afectados por filtros/paginación) para los
+        // contadores del blade y la validación visual de límites.
+        $totalEnCarrusel = CatalogItem::where('en_carrusel', true)->count();
+        $totalEnDestacados = CatalogItem::where('es_destacado', true)->count();
+
+        // Los límites viven SOLO aquí (constantes de la clase). Se mandan
+        // a la vista para que el blade no tenga su propia copia duplicada.
+        $LIMITE_CARRUSEL = self::LIMITE_CARRUSEL;
+        $LIMITE_DESTACADOS = self::LIMITE_DESTACADOS;
+
+        return view('catalogo.formulario', compact(
+            'items',
+            'totalEnCarrusel',
+            'totalEnDestacados',
+            'LIMITE_CARRUSEL',
+            'LIMITE_DESTACADOS'
+        ));
     }
 
     // 2. Guardar un nuevo bastón con su foto
@@ -143,6 +163,20 @@ class CatalogController extends Controller
     public function toggleCarrusel($id)
     {
         $item = CatalogItem::findOrFail($id);
+
+        // Solo validamos el límite cuando se está ACTIVANDO (false -> true).
+        // Desactivar siempre está permitido.
+        if (!$item->en_carrusel) {
+            $totalActual = CatalogItem::where('en_carrusel', true)->count();
+
+            if ($totalActual >= self::LIMITE_CARRUSEL) {
+                return back()->with(
+                    'error',
+                    'Ya tienes ' . self::LIMITE_CARRUSEL . ' diseños en el carrusel principal. Quita uno antes de añadir otro.'
+                );
+            }
+        }
+
         $item->en_carrusel = !$item->en_carrusel;
         $item->save();
 
@@ -153,6 +187,20 @@ class CatalogController extends Controller
     public function toggleDestacado($id)
     {
         $item = CatalogItem::findOrFail($id);
+
+        // Solo validamos el límite cuando se está ACTIVANDO (false -> true).
+        // Desactivar siempre está permitido.
+        if (!$item->es_destacado) {
+            $totalActual = CatalogItem::where('es_destacado', true)->count();
+
+            if ($totalActual >= self::LIMITE_DESTACADOS) {
+                return back()->with(
+                    'error',
+                    'Ya tienes ' . self::LIMITE_DESTACADOS . ' diseños marcados como destacados. Quita uno antes de añadir otro.'
+                );
+            }
+        }
+
         $item->es_destacado = !$item->es_destacado;
         $item->save();
 

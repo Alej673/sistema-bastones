@@ -11,29 +11,40 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // =========================================================
-        // 1. KPIs FINANCIEROS Y DE PRODUCCIÓN
+    // =========================================================
+        // 1. KPIs FINANCIEROS Y DE PRODUCCIÓN (Estimación Referencial)
         // =========================================================
         $mesActual = Carbon::now()->month;
         $anioActual = Carbon::now()->year;
+        
+        // Obtenemos el nombre del mes en español (ej. "Julio")
+        $nombreMes = ucfirst(Carbon::now()->locale('es')->translatedFormat('F'));
 
-        // Total de dinero de pedidos "Realizados" en el mes actual
-        $ingresosMes = Pedido::where('estado', 'Realizado')
+        // Traemos todos los pedidos realizados en el mes actual
+        $pedidosMes = Pedido::where('estado', 'Realizado')
                             ->whereMonth('created_at', $mesActual)
                             ->whereYear('created_at', $anioActual)
-                            ->sum('costo_total');
+                            ->get();
+
+        // 1. Ingresos Brutos (Total cobrado en el mes)
+        $ingresosMes = $pedidosMes->sum('costo_total');
+
+        // 2. Estimación de Mano de Obra / Ganancia ($3.00 por cada bastón fabricado)
+        // Nota: Asegúrate de que tu columna se llame 'cantidad_total_bastones' o ajústala
+        $totalBastonesMes = $pedidosMes->sum('cantidad_total_bastones');
+        $manoObraEstimada = $totalBastonesMes * 3.00;
+
+        // 3. Estimación del costo de reposición de materiales
+        $costoInsumosEstimado = $ingresosMes - $manoObraEstimada;
 
         $enProduccion = Pedido::where('estado', 'en_produccion')->count();
-        // $pedidosEnProduccion = Pedido::where('estado', 'En Producción')
-        //                              ->orWhere('estado', 'En Produccion')->count(); 
-                                     
         $cotizacionesPendientes = Pedido::where('estado', 'Pendiente')->count();
 
 
         // =========================================================
-        // 2. ACTIVIDAD RECIENTE (Para la tabla izquierda)
+        // 2. ACTIVIDAD RECIENTE 
         // =========================================================
-        $actividadReciente = Pedido::orderBy('updated_at', 'desc')->take(6)->get();
+        $actividadReciente = Pedido::orderBy('updated_at', 'desc')->take(4)->get();
 
 
         // =========================================================
@@ -63,7 +74,7 @@ class DashboardController extends Controller
         foreach ($pedidosProcesados as $pedido) {
             foreach ($pedido->materiales as $item) {
                 $materialesHuerfanos[] = [
-                    // 👇 ESTA LÍNEA ES LA QUE PROVOCA EL ERROR SI NO ESTÁ
+                    // ESTA LÍNEA ES LA QUE PROVOCA EL ERROR SI NO ESTÁ
                     'detalle_id' => $item->id, 
                     'pedido_id' => $pedido->id,
                     'nombre_material' => $item->nombre_material
@@ -84,6 +95,9 @@ class DashboardController extends Controller
         // Retornamos todo a la vista inicio.blade.php
         return view('Inicio.inicio', compact(
             'ingresosMes', 
+            'nombreMes',
+            'manoObraEstimada',
+            'costoInsumosEstimado',
             'enProduccion', 
             'cotizacionesPendientes', 
             'actividadReciente',

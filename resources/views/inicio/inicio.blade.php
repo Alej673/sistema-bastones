@@ -14,45 +14,83 @@
     </div>
 
     <!-- =========================================
-         FILA 1: TARJETAS DE INDICADORES (4 KPIs)
-         ========================================= -->
+     FILA 1: TARJETAS DE INDICADORES (4 KPIs) — MISMO DISEÑO
+     ========================================= -->
     <div class="row g-3 mb-4">
-        <!-- KPI 1: Ingresos -->
-        <div class="col-md-3">
-            <div class="card card-kpi">
+
+        <!-- KPI 1: Flujo Operativo -->
+        <div class="col-lg-3 col-md-6">
+            <div class="card card-kpi kpi-clickable" data-bs-toggle="modal" data-bs-target="#modalFinanciero">
                 <div class="card-body">
-                    <h6 class="kpi-titulo">Ingresos del Mes</h6>
-                    <h3 class="kpi-valor">$ {{ number_format($ingresosMes ?? 0, 2) }}</h3>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="kpi-titulo">
+                                Flujo Operativo ({{ $nombreMes }})
+                            </h6>
+                            <h3 class="kpi-valor color-exito">${{ number_format($ingresosMes, 2) }}</h3>
+                        </div>
+                        <div class="icon-shape icon-exito">
+                            <i class="fa-solid fa-sack-dollar"></i>
+                        </div>
+                    </div>
+                    <span class="kpi-hint">Click para ver desglose</span>
                 </div>
             </div>
         </div>
+
         <!-- KPI 2: En Producción -->
-        <div class="col-md-3">
+        <div class="col-lg-3 col-md-6">
             <div class="card card-kpi">
                 <div class="card-body">
-                    <h6 class="kpi-titulo">En Producción</h6>
-                    <h3 class="kpi-valor color-morado">{{ $enProduccion ?? 0 }}</h3>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="kpi-titulo">En Producción</h6>
+                            <h3 class="kpi-valor color-morado">{{ $enProduccion ?? 0 }}</h3>
+                        </div>
+                        <div class="icon-shape icon-morado">
+                            <i class="fa-solid fa-industry"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <!-- KPI 3: Pendientes -->
-        <div class="col-md-3">
+
+        <!-- KPI 3: Cotizaciones Pendientes -->
+        <div class="col-lg-3 col-md-6">
             <div class="card card-kpi">
                 <div class="card-body">
-                    <h6 class="kpi-titulo">Cotizaciones Pendientes</h6>
-                    <h3 class="kpi-valor color-fucsia">{{ $cotizacionesPendientes ?? 0 }}</h3>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="kpi-titulo">Cotizaciones Pendientes</h6>
+                            <h3 class="kpi-valor color-fucsia">{{ $cotizacionesPendientes ?? 0 }}</h3>
+                        </div>
+                        <div class="icon-shape icon-fucsia">
+                            <i class="fa-solid fa-file-invoice-dollar"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <!-- KPI 4: Alertas Críticas -->
-        <div class="col-md-3">
+
+        <!-- KPI 4: Alertas de Inventario -->
+        <div class="col-lg-3 col-md-6">
             <div class="card card-kpi">
                 <div class="card-body">
-                    <h6 class="kpi-titulo" style="color: var(--color-error) !important;">Alertas de Inventario</h6>
-                    <h3 class="kpi-valor color-peligro">{{ count($alertasStock ?? []) }}</h3>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="kpi-titulo" style="color: var(--color-error) !important;">Alertas de Inventario</h6>
+                            <h3 class="kpi-valor color-peligro">
+                                {{ count($alertasStock ?? []) + count($materialesHuerfanos ?? []) + count($insumosBajos ?? []) }}
+                            </h3>
+                        </div>
+                        <div class="icon-shape icon-peligro">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
     </div>
 
     <!-- =========================================
@@ -116,7 +154,7 @@
                     </h5>
                 </div>
                 <div class="card-body p-3 mt-2">
-                    <div class="d-flex flex-column">
+                    <div class="d-flex flex-column lista-alertas-scroll">
                         @forelse($alertasStock ?? [] as $alerta)
                             <div class="alert-item">
                                 <div>
@@ -144,7 +182,7 @@
                     </h5>
                 </div>
                 <div class="card-body p-3 mt-2">
-                    <div class="d-flex flex-column">
+                    <div class="d-flex flex-column lista-alertas-scroll">
                         @forelse($materialesHuerfanos ?? [] as $huerfano)
                             <div class="alert-item" id="alerta-huerfano-{{ $huerfano['detalle_id'] }}">
                                 <div>
@@ -172,7 +210,7 @@
                     </h5>
                 </div>
                 <div class="card-body p-3 mt-2">
-                    <div class="d-flex flex-column">
+                    <div class="d-flex flex-column lista-alertas-scroll">
                         @forelse($insumosBajos ?? [] as $insumo)
                             <div class="alert-item">
                                 <div>
@@ -198,6 +236,66 @@
             </div>
         </div>
 
+    </div>
+</div>
+
+<!-- MODAL: Desglose Financiero Referencial -->
+<div class="modal fade" id="modalFinanciero" tabindex="-1" aria-labelledby="modalFinancieroLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 16px; border: none; background-color: var(--bg-base); box-shadow: 0 8px 24px rgba(59, 7, 100, 0.15);">
+
+            <div class="modal-header pb-0 border-0" style="background-color: transparent;">
+                <h5 class="modal-title fw-bold" id="modalFinancieroLabel" style="color: var(--text-main);">
+                    <i class="fa-solid fa-chart-pie me-2" style="color: var(--accent-purple);"></i> Desglose Estimado de {{ $nombreMes }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body pt-4">
+
+                <!-- Ingresos Brutos -->
+                <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded" style="background-color: var(--bg-base); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); border-radius: 12px;">
+                    <div>
+                        <span class="d-block" style="color: var(--text-muted); font-size: 0.85rem;">Ingresos Estimados (Ventas Totales)</span>
+                        <strong class="fs-5" style="color: var(--text-main);">${{ number_format($ingresosMes, 2) }}</strong>
+                    </div>
+                    <i class="fa-solid fa-cash-register fs-3 opacity-50" style="color: var(--accent-purple);"></i>
+                </div>
+
+                <!-- Desglose: Insumos vs Mano de Obra -->
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="p-3 rounded h-100" style="background-color: var(--bg-base); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); border-radius: 12px;">
+                            <span class="d-block mb-1" style="font-size: 0.80rem; font-weight: 600; color: var(--color-error);">
+                                <i class="fa-solid fa-boxes-packing me-1"></i> Costo Insumos
+                            </span>
+                            <strong class="fs-5" style="color: var(--color-error);">${{ number_format($costoInsumosEstimado, 2) }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="p-3 rounded h-100" style="background-color: var(--bg-base); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); border-radius: 12px;">
+                            <span class="d-block mb-1" style="font-size: 0.80rem; font-weight: 600; color: #16a34a;">
+                                <i class="fa-solid fa-hand-holding-dollar me-1"></i> Margen / Mano de Obra
+                            </span>
+                            <strong class="fs-5" style="color: #16a34a;">${{ number_format($manoObraEstimada, 2) }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nota Aclaratoria Técnica -->
+                <div class="alert mt-4 mb-0" style="background-color: var(--bg-base); box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); color: var(--text-muted); font-size: 0.8rem; border-radius: 10px; border: none;">
+                    <i class="fa-solid fa-triangle-exclamation me-1" style="color: #d97706;"></i>
+                    <strong style="color: var(--text-main);">Nota:</strong> Este es un cálculo referencial de flujo de caja para manufactura. El margen de mano de obra se estima en $3.00 base por bastón fabricado. No reemplaza un balance contable estricto.
+                </div>
+
+            </div>
+
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn-neu-glow w-100 justify-content-center" data-bs-dismiss="modal">Entendido</button>
+            </div>
+
+        </div>
     </div>
 </div>
 

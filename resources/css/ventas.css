@@ -411,3 +411,35 @@
     color: var(--accent-purple) !important;
     font-weight: 700;
 }
+
+.btn-neu-glow {
+    background-color: var(--bg-base);
+    color: var(--accent-purple) !important;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    padding: 8px 20px;
+    box-shadow: 4px 4px 8px var(--shadow-dark), 
+               -4px -4px 8px var(--shadow-light);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    letter-spacing: 0.5px;
+}
+
+.btn-neu-glow:hover {
+    color: var(--accent-hover) !important;
+    transform: translateY(-3px);
+    box-shadow: 
+        0 0 15px var(--neon-glow),          
+        0 0 30px var(--neon-glow),          
+        6px 6px 12px var(--shadow-dark),    
+       -6px -6px 12px var(--shadow-light);  
+}
+
+.btn-neu-glow:active {
+    transform: translateY(0);
+    box-shadow: inset 4px 4px 8px var(--shadow-dark), 
+                inset -4px -4px 8px var(--shadow-light);
+}

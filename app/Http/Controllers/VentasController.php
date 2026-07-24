@@ -44,14 +44,27 @@ class VentasController extends Controller
 
 
         // 3. CÁLCULO DE KPIs (Estadísticas para las tarjetas superiores)
-        $inicioMes = Carbon::now()->startOfMonth();
-        $finMes = Carbon::now()->endOfMonth();
+        $mesActual = Carbon::now()->month;
+        $anioActual = Carbon::now()->year;
+        
+        // Nombre del mes dinámico en español
+        $nombreMes = ucfirst(Carbon::now()->locale('es')->translatedFormat('F'));
 
-        // Tarjeta 1: Ingresos de pedidos completados en el mes actual
-        // CAMBIO: Usamos 'realizado' (como en tu ENUM) y sum('costo_total')
-        $ingresosMes = Pedido::where('estado', 'realizado')
-            ->whereBetween('created_at', [$inicioMes, $finMes])
-            ->sum('costo_total'); 
+        // Traemos todos los pedidos en estado 'realizado' del mes actual
+        $pedidosMes = Pedido::where('estado', 'realizado')
+            ->whereMonth('created_at', $mesActual)
+            ->whereYear('created_at', $anioActual)
+            ->get();
+
+        // 1. Ingresos Brutos Totales del Mes
+        $ingresosMes = $pedidosMes->sum('costo_total');
+
+        // 2. Estimación de Mano de Obra ($3.00 por bastón fabricado)
+        $totalBastonesMes = $pedidosMes->sum('cantidad_total_bastones');
+        $manoObraEstimada = $totalBastonesMes * 3.00;
+
+        // 3. Estimación del Costo de Insumos (Diferencia)
+        $costoInsumosEstimado = $ingresosMes - $manoObraEstimada;
 
         // Tarjeta 2: Cantidad de pedidos actualmente en producción
         $enProduccion = Pedido::where('estado', 'en_produccion')->count();
@@ -59,26 +72,27 @@ class VentasController extends Controller
         // Tarjeta 3: Cantidad de cotizaciones en estado pendiente
         $cotizacionesPendientes = Pedido::where('estado', 'pendiente')->count();
 
-        // Tarjeta 4: Base más solicitada (Consulta relacional sobre la tabla pivote)
-        // Busca el insumo con categoría 'base_baston' que más se repite en pedido_materiales
+        // Tarjeta 4: Base más solicitada
         $baseMasSolicitada = DB::table('pedido_materiales')
             ->join('insumos', 'pedido_materiales.insumo_id', '=', 'insumos.id')
             ->select(
                 'insumos.nombre', 
                 DB::raw('SUM(pedido_materiales.cantidad_requerida) as total_unidades')
             )
-            ->where('insumos.nombre', 'LIKE', '%Base%') // Filtro por estructura base
+            ->where('insumos.nombre', 'LIKE', '%Base%')
             ->groupBy('pedido_materiales.insumo_id', 'insumos.nombre')
-            ->orderBy('total_unidades', 'desc') // Ordenamos por el volumen real acumulado
+            ->orderBy('total_unidades', 'desc')
             ->first();
 
         $nombreBaseEstrella = $baseMasSolicitada ? $baseMasSolicitada->nombre : 'Ninguna aún';
 
-
-        // 4. RETORNAR LA VISTA CON LOS DATOS
+        // 4. RETORNAR LA VISTA CON LOS DATOS COMPLETOS
         return view('Ventas.ventas', compact(
             'pedidos', 
             'ingresosMes', 
+            'nombreMes',
+            'manoObraEstimada',
+            'costoInsumosEstimado',
             'enProduccion', 
             'cotizacionesPendientes', 
             'nombreBaseEstrella'

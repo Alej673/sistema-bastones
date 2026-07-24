@@ -122,9 +122,18 @@
 
     <!-- 2. GALERÍA DE MODELOS PUBLICADOS -->
     <div class="card card-catalogo shadow-sm">
-        <div class="card-header card-header-purple fw-bold py-3 d-flex justify-content-between align-items-center">
+        <div class="card-header card-header-purple fw-bold py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div><i class="fa-solid fa-images me-2"></i> Modelos Actuales</div>
-            <span class="badge" style="background-color: var(--accent-purple); color: #fff;">{{ $items->total() }} Registros Totales</span>
+
+            <div class="d-flex gap-2 flex-wrap" id="contador-limites">
+                <span class="badge" style="background-color: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-weight: 600; border-radius: 8px; padding: 0.5em 0.8em;">
+                    <i class="fa-solid fa-images me-1"></i> Carrusel: <span id="badge-carrusel-actual">{{ $totalEnCarrusel }}</span>/{{ $LIMITE_CARRUSEL }}
+                </span>
+                <span class="badge" style="background-color: #fef9c3; color: #a16207; border: 1px solid #fde68a; font-weight: 600; border-radius: 8px; padding: 0.5em 0.8em;">
+                    <i class="fa-solid fa-star me-1"></i> Destacados: <span id="badge-destacados-actual">{{ $totalEnDestacados }}</span>/{{ $LIMITE_DESTACADOS }}
+                </span>
+                <span class="badge" style="background-color: var(--accent-purple); color: #fff;">{{ $items->total() }} Registros Totales</span>
+            </div>
         </div>
 
         <div class="card-body p-4">
@@ -224,7 +233,7 @@
 
                                         <!-- BANDEJA 1 -->
                                         <div class="actions-tray">
-                                            <form action="{{ route('admin.catalogo.carrusel', $item->id) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('admin.catalogo.carrusel', $item->id) }}" method="POST" class="d-inline form-carrusel-toggle">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button type="submit" class="btn-action {{ $item->en_carrusel ? 'is-on-info' : '' }}" title="{{ $item->en_carrusel ? 'Quitar del carrusel principal' : 'Mostrar en el carrusel principal' }}">
@@ -232,7 +241,7 @@
                                                 </button>
                                             </form>
 
-                                            <form action="{{ route('admin.catalogo.destacado', $item->id) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('admin.catalogo.destacado', $item->id) }}" method="POST" class="d-inline form-destacado-toggle">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button type="submit" class="btn-action {{ $item->es_destacado ? 'is-on-warning' : '' }}" title="{{ $item->es_destacado ? 'Quitar de destacados' : 'Marcar como destacado' }}">
@@ -390,6 +399,82 @@
             }
         });
 
+        // ===== LÍMITES DE CARRUSEL Y DESTACADOS =====
+        // Estos totales son globales (idealmente vienen del controller vía
+        // $totalEnCarrusel / $totalEnDestacados). Como los botones hacen un
+        // submit normal (recarga completa), el valor siempre se refresca
+        // con el dato real del servidor en cada carga de página.
+        const LIMITES = {
+            carrusel:  { max: {{ $LIMITE_CARRUSEL }}, actual: {{ $totalEnCarrusel }} },
+            destacado: { max: {{ $LIMITE_DESTACADOS }}, actual: {{ $totalEnDestacados }} }
+        };
+
+        function mostrarAlertaLimite(tipo) {
+            const mensajes = {
+                carrusel: {
+                    titulo: 'Límite del carrusel alcanzado',
+                    texto: `Ya tienes ${LIMITES.carrusel.max} diseños en el carrusel principal. Quita uno antes de añadir otro para no saturar la landing.`
+                },
+                destacado: {
+                    titulo: 'Límite de destacados alcanzado',
+                    texto: `Ya tienes ${LIMITES.destacado.max} diseños marcados como destacados. Quita uno antes de añadir otro.`
+                }
+            };
+
+            Swal.fire({
+                icon: 'warning',
+                title: mensajes[tipo].titulo,
+                text: mensajes[tipo].texto,
+                background: '#ffffff',
+                color: 'var(--text-main)',
+                confirmButtonColor: 'var(--accent-purple)',
+                confirmButtonText: 'Entendido'
+            });
+        }
+
+        // Marca visualmente (opacidad reducida) los botones que ya no se
+        // pueden activar porque se llegó al límite, sin deshabilitarlos:
+        // así el clic sigue disparando la alerta explicativa.
+        function aplicarEstadoLimiteVisual() {
+            document.querySelectorAll('.form-carrusel-toggle button').forEach(boton => {
+                const activo = boton.classList.contains('is-on-info');
+                const limiteAlcanzado = LIMITES.carrusel.actual >= LIMITES.carrusel.max;
+                boton.classList.toggle('btn-limite-alcanzado', !activo && limiteAlcanzado);
+            });
+
+            document.querySelectorAll('.form-destacado-toggle button').forEach(boton => {
+                const activo = boton.classList.contains('is-on-warning');
+                const limiteAlcanzado = LIMITES.destacado.actual >= LIMITES.destacado.max;
+                boton.classList.toggle('btn-limite-alcanzado', !activo && limiteAlcanzado);
+            });
+        }
+
+        function bindLimitesToggle() {
+            document.querySelectorAll('.form-carrusel-toggle').forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    const boton = form.querySelector('button');
+                    const estaActivo = boton.classList.contains('is-on-info');
+                    if (!estaActivo && LIMITES.carrusel.actual >= LIMITES.carrusel.max) {
+                        e.preventDefault();
+                        mostrarAlertaLimite('carrusel');
+                    }
+                });
+            });
+
+            document.querySelectorAll('.form-destacado-toggle').forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    const boton = form.querySelector('button');
+                    const estaActivo = boton.classList.contains('is-on-warning');
+                    if (!estaActivo && LIMITES.destacado.actual >= LIMITES.destacado.max) {
+                        e.preventDefault();
+                        mostrarAlertaLimite('destacado');
+                    }
+                });
+            });
+
+            aplicarEstadoLimiteVisual();
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
 
             function initSelect2() {
@@ -430,6 +515,21 @@
                 });
             @endif
 
+            // Mensaje de error (por ejemplo, cuando el controller rechace
+            // por límite de carrusel/destacados alcanzado)
+            @if(session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No se pudo completar la acción',
+                    text: '{{ session('error') }}',
+                    background: '#ffffff',
+                    color: 'var(--text-main)',
+                    confirmButtonColor: 'var(--accent-purple)',
+                });
+            @endif
+
+            bindLimitesToggle();
+
             // Lógica AJAX
             $('#filtro_categoria, #filtro_estado').on('change', function () {
                 ejecutarFiltroAjax();
@@ -468,6 +568,7 @@
                         $('#contenedor-resultados').html(nuevoContenido).css('opacity', '1');
                         window.history.pushState(null, '', urlDestino);
                         bindSweetAlertEliminar();
+                        bindLimitesToggle();
                     },
                     error: function() {
                         $('#contenedor-resultados').css('opacity', '1');
@@ -527,4 +628,10 @@
             $('#edit_nivel_accesorios').val(accesorios || '').trigger('change');
         }
     </script>
+
+    <style>
+        .btn-limite-alcanzado {
+            opacity: 0.45;
+        }
+    </style>
 @endpush

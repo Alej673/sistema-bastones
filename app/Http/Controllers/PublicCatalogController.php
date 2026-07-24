@@ -12,27 +12,27 @@ class PublicCatalogController extends Controller
         $bastones = CatalogItem::where('activo', true)
                                ->where('categoria', 'baston')
                                ->latest()
-                               ->take(3)
+                               ->take(6)
                                ->get();
 
         $lazos = CatalogItem::where('activo', true)
                             ->where('categoria', 'lazo')
                             ->latest()
-                            ->take(3)
+                            ->take(6)
                             ->get();
 
         // SEPARAMOS LOS APLIQUES
         $apliques = CatalogItem::where('activo', true)
                                ->where('categoria', 'aplique')
                                ->latest()
-                               ->take(3)
+                               ->take(6)
                                ->get();
 
         // SEPARAMOS LAS MANUALIDADES
         $manualidades = CatalogItem::where('activo', true)
                                    ->where('categoria', 'manualidad')
                                    ->latest()
-                                   ->take(3)
+                                   ->take(6)
                                    ->get();
 
         return view('catalogo.index', compact('bastones', 'lazos', 'apliques', 'manualidades'));
