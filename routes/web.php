@@ -14,6 +14,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\CatalogController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\clienteController;
+use App\Http\Controllers\CotizacionController;
 
 // ==========================================
 // 1. LA CARA DEL SISTEMA (Landing Page)
@@ -55,24 +56,24 @@ Route::prefix('catalogo')->name('catalogo.')->group(function () {
 // 2. RUTAS DEL CLIENTE EXTERNO
 // ==========================================
 
+// 2.0 Rutas Públicas (Cero fricción)
+// Cualquiera puede generar el link de WhatsApp sin estar logueado
+Route::post('/cotizacion/whatsapp', [App\Http\Controllers\CotizacionController::class, 'generarLinkWhatsapp'])->name('cotizacion.whatsapp');
+
+
 // 2.1 Rutas que solo requieren estar logueado (sin exigir correo verificado)
 Route::middleware(['auth'])->group(function () {
-
-    // Panel principal del cliente (Historial y botón de nueva cotización)
-    Route::get('/mis-pedidos', [App\Http\Controllers\ClienteController::class, 'dashboard'])
-        ->name('cliente.dashboard');
-
-    // Guardar comentarios/reseñas
-    Route::post('/comentarios', [ReviewController::class, 'store'])->name('comentarios.store');
-    
-    // Ruta para procesar el Like (Toggle)
-    Route::post('/comentarios/{id}/like', [ReviewController::class, 'toggleLike'])->name('comentarios.like');
+    Route::get('/mis-pedidos', [App\Http\Controllers\ClienteController::class, 'dashboard'])->name('cliente.dashboard');
+    Route::post('/comentarios', [App\Http\Controllers\ReviewController::class, 'store'])->name('comentarios.store');
+    Route::post('/comentarios/{id}/like', [App\Http\Controllers\ReviewController::class, 'toggleLike'])->name('comentarios.like');
 });
-// 2.2 Rutas que además exigen correo verificado
-Route::middleware(['auth', 'verified'])->group(function () {
 
-    // Recibe los datos del formulario de cotización
-    Route::post('/cotizar', [QuoteRequestController::class, 'store'])->name('cotizacion.store');
+
+// 2.2 Rutas que además exigen correo verificado (Sistema Interno)
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/mi-cuenta/cotizar-nuevo', [App\Http\Controllers\QuoteRequestController::class, 'create'])->name('cotizacion.crear');
+    Route::post('/cotizar', [App\Http\Controllers\QuoteRequestController::class, 'store'])->name('cotizacion.store');
+    Route::get('/cotizacion/{id}/pdf', [App\Http\Controllers\QuoteRequestController::class, 'descargarPDF'])->name('cotizacion.pdf');
 });
 
 

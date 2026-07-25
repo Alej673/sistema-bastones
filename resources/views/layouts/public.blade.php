@@ -173,9 +173,65 @@
 <!-- Importamos SweetAlert2 si no estaba en public.blade.php -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/compressorjs/1.2.1/compressor.min.js"></script>
+
     @vite(['resources/js/catalogo.js'])
     @stack('js')
 
 @include('catalogo.partials.modal-consulta')
+
+<!-- Notificaciones Flash del Sistema Interno (Laravel Session) -->
+@if (session('success'))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+            icon: 'success',
+            title: '¡Completado!',
+            text: '{{ session('success') }}',
+            confirmButtonColor: 'var(--color-lila-fuerte)',
+            background: 'var(--color-fondo-claro)',
+            color: 'var(--color-texto-principal)',
+            customClass: { popup: 'titi-modal-alert' }
+        });
+    });
+</script>
+@endif
+
+@if (session('error'))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+            icon: 'error',
+            title: 'Algo salió mal',
+            text: '{{ session('error') }}',
+            confirmButtonColor: '#c0392b',
+            background: 'var(--color-fondo-claro)',
+            color: 'var(--color-texto-principal)'
+        });
+    });
+</script>
+@endif
+
+<!-- Errores de Validación de Laravel ($errors) -->
+@if ($errors->any())
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Revisa tus datos',
+            html: `
+                <ul class="text-start mb-0" style="color: var(--color-texto-mutado); font-size: 0.9rem;">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            `,
+            confirmButtonColor: 'var(--color-lila-fuerte)',
+            background: 'var(--color-fondo-claro)',
+            color: 'var(--color-texto-principal)'
+        });
+    });
+</script>
+@endif
 </body>
 </html>

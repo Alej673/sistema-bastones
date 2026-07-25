@@ -14,7 +14,7 @@
             </p>
         </div>
         <div>
-            <a href="{{ route('catalogo.index') }}" class="btn btn-solid px-4 py-2">
+            <a href="{{ route('cotizacion.crear') }}" class="btn btn-solid px-4 py-2">
                 <i class="bi bi-plus-circle me-2"></i> Cotizar Nuevo Pedido
             </a>
         </div>

@@ -12,25 +12,15 @@ class QuoteRequest extends Model
 
     protected $fillable = [
         'user_id',
-        'cantidad_bastones',
-        'medida_cm',
-        'acabado',
-        'cantidad_colores_cuerpo',
-        'colores_cuerpo',
-        'incluye_cortina_lana',
-        'colores_cortina_lana',
-        'incluye_cortina_fiesta',
-        'colores_cortina_fiesta',
-        'color_lazo_simple',
-        'color_lazo_nombre',
-        'cantidad_flores',
-        'colores_flores',
-        'descripcion_apliques',
-        'descripcion_diseno_especial',
-        'precio_referencial',
-        'precio_final',
-        'estado',
-        'observaciones_taller',
+        'nombre', 
+        'telefono', 
+        'cantidad', 
+        'medida_cm', 
+        'acabado', 
+        'colores', 
+        'descripcion_diseno_especial', 
+        'imagen_path', 
+        'estado'
     ];
 
     // Convertir automáticamente los campos JSON a Arrays de PHP

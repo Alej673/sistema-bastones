@@ -12,7 +12,7 @@
  *
  * En tu vista Blade, agrega esto al <body>:
  *
- *   <body data-csrf="{{ csrf_token() }}" data-home-url="{{ url('/') }}">
+ *   <body data-csrf="{{ csrf_token() }}" data-home-url="{{ url('/') }}" data-telefono="{{ $telefonoTaller }}">
  *
  * Y luego incluye este archivo con:
  *   <script src="{{ asset('js/catalogo.js') }}" defer></script>
@@ -25,8 +25,36 @@
 const CSRF_TOKEN = document.body.dataset.csrf;
 const HOME_URL = document.body.dataset.homeUrl;
 
-// Número de WhatsApp del taller (antes repetido dos veces en el código)
+// Número de WhatsApp del taller (antes repetido dos veces en el código,
+// y una tercera vez quemado como "593900000000" en el bloque de subida
+// de imagen — ya unificado, ver sección 6)
 const TELEFONO_TALLER = document.body.dataset.telefono; // TODO: reemplazar con el número real de producción
+
+
+// ============================================================
+// HELPER GLOBAL — Toast compacto con SweetAlert2
+// ------------------------------------------------------------
+// Antes vivía metido dentro del DOMContentLoaded de la sección 4
+// (comentarios), así que solo esa sección podía usarlo. Lo subo al
+// scope global del archivo para poder reutilizarlo también en la
+// sección 6 (envío del formulario de cotización con imagen).
+// ============================================================
+function mostrarToast(icon, titulo, texto = '') {
+    Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: icon,
+        title: titulo,
+        text: texto,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        customClass: { popup: 'titi-toast' },
+        background: 'var(--color-fondo-claro)',
+        color: 'var(--color-texto-principal)',
+        iconColor: icon === 'success' ? 'var(--color-oro)' : '#ff10f0'
+    });
+}
 
 
 // ============================================================
@@ -136,24 +164,6 @@ document.addEventListener('DOMContentLoaded', function () {
 //    botón "útil" (like) y botón "responder" (solo admin)
 // ============================================================
 document.addEventListener('DOMContentLoaded', function () {
-
-    // --- Helper de alertas compactas (toast) ---
-    function mostrarToast(icon, titulo, texto = '') {
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: icon,
-            title: titulo,
-            text: texto,
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-            customClass: { popup: 'titi-toast' },
-            background: 'var(--color-fondo-claro)',
-            color: 'var(--color-texto-principal)',
-            iconColor: icon === 'success' ? 'var(--color-oro)' : '#ff10f0'
-        });
-    }
 
     // --- 4.1. ESTRELLAS INTERACTIVAS (hover + click) ---
     let currentRating = 0;
@@ -351,15 +361,6 @@ document.addEventListener('DOMContentLoaded', function () {
 // que coincida EXACTO con el que aparece en el onclick="" del HTML.
 // ============================================================
 
-// NOTA: el bloque original también enlazaba clicks a los botones con
-// clase ".btn-abrir-modal-consulta" vía addEventListener, haciendo
-// básicamente lo mismo que window.abrirConsultaRapida (llamada por
-// onclick="" en el HTML). Si tus tarjetas del catálogo usan
-// onclick="abrirConsultaRapida(...)" (o abrirCotizador, etc.), esto ya
-// no hace falta. Si en cambio usan la clase ".btn-abrir-modal-consulta"
-// SIN onclick, avísame y agrego de vuelta ese addEventListener llamando
-// a window.abrirConsultaRapida internamente.
-
 // Variable privada del módulo: guarda la instancia del modal de Bootstrap
 let modalConsulta = null;
 
@@ -452,5 +453,154 @@ document.addEventListener('DOMContentLoaded', function () {
             background: '#FBF6FF',
             color: '#3B2D4A'
         });
+    });
+
+});
+
+
+// ============================================================
+// 6. FORMULARIO "DISEÑA TU BASTÓN DESDE CERO"
+//    Dropzone de imagen + compresión (DataTransfer trick)
+//    Flujos duales: WhatsApp (Fetch) y Sistema Kardex (Submit nativo)
+// ============================================================
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('formNuevoBaston');
+    if (!form) return;
+
+    const inputImagen = document.getElementById('imagenReferencia');
+    const dropzoneLabel = document.getElementById('titiDropzoneLabel');
+    const dropzoneEmpty = document.getElementById('titiDropzoneEmpty');
+    const dropzonePreview = document.getElementById('titiDropzonePreview');
+    const previewImg = document.getElementById('titiPreviewImg');
+    const btnQuitarImagen = document.getElementById('titiRemoveImg');
+
+    // Botones de acción
+    const btnWhatsapp = document.getElementById('btnCotizarWhatsapp');
+    const btnInterno = document.getElementById('btnGuardarInterno');
+
+    // --- 6.1. Comprimir e INYECTAR archivo al input ---
+    function procesarArchivo(file) {
+        if (!file) return;
+
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+            mostrarToast('warning', 'Formato no válido', 'Solo se aceptan imágenes JPG, PNG o WEBP.');
+            return;
+        }
+
+        new Compressor(file, {
+            quality: 0.6,
+            maxWidth: 1200,
+            success(result) {
+                // TRUCO MAESTRO: Inyectar la imagen optimizada al input HTML.
+                // Así, tanto FormData (WhatsApp) como form.submit() (Kardex)
+                // tomarán la versión de 200kb y pasarán la validación de Laravel sin colapsar el servidor.
+                const dataTransfer = new DataTransfer();
+                const fileComprimido = new File([result], file.name, { type: result.type });
+                dataTransfer.items.add(fileComprimido);
+                inputImagen.files = dataTransfer.files;
+
+                previewImg.src = URL.createObjectURL(result);
+                dropzoneEmpty.classList.add('d-none');
+                dropzonePreview.classList.remove('d-none');
+            },
+            error(err) {
+                console.error('Error al comprimir:', err.message);
+                mostrarToast('error', 'Ups...', 'No se pudo procesar la imagen.');
+            },
+        });
+    }
+
+    inputImagen?.addEventListener('change', e => procesarArchivo(e.target.files[0]));
+
+    // Drag & drop
+    ['dragover', 'dragleave', 'drop'].forEach(evento => {
+        dropzoneLabel?.addEventListener(evento, e => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+
+    dropzoneLabel?.addEventListener('dragover', () => dropzoneLabel.classList.add('titi-dropzone-dragover'));
+    dropzoneLabel?.addEventListener('dragleave', () => dropzoneLabel.classList.remove('titi-dropzone-dragover'));
+    dropzoneLabel?.addEventListener('drop', function (e) {
+        dropzoneLabel.classList.remove('titi-dropzone-dragover');
+        procesarArchivo(e.dataTransfer.files[0]);
+    });
+
+    // Quitar imagen
+    btnQuitarImagen?.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        inputImagen.value = ''; // Limpia el input real
+        previewImg.src = '';
+        dropzonePreview.classList.add('d-none');
+        dropzoneEmpty.classList.remove('d-none');
+    });
+
+    // --- 6.2. Acción 1: Flujo Ágil (WhatsApp) ---
+    btnWhatsapp?.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        // Validar que al menos haya puesto teléfono (requerido en HTML)
+        if(!form.reportValidity()) return; 
+
+        const textoOriginal = btnWhatsapp.innerHTML;
+        btnWhatsapp.innerHTML = '<i class="bi bi-arrow-repeat fa-spin me-2"></i> Procesando...';
+        btnWhatsapp.disabled = true;
+
+        // Como inyectamos la imagen con DataTransfer, FormData ya la tiene lista
+        const formData = new FormData(form);
+
+        fetch('/cotizacion/whatsapp', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': CSRF_TOKEN,
+                'Accept': 'application/json'
+            }
+        })
+        .then(async response => {
+            const data = await response.json();
+            if (!response.ok) throw data;
+            return data;
+        })
+        .then(data => {
+            if (!data.success) return;
+
+            const cantidad = form.querySelector('#cantidad')?.value || '1';
+            let mensaje = `Hola Taller Arte Titi_Val, quiero cotizar *${cantidad} bastón/es* para bastoneras. `;
+            if (data.datos.colores) mensaje += `Colores: ${data.datos.colores}. `;
+            if (data.datos.detalles) mensaje += `Detalles: ${data.datos.detalles}. `;
+            if (data.url_imagen) mensaje += `Mi referencia visual: ${data.url_imagen}`;
+
+            const urlWhatsApp = `https://wa.me/${TELEFONO_TALLER}?text=${encodeURIComponent(mensaje)}`;
+            window.open(urlWhatsApp, '_blank');
+
+            mostrarToast('success', '¡Genial!', 'Te redirigimos a WhatsApp.');
+            
+            // Si quieres limpiar el form después de mandarlo a WP, descomenta esto:
+            // form.reset();
+            // btnQuitarImagen.click();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            mostrarToast('error', 'Ups...', 'Hubo un problema al procesar la cotización.');
+        })
+        .finally(() => {
+            btnWhatsapp.innerHTML = textoOriginal;
+            btnWhatsapp.disabled = false;
+        });
+    });
+
+    // --- 6.3. Acción 2: Sistema Interno (Kardex) ---
+    btnInterno?.addEventListener('click', function (e) {
+        e.preventDefault();
+        
+        // Ejecutamos las validaciones nativas de HTML antes de enviar
+        if(form.reportValidity()) {
+            // Disparamos el submit al QuoteRequestController. 
+            // La foto ya va comprimida en el input gracias al DataTransfer!
+            form.submit();
+        }
     });
 });

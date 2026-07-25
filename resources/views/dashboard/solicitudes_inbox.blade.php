@@ -62,7 +62,7 @@
                                    class="btn btn-success flex-grow-1 rounded-3 fw-bold small">
                                     <i class="fa-brands fa-whatsapp me-1"></i> WhatsApp
                                 </a>
-                                <a href="{{ route('cotizador.index') }}" class="btn glass-btn-primary flex-grow-1 rounded-3 fw-bold small">
+                                <a href="{{ route('cotizador.create') }}" class="btn glass-btn-primary flex-grow-1 rounded-3 fw-bold small">
                                     <i class="fa-solid fa-calculator me-1"></i> Cotizar
                                 </a>
                             </div>
