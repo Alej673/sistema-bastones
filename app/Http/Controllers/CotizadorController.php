@@ -9,6 +9,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Pedido;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\NotaVentaMailable;
+use App\Models\QuoteRequest;
 
 class CotizadorController extends Controller
 {
@@ -131,10 +132,38 @@ class CotizadorController extends Controller
         return response()->json($cintas);
     }
 
+    public function buscarSolicitudesPendientes(Request $request)
+    {
+        // Si la petición viene con un ID específico (para autocompletar)
+        if ($request->has('id')) {
+            return response()->json(
+                QuoteRequest::with('user')->find($request->id)
+            );
+        }
+
+        // Búsqueda para el Select2
+        $term = $request->get('q');
+
+        $solicitudes = QuoteRequest::with('user')
+            ->where('estado', 'pendiente')
+            ->when($term, function ($query, $term) {
+                $query->where('id', 'LIKE', "%{$term}%")
+                    ->orWhereHas('user', function ($userQuery) use ($term) {
+                        $userQuery->where('name', 'LIKE', "%{$term}%");
+                    });
+            })
+            ->latest()
+            ->take(10)
+            ->get();
+
+        return response()->json($solicitudes);
+    }
+
     public function guardar(Request $request)
     {
         // 1. Validación de estructura: campos base + materiales como arreglo obligatorio
         $request->validate([
+            'quote_request_id'    =>     'nullable|exists:quote_requests,id',
             'cantidad_total_bastones'            => 'required|numeric|min:1',
             'costo_total'                         => 'required|numeric',
             'correo_cliente'                      => 'nullable|email',
@@ -190,7 +219,8 @@ class CotizadorController extends Controller
 
             // 5. Guardar la cabecera del pedido (Maestro)
             $pedido = new \App\Models\Pedido();
-            
+            // Asignamos el ID de la solicitud web si viene en la petición (null si es venta física)
+            $pedido->quote_request_id = $request->input('quote_request_id');
             // Datos del cliente mapeados exactamente a como los envía tu AJAX
             $pedido->cliente_nombre = $request->input('nombre_cliente', 'Cliente de Mostrador'); 
             $pedido->correo_cliente = $request->input('correo_cliente'); 
@@ -206,6 +236,18 @@ class CotizadorController extends Controller
             
             $pedido->estado = 'pendiente'; 
             $pedido->save();
+
+            // Si el pedido tiene un ID web asociado, actualizamos la tabla del cliente
+            if ($request->filled('quote_request_id')) {
+                $solicitudWeb = \App\Models\QuoteRequest::find($request->input('quote_request_id'));
+                
+                if ($solicitudWeb) {
+                    // Guardamos el costo calculado por tu mamá y lo pasamos a estado 'cotizado'
+                    $solicitudWeb->precio_final = (float) $request->input('costo_total');
+                    $solicitudWeb->estado = 'cotizado';
+                    $solicitudWeb->save();
+                }
+            }
 
             // 6. Insertar cada material del carrito ya validado
             foreach ($listaMateriales as $mat) {
@@ -238,7 +280,7 @@ class CotizadorController extends Controller
                 // Insertamos cada fila en la tabla de detalles
                 DB::table('pedido_materiales')->insert([
                     'pedido_id'          => $pedido->id, 
-                    'insumo_id'          => $insumoIdFinal, // ¡Usamos nuestra variable validada!
+                    'insumo_id'          => $insumoIdFinal, 
                     'nombre_material'    => $mat['nombre_material'],
                     'cantidad_requerida' => $mat['cantidad_requerida'],
                     'subtotal_calculado' => $mat['subtotal_calculado'],

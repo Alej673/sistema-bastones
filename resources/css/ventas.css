@@ -335,6 +335,22 @@
     box-shadow: none !important;
 }
 
+.btn-ver-detalle,
+.btn-accion-secundaria,
+.btn-accion,
+.btn-vincular-action {
+    width: 34px;
+    height: 34px;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px !important;
+    font-size: 0.95rem;
+    line-height: 1;
+    transition: all 0.2s ease-in-out;
+}
+
 /* --------------------------------------------------------------------------
    DROPDOWN DE ESTADO — legibilidad corregida
    -------------------------------------------------------------------------- */
@@ -442,4 +458,21 @@
     transform: translateY(0);
     box-shadow: inset 4px 4px 8px var(--shadow-dark), 
                 inset -4px -4px 8px var(--shadow-light);
+}
+
+/* --- Vincular Pedido (Fondo Celeste-Verdoso, acción de sincronización) --- */
+.btn-vincular-action {
+    background-color: #ecfeff !important; /* Celeste-verdoso muy claro */
+    color: #0891b2 !important;
+    border: 1px solid #a5f3fc !important;
+    box-shadow: 0 2px 4px rgba(8, 145, 178, 0.15) !important;
+}
+.btn-vincular-action:hover {
+    background-color: #a5f3fc !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(8, 145, 178, 0.25) !important;
+}
+.btn-vincular-action:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(8, 145, 178, 0.15) !important;
 }

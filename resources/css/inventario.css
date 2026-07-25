@@ -125,6 +125,8 @@ body, main, .content-wrapper, .container-fluid {
 .glass-btn-action.text-danger:hover { color: #b91c1c !important; }
 .glass-btn-action.text-secondary { color: var(--text-muted) !important; }
 .glass-btn-action.text-secondary:hover { color: var(--accent-purple) !important; }
+.glass-btn-action.text-purple { color: var(--accent-purple) !important; }
+.glass-btn-action.text-purple:hover { color: var(--accent-hover) !important; }
 
 /* 4. INPUTS HUNDIDOS (efecto "presionado") */
 .glass-input, .glass-select {

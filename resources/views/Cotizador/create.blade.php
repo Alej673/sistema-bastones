@@ -373,12 +373,24 @@
         <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
             <div class="modal-content glass-card">
                 <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
-                    <h6 class="modal-title fw-bold"><i class="fa-solid fa-user-tag me-2" style="color: var(--accent-purple);"></i> Finalizar Pedido</h6>
+                    <h6 class="modal-title fw-bold">
+                        <i class="fa-solid fa-user-tag me-2" style="color: var(--accent-purple);"></i> Finalizar Pedido
+                    </h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body px-4 py-3">
-                    <p class="text-muted small mb-4">Ingresa los datos del cliente para asociarlos a la nota de venta.</p>
+                    <p class="text-muted small mb-4">Ingresa los datos o vincula una solicitud de la página web.</p>
                     
+                    {{-- NUEVO CAMPO: Selector de Solicitud Web --}}
+                    <div class="mb-4 p-3 rounded-3" style="background-color: rgba(var(--accent-purple-rgb), 0.05); border: 1px dashed rgba(var(--accent-purple-rgb), 0.3);">
+                        <label class="form-label text-muted small fw-bold mb-1">Vincular Solicitud Web (Opcional)</label>
+                        <select class="form-control" id="selectSolicitudWeb" style="width: 100%;">
+                            <option value="">-- Cliente Presencial (Ninguna) --</option>
+                            <!-- Select2 cargará las opciones aquí -->
+                        </select>
+                    </div>
+                    
+                    {{-- CAMPOS TRADICIONALES --}}
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold mb-1">Nombre / Institución</label>
                         <input type="text" class="form-control glass-input" id="inputNombreCliente" placeholder="Ej. Unidad Educativa Sucre" required>
@@ -465,7 +477,7 @@
         </div>
     </div>
 
-</div>{{-- /dark-glass-cotizador --}}
+</div>
 
 {{-- ==========================================
      DEPENDENCIAS JS Y PUENTE DE DATOS
@@ -483,6 +495,18 @@
             buscarLanas: "{{ route('lanas.buscar') }}",
             buscarCortinas: "{{ route('cortinas.buscar') }}",
             buscarCintas: "{{ route('cintas.buscar') }}"
+        }
+    };
+</script>
+
+<script>
+    window.KardexConfig = {
+        rutas: {
+            buscarLanas: "{{ route('lanas.buscar') }}",
+            buscarCortinas: "{{ route('cortinas.buscar') }}",
+            buscarCintas: "{{ route('cintas.buscar') }}",
+            // Agregamos la ruta para buscar las solicitudes web
+            buscarSolicitudes: "{{ route('admin.solicitudes.pendientes') }}" 
         }
     };
 </script>

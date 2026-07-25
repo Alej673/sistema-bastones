@@ -99,6 +99,62 @@ class VentasController extends Controller
         ));
     }
 
+    public function vincularPedido(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $pedido = Pedido::findOrFail($id);
+
+            // 1. Vincular a la Web (Si se seleccionó un ID)
+            if ($request->filled('quote_request_id')) {
+                // Actualizamos el pedido físico
+                $pedido->quote_request_id = $request->quote_request_id;
+                $pedido->save();
+
+                // Actualizamos el estado y precio de la solicitud web para el cliente
+                $solicitudWeb = \App\Models\QuoteRequest::find($request->quote_request_id);
+                if ($solicitudWeb) {
+                    $solicitudWeb->precio_final = $pedido->costo_total;
+                    
+                    // Emparejamos los estados
+                    $estadoInterno = strtolower($pedido->estado);
+                    if ($estadoInterno === 'realizado') {
+                        $solicitudWeb->estado = 'entregado';
+                    } elseif ($estadoInterno === 'en_produccion') {
+                        $solicitudWeb->estado = 'en_produccion';
+                    } else {
+                        $solicitudWeb->estado = 'cotizado';
+                    }
+                    
+                    $solicitudWeb->save();
+                }
+            }
+
+            // 2. Reenviar Correo (Si escribió un email)
+            if ($request->filled('correo')) {
+                // Actualizamos el correo en el pedido
+                $pedido->correo_cliente = $request->correo;
+                $pedido->save();
+
+                // Aquí llamas a tu mailable existente (NotaVentaMailable)
+                \Illuminate\Support\Facades\Mail::to($request->correo)
+                    ->send(new \App\Mail\NotaVentaMailable($pedido));
+            }
+
+            DB::commit();
+
+            return response()->json(['success' => true]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false, 
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function actualizarEstado(Request $request, $id)
     {
         try {
@@ -241,6 +297,27 @@ class VentasController extends Controller
             // Guardamos el nuevo estado de la cabecera (y el candado si se activó)
             $pedido->estado = $nuevoEstado;
             $pedido->save();
+
+        // --- INICIO: SINCRONIZACIÓN CON EL PORTAL WEB (EL ESPEJO) ---
+            if (!is_null($pedido->quote_request_id)) {
+                $solicitudWeb = \App\Models\QuoteRequest::find($pedido->quote_request_id);
+                
+                if ($solicitudWeb) {
+                    $estadoLimpio = strtolower($nuevoEstado); 
+                    
+                    // Traductor de estados (Taller -> Cliente Web)
+                    if ($estadoLimpio === 'en_produccion') {
+                        $solicitudWeb->estado = 'en_produccion';
+                    } elseif ($estadoLimpio === 'realizado') {
+                        $solicitudWeb->estado = 'entregado'; 
+                    } elseif ($estadoLimpio === 'cancelado') {
+                        $solicitudWeb->estado = 'cancelado';
+                    }
+
+                    $solicitudWeb->save();
+                }
+            }
+            // --- FIN: SINCRONIZACIÓN CON EL PORTAL WEB ---
 
             DB::commit();
 

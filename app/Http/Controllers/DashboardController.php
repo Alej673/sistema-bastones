@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Pedido;
 use App\Models\Insumo;
 use Carbon\Carbon;
+use App\Models\QuoteRequest;
 
 class DashboardController extends Controller
 {
@@ -16,6 +17,7 @@ class DashboardController extends Controller
         // =========================================================
         $mesActual = Carbon::now()->month;
         $anioActual = Carbon::now()->year;
+        $solicitudesWeb = QuoteRequest::where('estado', 'pendiente')->get();
         
         // Obtenemos el nombre del mes en español (ej. "Julio")
         $nombreMes = ucfirst(Carbon::now()->locale('es')->translatedFormat('F'));
@@ -98,6 +100,7 @@ class DashboardController extends Controller
             'nombreMes',
             'manoObraEstimada',
             'costoInsumosEstimado',
+            'solicitudesWeb',
             'enProduccion', 
             'cotizacionesPendientes', 
             'actividadReciente',
@@ -110,6 +113,17 @@ class DashboardController extends Controller
     // =======================================================
     // ACCIONES RÁPIDAS DEL DASHBOARD
     // =======================================================
+
+    public function inboxSolicitudes()
+    {
+        // Traemos todas las solicitudes pendientes con los datos del usuario
+        $solicitudes = \App\Models\QuoteRequest::with('user')
+            ->where('estado', 'pendiente')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('dashboard.solicitudes_inbox', compact('solicitudes'));
+    }
 
     public function descartarAlerta($detalle_id)
     {

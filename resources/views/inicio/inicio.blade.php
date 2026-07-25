@@ -9,9 +9,36 @@
     
     <!-- ENCABEZADO -->
     <div class="d-flex justify-content-between align-items-center mb-4">
+        
         <h2 class="fw-bold mb-0" style="color: var(--text-main);">Panel de Control</h2>
-        <span class="small" style="color: var(--text-muted);">{{ \Carbon\Carbon::now()->translatedFormat('l, d \d\e F \d\e Y') }}</span>
+
+        <div class="d-flex align-items-center gap-3">
+            <span class="small" style="color: var(--text-muted);">{{ \Carbon\Carbon::now()->translatedFormat('l, d \d\e F \d\e Y') }}</span>
+
+            {{-- BOTÓN DE NOTIFICACIONES --}}
+            <a href="{{ route('admin.solicitudes.inbox') }}" 
+            class="btn btn-notificacion position-relative rounded-circle d-flex align-items-center justify-content-center" 
+            style="width: 48px; height: 48px; background-color: var(--bg-base); border: none; box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);">
+                
+                {{-- Ícono de la campana --}}
+                <i class="fa-solid fa-bell fs-5" style="color: var(--text-muted);"></i>
+                
+                {{-- BURBUJA DE CONTEO --}}
+                {{-- Cuando ya lo vayas a usar de verdad, descomenta el @if y el @endif --}}
+                {{-- @if($solicitudesWeb->count() > 0) --}}
+                    
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                        style="font-size: 0.70rem; border: 2px solid var(--bg-base); animation: pulse 2s infinite;">
+                        {{-- Cámbialo por: {{ $solicitudesWeb->count() }} --}}
+                        <span class="visually-hidden">mensajes no leídos</span>
+                    </span>
+                    
+                {{-- @endif --}}
+            </a>
+        </div>
+
     </div>
+
 
     <!-- =========================================
      FILA 1: TARJETAS DE INDICADORES (4 KPIs) — MISMO DISEÑO

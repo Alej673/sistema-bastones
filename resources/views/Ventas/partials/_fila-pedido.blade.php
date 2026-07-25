@@ -34,7 +34,13 @@
         </div>
     </td>
     <td class="pe-4 text-end">
-        <!-- Nuevo botón de Vista Rápida -->
+        <button type="button" 
+                class="btn btn-sm btn-vincular-action ms-1 btn-vincular" 
+                data-id="{{ $pedido->id }}" 
+                data-estado="{{ $pedido->estado }}"
+                title="Vincular a cliente web o enviar por correo">
+            <i class="fa-solid fa-link"></i>
+        </button>
         <button class="btn btn-sm btn-ver-detalle me-1" title="Ver Materiales" data-id="{{ $pedido->id }}">👁️</button>
         <button class="btn btn-sm btn-accion-secundaria" title="Nota de Venta" onclick="window.open('{{ route('pedidos.pdf_nota', $pedido->id) }}', '_blank')">📄</button>
         <button class="btn btn-sm btn-accion" title="Receta Interna" onclick="window.open('{{ route('pedidos.pdf_receta', $pedido->id) }}', '_blank')">📋</button>

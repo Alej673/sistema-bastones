@@ -277,3 +277,31 @@
     background-color: rgba(239, 68, 68, 0.12);
     color: var(--color-error);
 }
+
+@keyframes pulse {
+    0% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { transform: translate(-50%, -50%) scale(1.05); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.btn-notificacion {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-notificacion:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 0 12px var(--neon-glow),
+        4px 4px 8px var(--shadow-dark),
+        -4px -4px 8px var(--shadow-light) !important;
+}
+
+.btn-notificacion:hover i {
+    color: var(--accent-purple) !important;
+}
+
+.btn-notificacion:active {
+    transform: translateY(0);
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), 
+                inset -3px -3px 6px var(--shadow-light) !important;
+}

@@ -15,6 +15,7 @@ class QuoteRequestController extends Controller
     {
         // 1. Validar estrictamente los datos que vienen del formulario del catálogo
         $validated = $request->validate([
+            'telefono' => 'required|string|max:20', // Añadido aquí
             'cantidad_bastones' => 'required|integer|min:1',
             'medida_cm' => 'required|in:45,50,55,60',
             'acabado' => 'required|in:Plata,Oro',

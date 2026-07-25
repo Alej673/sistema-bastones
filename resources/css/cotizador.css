@@ -434,3 +434,81 @@ body, main, .content-wrapper, .container-fluid {
         align-items: center;
     }
 }
+
+/* =========================================
+   ADAPTACIÓN DE SELECT2 AL ESTILO GLASS/NEUMÓRFICO
+   ========================================= */
+
+/* 1. El contenedor principal (Input falso) */
+.select2-container--default .select2-selection--single {
+    background-color: var(--bg-base) !important;
+    border: none !important;
+    border-radius: 12px !important; /* Ajusta si tus inputs usan más o menos redondeo */
+    height: 45px !important; /* Misma altura que tus inputs glass */
+    box-shadow: inset 4px 4px 8px var(--shadow-dark),
+                inset -4px -4px 8px var(--shadow-light) !important;
+    display: flex;
+    align-items: center;
+}
+
+/* 2. El texto dentro del Select */
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: var(--text-muted) !important;
+    padding-left: 15px !important;
+    font-weight: 400;
+}
+
+/* 3. La flechita de la derecha */
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 45px !important;
+    right: 10px !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: var(--text-muted) transparent transparent transparent !important;
+}
+
+/* 4. Efecto al hacer clic (Focus) */
+.select2-container--default.select2-container--open .select2-selection--single {
+    box-shadow: inset 6px 6px 10px var(--shadow-dark),
+                inset -6px -6px 10px var(--shadow-light),
+                0 0 0 2px var(--neon-glow) !important; /* Resplandor exterior */
+}
+
+/* =========================================
+   EL MENÚ DESPLEGABLE (Cuando lo abres)
+   ========================================= */
+
+/* La caja flotante */
+.select2-dropdown {
+    background-color: var(--bg-elevated) !important;
+    border: 1px solid var(--shadow-dark) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 25px rgba(59, 7, 100, 0.15) !important;
+    overflow: hidden;
+    margin-top: 5px; /* Separación sutil del input */
+}
+
+/* La barrita de búsqueda dentro del menú */
+.select2-search--dropdown .select2-search__field {
+    background-color: var(--bg-base) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    box-shadow: inset 3px 3px 6px var(--shadow-dark),
+                inset -3px -3px 6px var(--shadow-light) !important;
+    color: var(--text-main) !important;
+    padding: 8px 12px !important;
+}
+
+/* Los items de la lista */
+.select2-container--default .select2-results__option {
+    color: var(--text-main) !important;
+    padding: 10px 15px !important;
+    transition: background-color 0.2s ease;
+}
+
+/* El item cuando pasas el mouse o lo seleccionas */
+.select2-container--default .select2-results__option--highlighted[aria-selected],
+.select2-container--default .select2-results__option[aria-selected=true] {
+    background-color: var(--accent-purple) !important;
+    color: #ffffff !important;
+}

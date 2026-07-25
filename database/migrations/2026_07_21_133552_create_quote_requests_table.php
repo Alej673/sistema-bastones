@@ -44,7 +44,13 @@ return new class extends Migration
             $table->decimal('precio_referencial', 8, 2)->default(0.00); 
             $table->decimal('precio_final', 8, 2)->nullable();
             
-            $table->enum('estado', ['pendiente', 'cotizado', 'aprobado', 'rechazado'])->default('pendiente');
+            $table->enum('estado', [
+                'pendiente', 
+                'cotizado', 
+                'en_produccion', 
+                'entregado', 
+                'cancelado'
+            ])->default('pendiente');
             $table->text('observaciones_taller')->nullable();
             
             $table->timestamps();

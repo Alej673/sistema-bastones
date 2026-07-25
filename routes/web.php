@@ -13,6 +13,7 @@ use App\Models\Review;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\CatalogController;
 use Illuminate\Http\Request;
+use App\Http\Controllers\clienteController;
 
 // ==========================================
 // 1. LA CARA DEL SISTEMA (Landing Page)
@@ -57,17 +58,16 @@ Route::prefix('catalogo')->name('catalogo.')->group(function () {
 // 2.1 Rutas que solo requieren estar logueado (sin exigir correo verificado)
 Route::middleware(['auth'])->group(function () {
 
-    // Historial de pedidos del cliente
-    Route::get('/mis-pedidos', function () {
-        return "Próximamente: Historial de pedidos del cliente.";
-    })->name('cliente.dashboard');
+    // Panel principal del cliente (Historial y botón de nueva cotización)
+    Route::get('/mis-pedidos', [App\Http\Controllers\ClienteController::class, 'dashboard'])
+        ->name('cliente.dashboard');
 
     // Guardar comentarios/reseñas
     Route::post('/comentarios', [ReviewController::class, 'store'])->name('comentarios.store');
+    
     // Ruta para procesar el Like (Toggle)
     Route::post('/comentarios/{id}/like', [ReviewController::class, 'toggleLike'])->name('comentarios.like');
 });
-
 // 2.2 Rutas que además exigen correo verificado
 Route::middleware(['auth', 'verified'])->group(function () {
 
@@ -89,6 +89,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     Route::post('/dashboard/alerta/descartar/{id}', [DashboardController::class, 'descartarAlerta']);
     Route::post('/dashboard/stock/arreglar/{id}', [DashboardController::class, 'arreglarStock']);
+    Route::get('/admin/solicitudes-web', [DashboardController::class, 'inboxSolicitudes'])->name('admin.solicitudes.inbox');
 
     // ------------------------------------------
     // Módulo de Inventarios (Kardex)
@@ -120,6 +121,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::patch('/pedidos/{id}/estado', [VentasController::class, 'actualizarEstado'])->name('pedidos.estado');
     Route::get('/buscar-clientes-historial', [VentasController::class, 'buscarClientesAjax'])->name('clientes.buscar_ajax');
     Route::get('/pedidos/{id}/detalles', [VentasController::class, 'obtenerDetalles'])->name('pedidos.detalles');
+    Route::post('/pedidos/{id}/vincular', [VentasController::class, 'vincularPedido'])->name('pedidos.vincular');
 
     // ------------------------------------------
     // Módulo de Gestión del Catálogo Público
@@ -133,6 +135,9 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         Route::patch('/admin/catalogo/{id}/carrusel', 'toggleCarrusel')->name('admin.catalogo.carrusel');
         Route::patch('/admin/catalogo/{id}/destacado', 'toggleDestacado')->name('admin.catalogo.destacado');
     });
+
+    Route::get('/admin/solicitudes-pendientes', [CotizadorController::class, 'buscarSolicitudesPendientes'])
+    ->name('admin.solicitudes.pendientes');
 });
 
 

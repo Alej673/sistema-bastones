@@ -324,9 +324,58 @@ $(document).ready(function () {
         minimumResultsForSearch: Infinity, // oculta el buscador: son listas cortas y fijas
     });
 
+    // =======================================================
+    // 5.1 Inicialización de Componentes y Select2
+    // =======================================================
+
+    // Inicializamos el selector de solicitudes web
+    $('#selectSolicitudWeb').select2({
+        dropdownParent: $('#modalDatosCliente'), // Obligatorio para que Select2 funcione dentro de un Modal de Bootstrap
+        placeholder: '-- Cliente Presencial (Ninguna) --',
+        allowClear: true,
+        ajax: {
+            url: window.KardexConfig.rutas.buscarSolicitudes, // Usamos la ruta que agregamos al puente
+            dataType: 'json',
+            delay: 300,
+            data: function (params) {
+                return {
+                    q: params.term // Término de búsqueda escrito por tu mamá
+                };
+            },
+            processResults: function (data) {
+                return {
+                    results: $.map(data, function (item) {
+                        return {
+                            id: item.id,
+                            // Formato amigable que verá tu mamá: "RQ-0045 | María Pérez (50cm Plata)"
+                            text: `RQ-${String(item.id).padStart(4, '0')} | ${item.user ? item.user.name : 'Cliente'} (${item.medida_cm}cm ${item.acabado})`
+                        };
+                    })
+                };
+            }
+        }
+    });
+
+    // Evento opcional de UX: Si tu mamá selecciona una solicitud web, autocompletamos
+    // el nombre del cliente y el correo si existen en la solicitud
+    $('#selectSolicitudWeb').on('select2:select', function (e) {
+        const data = e.params.data;
+        if (data) {
+            // Hacemos una petición rápida o usamos la info cargada para autocompletar inputs
+            fetch(`${window.KardexConfig.rutas.buscarSolicitudes}?id=${data.id}`)
+                .then(res => res.json())
+                .then(solicitud => {
+                    if (solicitud && solicitud.user) {
+                        $('#inputNombreCliente').val(solicitud.user.name);
+                        $('#inputCorreoCliente').val(solicitud.user.email || '');
+                    }
+                });
+        }
+    });
+
 
     // =======================================================
-    // 5.1 CONSTANTES Y CONFIGURACIÓN BASE
+    // 5.2 CONSTANTES Y CONFIGURACIÓN BASE
     // =======================================================
     // "Precio fantasma" = precio de referencia que se usa SOLO cuando el
     // cliente pide un material nuevo que todavía no existe en el inventario
@@ -351,7 +400,7 @@ $(document).ready(function () {
 
 
     // =======================================================
-    // 5.2 FUNCIÓN MAESTRA — Recalcula la tabla y los totales
+    // 5.3 FUNCIÓN MAESTRA — Recalcula la tabla y los totales
     // =======================================================
 
     /**
@@ -374,7 +423,7 @@ $(document).ready(function () {
      * actualiza el panel de totales.
      *
      * Se dispara con debounce cada vez que el usuario cambia algún campo
-     * (ver sección 5.3).
+     * (ver sección 5.4).
      */
     function calcularCotizacion() {
 
@@ -917,7 +966,7 @@ $(document).ready(function () {
 
 
     // =======================================================
-    // 5.3 TRIGGERS — Eventos que disparan el recálculo
+    // 5.4 TRIGGERS — Eventos que disparan el recálculo
     // =======================================================
 
     // Debounce corto: agrupa cambios que llegan casi al mismo tiempo (por
@@ -948,7 +997,7 @@ $(document).ready(function () {
 
 
     // =======================================================
-    // 5.4 GUARDAR COTIZACIÓN — AJAX + modal de validación
+    // 5.5 GUARDAR COTIZACIÓN — AJAX + modal de validación
     // =======================================================
 
     // ---- PASO 1: Validación (botón verde de la pantalla principal) ----
@@ -1043,6 +1092,7 @@ $(document).ready(function () {
 
         const nombreCliente = $('#inputNombreCliente').val();
         const correoCliente = $('#inputCorreoCliente').val();
+        const quoteRequestId = $('#selectSolicitudWeb').val();
 
         if (nombreCliente.trim() === '') {
             mostrarAlerta('Por favor ingresa el nombre del cliente.', 'Falta información', 'warning');
@@ -1056,6 +1106,10 @@ $(document).ready(function () {
         // Armamos el payload: todos los campos del form + datos del cliente
         // + el resumen de costos ya formateado + el detalle del carrito.
         let datosFormulario = $('#formCotizador').serializeArray();
+        // INYECTAMOS EL ID EN EL PAYLOAD (NUEVO)
+        if (quoteRequestId) {
+            datosFormulario.push({ name: 'quote_request_id', value: quoteRequestId });
+        }
         datosFormulario.push({ name: 'nombre_cliente', value: nombreCliente });
         datosFormulario.push({ name: 'correo_cliente', value: correoCliente });
         datosFormulario.push({ name: 'costo_materiales', value: $('#txtCostoMateriales').text().replace('$', '').trim() });
@@ -1123,12 +1177,16 @@ $(document).ready(function () {
 
         $('#inputNombreCliente').val('');
         $('#inputCorreoCliente').val('');
+        //LIMPIAMOS EL SELECTOR DE LA SOLICITUD WEB (NUEVO)
+        if ($('#selectSolicitudWeb').hasClass('select2-hidden-accessible')) {
+            $('#selectSolicitudWeb').val(null).trigger('change');
+        }
 
         resetearFormulario();
     });
 
     // =======================================================
-    // 5.5 FUNCIÓN DE RESETEO
+    // 5.6 FUNCIÓN DE RESETEO
     // Deja el formulario listo para cotizar un pedido nuevo desde cero.
     // =======================================================
     function resetearFormulario() {
@@ -1168,6 +1226,8 @@ $(document).ready(function () {
 
         $('#txtGananciaFija').text('$ 0.00');
         calcularCotizacion();
+
+        $('#selectSolicitudWeb').val(null).trigger('change');
     }
 
     // =======================================================

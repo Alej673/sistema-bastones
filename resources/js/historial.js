@@ -310,4 +310,100 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    // =======================================================
+    // MÓDULO: VINCULACIÓN WEB Y REENVÍO DE CORREOS
+    // =======================================================
+
+    // 1. Inicializar Select2 en el modal de vinculación
+    $('#selectVincularWeb').select2({
+        dropdownParent: $('#modalVincularPedido'), // Vital para que funcione sobre un modal de Bootstrap
+        placeholder: '-- Buscar solicitud pendiente --',
+        allowClear: true,
+        ajax: {
+            url: '/admin/solicitudes-pendientes', // Misma ruta JSON que usamos en el cotizador
+            dataType: 'json',
+            delay: 300,
+            data: function (params) {
+                return { q: params.term };
+            },
+            processResults: function (data) {
+                return {
+                    results: $.map(data, function (item) {
+                        return {
+                            id: item.id,
+                            text: `RQ-${String(item.id).padStart(4, '0')} | ${item.user ? item.user.name : 'Cliente'} (${item.medida_cm}cm)`
+                        };
+                    })
+                };
+            }
+        }
+    });
+
+    // 2. Abrir el modal al hacer clic en el botón de la tabla (Delegación de eventos)
+    $(document).on('click', '.btn-vincular', function(e) {
+        e.preventDefault();
+        const pedidoId = $(this).data('id');
+        
+        // Inyectamos el ID en el título y en el input oculto
+        $('#txtVincularPedidoId').text(String(pedidoId).padStart(4, '0'));
+        $('#hiddenPedidoFisicoId').val(pedidoId);
+        
+        // Limpiamos los campos del modal de usos anteriores
+        $('#inputReenviarCorreo').val('');
+        if ($('#selectVincularWeb').hasClass('select2-hidden-accessible')) {
+            $('#selectVincularWeb').val(null).trigger('change');
+        }
+        
+        // Mostramos el modal
+        const modalVinculacion = new bootstrap.Modal(document.getElementById('modalVincularPedido'));
+        modalVinculacion.show();
+    });
+
+    // 3. Procesar la actualización vía AJAX
+    $('#btnProcesarVinculacion').on('click', function(e) {
+        e.preventDefault();
+        
+        const pedidoId = $('#hiddenPedidoFisicoId').val();
+        const quoteRequestId = $('#selectVincularWeb').val();
+        const correo = $('#inputReenviarCorreo').val().trim();
+        
+        // Validación: debe querer hacer al menos una de las dos cosas
+        if (!quoteRequestId && correo === '') {
+            // Usa tu función de alertas predeterminada (SweetAlert2)
+            Swal.fire('¡Atención!', 'Debes seleccionar una solicitud web para vincular o ingresar un correo para reenviar.', 'warning');
+            return;
+        }
+
+        const btn = $(this);
+        const textoOriginal = btn.html();
+        btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Actualizando...');
+
+        $.ajax({
+            url: `/pedidos/${pedidoId}/vincular`, // Crearemos este endpoint ahora
+            type: 'POST', // Usamos POST o PATCH 
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // Tu config CSRF
+            },
+            data: {
+                quote_request_id: quoteRequestId,
+                correo: correo
+            },
+            success: function(response) {
+                $('#modalVincularPedido').modal('hide');
+                
+                Swal.fire('¡Éxito!', 'El pedido fue actualizado correctamente.', 'success').then(() => {
+                    // Opcional: Recargar la página para ver los cambios reflejados si modificaste algo visual
+                    // location.reload();
+                });
+                
+                btn.prop('disabled', false).html(textoOriginal);
+            },
+            error: function(xhr) {
+                console.error(xhr.responseText);
+                Swal.fire('Error', 'Ocurrió un problema al procesar la solicitud.', 'error');
+                btn.prop('disabled', false).html(textoOriginal);
+            }
+        });
+    });
 });

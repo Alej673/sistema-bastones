@@ -98,6 +98,60 @@
         </div>
     </div>
 </div>
+
+{{-- MODAL: VINCULAR PEDIDO Y ENVIAR CORREO --}}
+{{-- MODAL: VINCULAR PEDIDO Y ENVIAR CORREO --}}
+<div class="modal fade" id="modalVincularPedido" tabindex="-1" aria-labelledby="modalVincularPedidoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none; background-color: var(--bg-base); box-shadow: 0 8px 24px rgba(59, 7, 100, 0.15);">
+
+            <div class="modal-header pb-0 border-0" style="background-color: transparent;">
+                <h5 class="modal-title fw-bold" id="modalVincularPedidoLabel" style="color: var(--text-main);">
+                    <i class="fa-solid fa-link me-2" style="color: var(--accent-purple);"></i> Vincular Pedido #<span id="txtVincularPedidoId"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body pt-4">
+
+                {{-- Selector para vincular con la web --}}
+                <div class="mb-3 p-3 rounded" style="background-color: var(--bg-base); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); border-radius: 12px;">
+                    <span class="d-block mb-1" style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">Vincular Solicitud Web</span>
+                    <p class="mb-2" style="color: var(--text-muted); font-size: 0.75rem;">Si este pedido pertenece a un cliente de la web, búscalo aquí para sincronizar su portal.</p>
+                    <select class="form-control" id="selectVincularWeb" style="width: 100%;">
+                        <option value="">-- Buscar solicitud pendiente --</option>
+                    </select>
+                </div>
+
+                {{-- Opcional: Reenviar correo --}}
+                <div class="mb-3 p-3 rounded" style="background-color: var(--bg-base); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); border-radius: 12px;">
+                    <span class="d-block mb-2" style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">
+                        <i class="fa-solid fa-envelope me-1"></i> Reenviar Nota de Venta (Opcional)
+                    </span>
+                    <input type="email" class="form-control" id="inputReenviarCorreo" placeholder="ejemplo@correo.com"
+                        style="background-color: #f3ebff; border: 1px solid rgba(var(--accent-purple-rgb), 0.15); border-radius: 8px; color: var(--text-main); padding: 0.5rem 0.75rem;">
+                </div>
+
+                {{-- Nota Aclaratoria --}}
+                <div class="alert mt-3 mb-0" style="background-color: var(--bg-base); box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); color: var(--text-muted); font-size: 0.8rem; border-radius: 10px; border: none;">
+                    <i class="fa-solid fa-circle-info me-1" style="color: var(--accent-purple);"></i>
+                    Al vincular, el estado se sincronizará automáticamente con el portal del cliente.
+                </div>
+
+                {{-- Campo oculto para el ID del pedido físico --}}
+                <input type="hidden" id="hiddenPedidoFisicoId">
+
+            </div>
+
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn-neu-glow w-100 justify-content-center" id="btnProcesarVinculacion">
+                    <i class="fa-solid fa-cloud-arrow-up me-2"></i> Actualizar Pedido
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('js') 
