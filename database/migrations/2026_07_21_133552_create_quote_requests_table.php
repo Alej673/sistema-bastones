@@ -24,6 +24,7 @@ return new class extends Migration
             $table->text('descripcion_diseno_especial')->nullable();
             $table->string('imagen_path')->nullable(); // Ruta de la foto comprimida
             $table->string('estado')->default('pendiente'); // pendiente, aprobado, etc.
+            $table->decimal('precio_final', 8, 2)->nullable();
             
             $table->timestamps();
         });

@@ -1048,3 +1048,88 @@ body {
     border-radius: 30px !important;
     font-weight: bold;
 }
+
+/* ==========================================
+   TABLA DE PEDIDOS (vista "Mis Pedidos")
+========================================== */
+.titi-pedidos-table thead th {
+    color: var(--color-texto-mutado);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-weight: 600;
+    border-bottom: 2px solid var(--color-lila-pastel);
+}
+
+.titi-pedidos-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.titi-pedidos-table tbody tr:hover {
+    background-color: var(--color-lila-pastel);
+}
+
+.titi-pedidos-table td {
+    border-bottom: 1px solid rgba(217, 191, 250, 0.5);
+    font-size: 0.9rem;
+}
+
+/* Badges de estado del pedido */
+.badge-pedido {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-pendiente {
+    background-color: rgba(201, 160, 82, 0.18);
+    color: #8a6b2e;
+    border: 1px solid var(--color-oro);
+}
+
+.badge-cotizado {
+    background-color: rgba(157, 92, 224, 0.15);
+    color: var(--color-lila-fuerte);
+    border: 1px solid var(--color-lila-medio);
+}
+
+.badge-produccion {
+    background-color: var(--color-lila-fuerte);
+    color: #fff;
+    border: 1px solid var(--color-lila-oscuro);
+}
+
+.badge-entregado {
+    background-color: rgba(40, 167, 69, 0.15);
+    color: #1e7e34;
+    border: 1px solid #28a745;
+}
+
+.badge-cancelado {
+    background-color: rgba(220, 53, 69, 0.12);
+    color: #b02a37;
+    border: 1px solid #dc3545;
+}
+
+/* Botón outline morado (acción "ver cotización final") — centralizado aquí */
+.btn-outline-purple {
+    color: var(--color-lila-fuerte);
+    border: 1px solid var(--color-lila-fuerte);
+    background-color: transparent;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 500;
+}
+
+.btn-outline-purple:hover {
+    background-color: var(--color-lila-fuerte);
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(107, 47, 163, 0.2);
+    transform: translateY(-2px);
+}

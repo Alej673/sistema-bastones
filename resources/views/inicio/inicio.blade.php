@@ -25,15 +25,15 @@
                 
                 {{-- BURBUJA DE CONTEO --}}
                 {{-- Cuando ya lo vayas a usar de verdad, descomenta el @if y el @endif --}}
-                {{-- @if($solicitudesWeb->count() > 0) --}}
+               @if($solicitudesWeb->count() > 0) 
                     
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
                         style="font-size: 0.70rem; border: 2px solid var(--bg-base); animation: pulse 2s infinite;">
-                        {{-- Cámbialo por: {{ $solicitudesWeb->count() }} --}}
+                        {{ $solicitudesWeb->count() }} 
                         <span class="visually-hidden">mensajes no leídos</span>
                     </span>
                     
-                {{-- @endif --}}
+                @endif 
             </a>
         </div>
 

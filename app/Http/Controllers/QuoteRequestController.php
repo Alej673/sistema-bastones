@@ -19,16 +19,23 @@ class QuoteRequestController extends Controller
             'nombre' => 'required|string|max:255',
             'telefono' => 'required|string|max:20', 
             'cantidad' => 'required|integer|min:1', // Cambiado de cantidad_bastones
-            'medida_cm' => 'required|in:45,50,55,60',
-            'acabado' => 'required|in:Plata,Oro',
+            'medida_cm' => 'required|in:45,50,55,60,na', 
+            'acabado' => 'required|in:Plata,Oro,na',
             'colores' => 'nullable|string', // Reemplaza a todos los arrays de colores
             'descripcion_diseno_especial' => 'nullable|string',
             'imagen_referencia' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'imagen_catalogo_url' => 'nullable|string',
         ]);
 
-        // Si subieron imagen, la guardamos
+        // 1. Si viene del formulario "Diseña desde cero" 
         if ($request->hasFile('imagen_referencia')) {
             $validated['imagen_path'] = $request->file('imagen_referencia')->store('referencias_kardex', 'public');
+        } 
+        // 2. NUEVO: Si viene del Catálogo (URL del modelo)
+        elseif ($request->filled('imagen_catalogo_url')) {
+            // Extraemos solo la ruta interna 
+            $path = parse_url($request->imagen_catalogo_url, PHP_URL_PATH);
+            $validated['imagen_path'] = preg_replace('/^\/?storage\//', '', $path);
         }
 
         // 2. Asociar la solicitud al cliente logueado
@@ -42,7 +49,16 @@ class QuoteRequestController extends Controller
         // (colores, cantidad, imagen_path) o deberás crear una migración para actualizarlas.
         QuoteRequest::create($validated);
 
-        // 5. Redirigir con éxito
+        // 5. MAGIA BILINGÜE: Responder según el tipo de petición
+        if ($request->wantsJson()) {
+            // Si la petición viene del JS del Modal (fetch)
+            return response()->json([
+                'success' => true,
+                'message' => '¡Tu solicitud ha sido enviada al taller!'
+            ]);
+        }
+
+        // Si la petición viene del formulario normal (Diseña desde cero)
         return redirect()->route('cliente.dashboard')
                          ->with('success', '¡Tu solicitud ha sido enviada al taller para su revisión!');
     }
@@ -52,8 +68,8 @@ class QuoteRequestController extends Controller
     // Buscamos la cotización
     $cotizacion = QuoteRequest::findOrFail($id);
 
-    // Verificamos que el usuario logueado sea el dueño (o el administrador)
-    if ($cotizacion->user_id !== Auth::id() /* aquí a futuro validas si es admin */) {
+    // Verificamos que el usuario logueado sea el dueño o tenga el rol de administrador
+    if ($cotizacion->user_id !== Auth::id() && Auth::user()->role !== 'admin') {
         abort(403, 'No tienes permiso para ver este documento.');
     }
 

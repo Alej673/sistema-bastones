@@ -25,7 +25,6 @@
         <div class="card-body p-4">
 
             @if($pedidos->isEmpty())
-                <!-- Estado vacío, mismo lenguaje visual que .review-empty -->
                 <div class="text-center py-5 rounded-4" style="background-color: var(--color-lila-pastel); border: 1px dashed var(--color-lila-medio);">
                     <i class="bi bi-inbox" style="font-size: 3.5rem; color: var(--color-lila-medio); opacity: 0.6;"></i>
                     <h5 class="mt-3 fw-bold" style="color: var(--color-lila-fuerte); font-family:'Playfair Display', serif;">
@@ -84,9 +83,31 @@
                                     @endif
                                 </td>
                                 <td class="text-end">
-                                    <button class="btn btn-sm btn-ver-mas" onclick="verDetalle({{ $pedido->id }})">
-                                        Ver Detalle
-                                    </button>
+                                    <div class="d-inline-flex gap-2">
+                                        {{-- Siempre visible: la solicitud original enviada por el cliente --}}
+                                        <a href="{{ route('cotizacion.pdf', $pedido->id) }}" target="_blank" class="btn btn-sm btn-ver-mas" title="Ver Solicitud Original">
+                                            <i class="bi bi-clipboard-check"></i> Ver Pedido
+                                        </a>
+
+                                        @if($pedido->estado === 'pendiente')
+                                            {{-- Aún no hay cotización final: mostramos el estado / WhatsApp --}}
+                                            <button class="btn btn-sm btn-ver-mas" onclick="verDetallePendiente('{{ $pedido->id }}')">
+                                                <i class="bi bi-eye"></i> Ver Estado
+                                            </button>
+                                        @else
+                                            @php
+                                                $pedidoInterno = \App\Models\Pedido::where('quote_request_id', $pedido->id)->first();
+                                            @endphp
+
+                                            @if($pedidoInterno)
+                                                <a href="{{ route('pedidos.pdf_nota', $pedidoInterno->id) }}" target="_blank" class="btn btn-sm btn-outline-purple" title="Descargar Cotización Final">
+                                                    <i class="bi bi-file-earmark-pdf"></i> Ver Cotización
+                                                </a>
+                                            @else
+                                                <span class="badge bg-light text-muted border">Error de enlace</span>
+                                            @endif
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                             @endforeach
@@ -98,70 +119,40 @@
     </div>
 </div>
 
-@push('styles')
-<style>
-    .titi-pedidos-table thead th {
-        color: var(--color-texto-mutado);
-        font-size: 0.78rem;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        font-weight: 600;
-        border-bottom: 2px solid var(--color-lila-pastel);
-    }
+@push('js')
+<script>
+    function verDetallePendiente(id) {
+        const idFormateado = String(id).padStart(4, '0');
+        
+        // Capturamos el número dinámico directamente del dataset del body
+        const numeroTaller = document.body.dataset.telefono; 
+        
+        const mensajeWa = encodeURIComponent(`Hola, quisiera consultar el estado de mi solicitud web RQ-${idFormateado}.`);
 
-    .titi-pedidos-table tbody tr {
-        transition: background-color 0.2s ease;
+        Swal.fire({
+            title: '¡Cotización en Proceso!',
+            html: `
+                <div style="text-align: center;">
+                    <p style="color: var(--color-texto-principal); font-size: 0.95rem; margin-bottom: 10px;">
+                        Tu solicitud <strong>RQ-${idFormateado}</strong> está siendo evaluada por nuestro taller.
+                    </p>
+                    <p style="color: var(--color-texto-mutado); font-size: 0.85rem; margin-bottom: 25px;">
+                        Aún no hemos establecido el precio final. Si deseas acelerar el proceso o darnos más detalles, contáctanos:
+                    </p>
+                    <a href="https://wa.me/${numeroTaller}?text=${mensajeWa}"
+                       target="_blank"
+                       style="background-color: #25D366; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);">
+                        <i class="bi bi-whatsapp me-1"></i> Hablar por WhatsApp
+                    </a>
+                </div>
+            `,
+            icon: 'info',
+            showConfirmButton: false,
+            showCloseButton: true,
+            background: 'rgba(255, 255, 255, 0.98)',
+            backdrop: `rgba(107, 47, 163, 0.2)`
+        });
     }
-
-    .titi-pedidos-table tbody tr:hover {
-        background-color: var(--color-lila-pastel);
-    }
-
-    .titi-pedidos-table td {
-        border-bottom: 1px solid rgba(217, 191, 250, 0.5);
-        font-size: 0.9rem;
-    }
-
-    /* Badges de estado en la paleta lila/oro */
-    .badge-pedido {
-        display: inline-flex;
-        align-items: center;
-        padding: 5px 12px;
-        border-radius: 999px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    .badge-pendiente {
-        background-color: rgba(201, 160, 82, 0.18);
-        color: #8a6b2e;
-        border: 1px solid var(--color-oro);
-    }
-
-    .badge-cotizado {
-        background-color: rgba(157, 92, 224, 0.15);
-        color: var(--color-lila-fuerte);
-        border: 1px solid var(--color-lila-medio);
-    }
-
-    .badge-produccion {
-        background-color: var(--color-lila-fuerte);
-        color: #fff;
-        border: 1px solid var(--color-lila-oscuro);
-    }
-
-    .badge-entregado {
-        background-color: rgba(40, 167, 69, 0.15);
-        color: #1e7e34;
-        border: 1px solid #28a745;
-    }
-
-    .badge-cancelado {
-        background-color: rgba(220, 53, 69, 0.12);
-        color: #b02a37;
-        border: 1px solid #dc3545;
-    }
-</style>
+</script>
 @endpush
 @endsection

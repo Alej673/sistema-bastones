@@ -116,13 +116,21 @@ class DashboardController extends Controller
 
     public function inboxSolicitudes()
     {
-        // Traemos todas las solicitudes pendientes con los datos del usuario
-        $solicitudes = \App\Models\QuoteRequest::with('user')
+        // 1. Traemos las solicitudes pendientes (Pestaña 1)
+        $pendientes = \App\Models\QuoteRequest::with('user')
             ->where('estado', 'pendiente')
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('dashboard.solicitudes_inbox', compact('solicitudes'));
+        // 2. Traemos las solicitudes ya gestionadas (Pestaña 2)
+        // Agrupamos los estados que pertenecen al ciclo de vida del BTO 
+        $gestionadas = \App\Models\QuoteRequest::with('user')
+            ->whereIn('estado', ['cotizado', 'en_produccion', 'entregado', 'cancelado'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // 3. Enviamos ambas variables a la vista
+        return view('dashboard.solicitudes_inbox', compact('pendientes', 'gestionadas'));
     }
 
     public function descartarAlerta($detalle_id)

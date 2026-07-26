@@ -15,37 +15,33 @@ body.theme-synthwave {
    ========================================================================== */
 .sidebar-glass {
     background-color: var(--bg-base);
-    /* En lugar de borde, usamos una sombra hacia la derecha para separar el menú */
     border-right: none;
     box-shadow: 8px 0 20px var(--shadow-dark);
     color: var(--text-main);
 }
 
-/* Fijar menú en escritorio */
 @media (min-width: 992px) {
-    .sidebar-glass { 
-        height: 100vh; 
-        position: sticky; 
-        top: 0; 
-        overflow-y: auto; 
+    .sidebar-glass {
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        overflow-y: auto;
         z-index: 1030;
     }
 }
 
-/* Logo / Título de Kardex */
 .brand-glow {
     color: var(--text-main) !important;
-    font-family: 'Playfair Display', serif; /* Para mantener coherencia con el login */
+    font-family: 'Playfair Display', serif;
     font-weight: 700;
     letter-spacing: 1px;
-    text-shadow: none; /* Quitamos el neón oscuro */
+    text-shadow: none;
 }
 
 .offcanvas-title {
     color: var(--text-main) !important;
 }
 
-/* Enlaces del menú */
 .nav-link-glass {
     color: var(--text-muted);
     text-decoration: none;
@@ -58,26 +54,23 @@ body.theme-synthwave {
     background-color: var(--bg-base);
 }
 
-/* Efecto al pasar el mouse (Se levanta ligeramente) */
 .nav-link-glass:hover {
     color: var(--accent-purple);
-    box-shadow: 4px 4px 10px var(--shadow-dark), 
+    box-shadow: 4px 4px 10px var(--shadow-dark),
                -4px -4px 10px var(--shadow-light);
     transform: translateY(-2px);
 }
 
-/* Enlace Activo (Se hunde simulando botón presionado) */
 .nav-link-glass.active {
     color: var(--accent-purple);
     font-weight: 600;
-    box-shadow: inset 4px 4px 8px var(--shadow-dark), 
+    box-shadow: inset 4px 4px 8px var(--shadow-dark),
                 inset -4px -4px 8px var(--shadow-light);
     transform: translateY(0);
 }
 
-/* Opciones de la parte inferior (Sitio web y Cerrar sesión) */
 .nav-link-glass.text-warning {
-    color: var(--accent-purple) !important; 
+    color: var(--accent-purple) !important;
 }
 
 .btn-logout {
@@ -87,7 +80,7 @@ body.theme-synthwave {
 .btn-logout:hover {
     background-color: var(--bg-base);
     color: var(--color-error) !important;
-    box-shadow: 4px 4px 10px rgba(239, 68, 68, 0.2), 
+    box-shadow: 4px 4px 10px rgba(239, 68, 68, 0.2),
                -4px -4px 10px var(--shadow-light);
 }
 
@@ -105,19 +98,18 @@ body.theme-synthwave {
     color: var(--text-main) !important;
 }
 
-/* Botón de hamburguesa en móvil */
 .glass-btn-mobile {
     background-color: var(--bg-base);
     border: none;
     color: var(--text-main) !important;
-    box-shadow: 3px 3px 6px var(--shadow-dark), 
+    box-shadow: 3px 3px 6px var(--shadow-dark),
                -3px -3px 6px var(--shadow-light);
     border-radius: 8px;
     padding: 6px 12px;
 }
 
 .glass-btn-mobile:active {
-    box-shadow: inset 3px 3px 6px var(--shadow-dark), 
+    box-shadow: inset 3px 3px 6px var(--shadow-dark),
                 inset -3px -3px 6px var(--shadow-light);
 }
 
@@ -127,92 +119,213 @@ hr.border-secondary {
 }
 
 /* ==========================================================================
-   BUZÓN DE SOLICITUDES WEB
+   TARJETAS GLOW (Buzón Web)
    ========================================================================== */
-
-/* Tarjeta neumórfica de cada solicitud */
-.glass-card {
-    background-color: var(--bg-base) !important;
-    border-radius: 16px !important;
-    border: none !important;
-    box-shadow: 6px 6px 14px var(--shadow-dark), -4px -4px 10px var(--shadow-light) !important;
-    color: var(--text-main);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+.titi-glow-card {
+    background: var(--bg-base);
+    border-radius: 16px;
+    border: 1px solid rgba(157, 92, 224, 0.1);
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(157, 92, 224, 0.08), 0 4px 8px rgba(0,0,0,0.04);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
-.glass-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 8px 8px 18px var(--shadow-dark), -6px -6px 14px var(--shadow-light) !important;
+.titi-glow-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(157, 92, 224, 0.15), 0 6px 12px rgba(0,0,0,0.08);
 }
 
-/* Botón "Cotizar" (acción primaria dentro de la tarjeta) */
-.glass-btn-primary {
-    background-color: var(--accent-purple) !important;
-    color: #fff !important;
-    border: none !important;
-    box-shadow: 4px 4px 10px var(--shadow-dark), -2px -2px 6px var(--shadow-light) !important;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+/* --------------------------------------------------------------------------
+   Cabecera visual de la tarjeta (imagen con fondo difuminado)
+   -------------------------------------------------------------------------- */
+.card-img-wrapper {
+    position: relative;
+    overflow: hidden;
+    height: 230px;
+    background: linear-gradient(135deg, rgba(234, 217, 255, 0.6), rgba(245, 245, 245, 0.8));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 2px solid rgba(157, 92, 224, 0.05);
 }
 
-.glass-btn-primary:hover {
-    background-color: var(--accent-hover) !important;
-    box-shadow: 0 0 12px var(--neon-glow), 4px 4px 10px var(--shadow-dark) !important;
-    transform: translateY(-2px);
-    color: #fff !important;
+/* Capa de fondo: la misma imagen, ampliada y difuminada, rellena todo el espacio */
+.img-backdrop {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: blur(20px) brightness(0.85) saturate(1.2);
+    transform: scale(1.3); /* evita ver bordes nítidos del blur */
+    z-index: 1;
 }
 
-.glass-btn-primary:active {
-    background-color: var(--accent-active) !important;
-    transform: translateY(0);
-    box-shadow: inset 3px 3px 8px rgba(0,0,0,0.2), inset -2px -2px 6px var(--shadow-light) !important;
+/* Tinte morado sobre el difuminado para que combine con la marca, sea cual sea la foto */
+.img-backdrop::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(157, 92, 224, 0.25);
+    mix-blend-mode: multiply;
 }
 
-/* Botón "WhatsApp" — mantiene su verde de marca, pero suavizado al estilo pastel */
-.glass-card .btn-success {
-    background-color: #25d366 !important;
-    border: none !important;
-    box-shadow: 4px 4px 10px var(--shadow-dark), -2px -2px 6px var(--shadow-light) !important;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+/* Imagen principal: siempre completa, nunca recortada, flotando centrada */
+.img-main {
+    position: relative;
+    z-index: 2;
+    max-width: 85%;
+    max-height: 85%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.35);
+    transition: transform 0.3s ease;
 }
 
-.glass-card .btn-success:hover {
-    background-color: #1fb955 !important;
-    transform: translateY(-2px);
-    box-shadow: 0 0 12px rgba(37, 211, 102, 0.4), 4px 4px 10px var(--shadow-dark) !important;
+.titi-glow-card:hover .img-main {
+    transform: scale(1.04);
 }
 
-.glass-card .btn-success:active {
-    transform: translateY(0);
-    box-shadow: inset 3px 3px 8px rgba(0,0,0,0.15) !important;
+.card-img-wrapper .no-img {
+    position: relative;
+    z-index: 2;
+    color: rgba(157, 92, 224, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.85rem;
 }
 
-/* Bloque de "Detalles Rápidos" (medida / acabado) dentro de la tarjeta */
-.glass-card .p-3.rounded-3 {
-    box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light) !important;
+/* Variante para tarjetas "Ya Gestionadas" (escala de grises) */
+.card-img-wrapper.is-managed .img-backdrop,
+.card-img-wrapper.is-managed .img-main {
+    filter: grayscale(80%);
+}
+.card-img-wrapper.is-managed .img-main {
+    filter: grayscale(80%) drop-shadow(0 6px 14px rgba(0,0,0,0.2));
 }
 
-/* Estado vacío: "No hay solicitudes nuevas" */
-.glass-card.text-center {
-    box-shadow: inset 4px 4px 10px var(--shadow-dark), inset -4px -4px 10px var(--shadow-light) !important;
-}
-
-/* Badge "RQ-0001" */
-.glass-card .badge {
-    font-weight: 600;
+/* --------------------------------------------------------------------------
+   Badges y botón flotante de PDF
+   -------------------------------------------------------------------------- */
+.top-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 3; /* clave: por encima del backdrop, si no queda tapado */
+    padding: 5px 8px;
     border-radius: 6px;
-    padding: 0.35rem 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    font-size: 0.75rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-/* Botón "Volver al Panel" */
-.btn-outline-secondary.rounded-pill {
-    color: var(--text-muted) !important;
-    border-color: var(--shadow-dark) !important;
-    background-color: var(--bg-base) !important;
-    transition: all 0.15s ease;
+.bg-purple {
+    background-color: var(--accent-purple) !important;
+    color: white;
 }
 
-.btn-outline-secondary.rounded-pill:hover {
-    color: var(--accent-purple) !important;
-    border-color: var(--accent-purple) !important;
-    box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light) !important;
+/* Botón PDF: ahora vive dentro del marco (no se corta con overflow: hidden) */
+.action-btn-float {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    z-index: 3;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: transform 0.2s;
+    text-decoration: none;
+}
+
+.pdf-btn {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.action-btn-float:hover {
+    transform: scale(1.1);
+    color: white;
+}
+
+/* --------------------------------------------------------------------------
+   Cuerpo de texto de la tarjeta
+   -------------------------------------------------------------------------- */
+.text-sm {
+    font-size: 0.82rem;
+    color: var(--text-main);
+}
+
+.text-purple {
+    color: var(--accent-purple);
+}
+
+.text-truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+}
+
+/* --------------------------------------------------------------------------
+   Botones de acción del footer
+   -------------------------------------------------------------------------- */
+.action-btn {
+    font-weight: 600;
+    transition: all 0.2s;
+    border: none;
+}
+
+.whatsapp-btn {
+    background-color: #e8f9f0;
+    color: #25d366;
+}
+
+.whatsapp-btn:hover {
+    background-color: #25d366;
+    color: white;
+}
+
+.cotizar-btn {
+    background-color: rgba(157, 92, 224, 0.1);
+    color: var(--accent-purple);
+}
+
+.cotizar-btn:hover {
+    background-color: var(--accent-purple);
+    color: white;
+}
+
+/* --------------------------------------------------------------------------
+   Pestañas (Tabs) de filtro
+   -------------------------------------------------------------------------- */
+.titi-nav-pills .nav-link {
+    color: rgba(157, 92, 224, 0.6);
+    border-radius: 30px;
+    font-weight: 600;
+    padding: 8px 24px;
+    margin-right: 10px;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.titi-nav-pills .nav-link:hover {
+    background-color: rgba(157, 92, 224, 0.05);
+}
+
+.titi-nav-pills .nav-link.active {
+    background-color: var(--accent-purple);
+    color: white;
+    box-shadow: 0 4px 12px rgba(157, 92, 224, 0.3);
 }

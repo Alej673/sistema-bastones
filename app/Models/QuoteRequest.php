@@ -20,7 +20,8 @@ class QuoteRequest extends Model
         'colores', 
         'descripcion_diseno_especial', 
         'imagen_path', 
-        'estado'
+        'estado',
+        'precio_final'
     ];
 
     // Convertir automáticamente los campos JSON a Arrays de PHP

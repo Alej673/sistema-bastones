@@ -59,8 +59,8 @@
                         @error('categoria') <span class="text-danger small">{{ $message }}</span> @enderror
                     </div>
 
-                    <!-- Medida Base: opcional -->
-                    <div class="col-md-3">
+                <!-- Medida Base -->
+                    <div class="col-md-3" id="wrapper_medida">
                         <label for="medida_cm" class="form-label" style="color: var(--text-main);">Medida Base</label>
                         <select name="medida_cm" id="medida_cm"
                                 class="form-select form-control-dark select2-form"
@@ -70,12 +70,13 @@
                             <option value="45">45 cm</option>
                             <option value="55">55 cm</option>
                             <option value="60">60 cm</option>
+                            <option value="na" class="d-none">N/A</option>
                         </select>
                         @error('medida_cm') <span class="text-danger small">{{ $message }}</span> @enderror
                     </div>
 
-                    <!-- Nivel de Diseño: opcional -->
-                    <div class="col-md-3">
+                    <!-- Nivel de Diseño -->
+                    <div class="col-md-3" id="wrapper_diseno">
                         <label for="nivel_diseno" class="form-label" style="color: var(--text-main);">Nivel de Diseño</label>
                         <select name="nivel_diseno" id="nivel_diseno"
                                 class="form-select form-control-dark select2-form"
@@ -84,12 +85,13 @@
                             <option value="basico">Básico</option>
                             <option value="intermedio">Intermedio</option>
                             <option value="premium">Premium</option>
+                            <option value="na" class="d-none">N/A</option>
                         </select>
                         @error('nivel_diseno') <span class="text-danger small">{{ $message }}</span> @enderror
                     </div>
 
-                    <!-- Volumen Accesorios: opcional -->
-                    <div class="col-md-3">
+                    <!-- Volumen Accesorios -->
+                    <div class="col-md-3" id="wrapper_accesorios">
                         <label for="nivel_accesorios" class="form-label" style="color: var(--text-main);">Volumen Accesorios</label>
                         <select name="nivel_accesorios" id="nivel_accesorios"
                                 class="form-select form-control-dark select2-form"
@@ -98,10 +100,10 @@
                             <option value="estandar">Estándar</option>
                             <option value="detallado">Detallado</option>
                             <option value="personalizado_pro">Personalizado</option>
+                            <option value="na" class="d-none">N/A</option>
                         </select>
                         @error('nivel_accesorios') <span class="text-danger small">{{ $message }}</span> @enderror
                     </div>
-                </div>
 
                 <div class="mb-4">
                     <label for="descripcion" class="form-label" style="color: var(--text-main);">Descripción de acabados y detalles (Opcional)</label>
@@ -627,6 +629,75 @@
             $('#edit_nivel_diseno').val(diseno || '').trigger('change');
             $('#edit_nivel_accesorios').val(accesorios || '').trigger('change');
         }
+
+        // ===== LÓGICA DE CATEGORÍAS DINÁMICAS =====
+        function adaptarCamposPorCategoria(categoriaSelec, prefix = '') {
+            let categoria = $(categoriaSelec).val();
+            
+            // Los wrappers que vamos a mostrar/ocultar
+            let wrapMedida = $('#' + prefix + 'wrapper_medida');
+            let wrapDiseno = $('#' + prefix + 'wrapper_diseno');
+            let wrapAccesorios = $('#' + prefix + 'wrapper_accesorios');
+            
+            // Los selects a los que les cambiaremos el valor
+            let selMedida = $('#' + prefix + 'medida_cm');
+            let selDiseno = $('#' + prefix + 'nivel_diseno');
+            let selAccesorios = $('#' + prefix + 'nivel_accesorios');
+
+            if (categoria === 'baston') {
+                // Si es bastón: Mostramos las columnas y obligamos a llenar la medida
+                wrapMedida.show();
+                wrapDiseno.show();
+                wrapAccesorios.show();
+                
+                selMedida.prop('required', true);
+                
+                // Si estaba en 'na', lo limpiamos para que elija uno real
+                if(selMedida.val() === 'na') selMedida.val('').trigger('change');
+                if(selDiseno.val() === 'na') selDiseno.val('').trigger('change');
+                if(selAccesorios.val() === 'na') selAccesorios.val('').trigger('change');
+
+            } else if (categoria === 'manualidad') {
+                // ESCENARIO 2 (Manualidad): Solo mostramos el Nivel de Diseño
+                wrapMedida.hide();
+                wrapAccesorios.hide();
+                wrapDiseno.show(); // <-- ¡Aquí lo mantenemos visible!
+                
+                selMedida.prop('required', false);
+                
+                // Forzamos 'na' solo para Medida y Accesorios
+                selMedida.val('na').trigger('change');
+                selAccesorios.val('na').trigger('change');
+                
+                // Si Diseño estaba en 'na' (porque antes eligió un lazo, por ejemplo), lo limpiamos
+                if(selDiseno.val() === 'na') selDiseno.val('').trigger('change');
+
+            } else {
+                // Si es lazo, manualidad o aplique: Ocultamos y forzamos el valor 'na'
+                wrapMedida.hide();
+                wrapDiseno.hide();
+                wrapAccesorios.hide();
+                
+                selMedida.prop('required', false);
+                
+                // Forzamos el valor 'na' y avisamos a Select2 que se actualice
+                selMedida.val('na').trigger('change');
+                selDiseno.val('na').trigger('change');
+                selAccesorios.val('na').trigger('change');
+            }
+        }
+
+        // 1. Escuchar cambios en el formulario de creación
+        $('#categoria').on('change', function() {
+            adaptarCamposPorCategoria(this, '');
+        });
+
+        // (Opcional) Si en tu modal de Edición tienes los mismos campos, 
+        // puedes hacer que también reaccione agregándole el id '#edit_categoria'
+        $('#edit_categoria').on('change', function() {
+            // Asume que a los wrappers del modal de edición les pusiste id="edit_wrapper_medida", etc.
+            adaptarCamposPorCategoria(this, 'edit_'); 
+        });
     </script>
 
     <style>

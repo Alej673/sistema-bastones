@@ -74,6 +74,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/mi-cuenta/cotizar-nuevo', [App\Http\Controllers\QuoteRequestController::class, 'create'])->name('cotizacion.crear');
     Route::post('/cotizar', [App\Http\Controllers\QuoteRequestController::class, 'store'])->name('cotizacion.store');
     Route::get('/cotizacion/{id}/pdf', [App\Http\Controllers\QuoteRequestController::class, 'descargarPDF'])->name('cotizacion.pdf');
+    Route::get('/pedidos/{id}/pdf-nota', [App\Http\Controllers\CotizadorController::class, 'generarPdfNota'])->name('pedidos.pdf_nota');
 });
 
 
@@ -111,7 +112,6 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         Route::get('/buscar-cintas', 'buscarCintas')->name('cintas.buscar');
 
         Route::get('/pedidos/{id}/pdf-receta', 'generarPdfReceta')->name('pedidos.pdf_receta');
-        Route::get('/pedidos/{id}/pdf-nota', 'generarPdfNota')->name('pedidos.pdf_nota');
         Route::post('/pedidos/enviar-correo', 'enviarCorreo')->name('pedidos.enviar_correo');
     });
 

@@ -1,7 +1,7 @@
-@extends('layouts.admin') {{-- Ajusta al nombre de tu layout principal --}}
+@extends('layouts.admin') 
 
 @section('contenido')
-<div class="container-fluid">
+<div class="container-fluid py-2">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="fw-bold" style="color: var(--text-main);">
             <i class="fa-solid fa-inbox me-2" style="color: var(--accent-purple);"></i> Buzón de Solicitudes Web
@@ -11,66 +11,124 @@
         </a>
     </div>
 
-    @if($solicitudes->isEmpty())
-        <div class="alert text-center py-5 glass-card">
-            <i class="fa-regular fa-envelope-open fa-3x mb-3 text-muted"></i>
-            <h5 class="text-muted">No hay solicitudes nuevas</h5>
-            <p class="small">Las cotizaciones solicitadas desde la web aparecerán aquí.</p>
-        </div>
-    @else
-        <div class="row">
-            @foreach($solicitudes as $solicitud)
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card glass-card h-100 border-0 shadow-sm">
-                        <div class="card-header border-bottom-0 bg-transparent pt-4 pb-0 d-flex justify-content-between">
-                            <span class="badge" style="background-color: rgba(var(--accent-purple-rgb), 0.1); color: var(--accent-purple);">
-                                RQ-{{ str_pad($solicitud->id, 4, '0', STR_PAD_LEFT) }}
-                            </span>
-                            <small class="text-muted">{{ $solicitud->created_at->diffForHumans() }}</small>
-                        </div>
-                        <div class="card-body">
-                            <h5 class="fw-bold mb-1" style="color: var(--text-main);">{{ $solicitud->user->name }}</h5>
-                            <p class="text-muted small mb-3"><i class="fa-solid fa-envelope me-1"></i> {{ $solicitud->user->email }}</p>
+    <!-- Navegación de Pestañas (Filtros) -->
+    <ul class="nav nav-pills mb-4 titi-nav-pills" id="inboxTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="pendientes-tab" data-bs-toggle="pill" data-bs-target="#pendientes-pane" type="button" role="tab">
+                <i class="fas fa-bell me-1"></i> Nuevas (Pendientes) <span class="badge bg-white text-dark ms-1">{{ $pendientes->count() }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="gestionadas-tab" data-bs-toggle="pill" data-bs-target="#gestionadas-pane" type="button" role="tab">
+                <i class="fas fa-check-double me-1"></i> Ya Gestionadas <span class="badge bg-white text-dark ms-1">{{ $gestionadas->count() }}</span>
+            </button>
+        </li>
+    </ul>
 
-                            {{-- Detalles Rápidos --}}
-                            <div class="p-3 rounded-3 mb-3" style="background-color: var(--bg-base);">
-                                <div class="row text-center text-muted small">
-                                    <div class="col-6 border-end">
-                                        <span class="d-block fw-bold" style="color: var(--text-main);">{{ $solicitud->medida_cm }} cm</span>
-                                        Medida
+    <!-- Contenido de las Pestañas -->
+    <div class="tab-content" id="inboxTabsContent">
+        
+        <!-- PESTAÑA 1: NUEVAS (PENDIENTES) -->
+        <div class="tab-pane fade show active" id="pendientes-pane" role="tabpanel">
+            @if($pendientes->isEmpty())
+                <div class="alert text-center py-5 titi-glow-card">
+                    <i class="fa-regular fa-envelope-open fa-3x mb-3 text-muted"></i>
+                    <h5 class="text-muted">No hay solicitudes nuevas</h5>
+                    <p class="small">Todo está al día.</p>
+                </div>
+            @else
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                    @foreach($pendientes as $solicitud)
+                        <div class="col">
+                            <div class="titi-glow-card">
+                                <!-- Cabecera de Imagen -->
+                                <div class="card-img-wrapper">
+                                    @if($solicitud->imagen_path)
+                                        <div class="img-backdrop" style="background-image: url('{{ asset('storage/'.$solicitud->imagen_path) }}');"></div>
+                                        <img src="{{ asset('storage/' . $solicitud->imagen_path) }}" alt="Referencia" class="img-main">
+                                    @else
+                                        <div class="no-img"><i class="fas fa-image fa-2x mb-2"></i> Sin imagen</div>
+                                    @endif
+
+                                    <span class="badge top-badge bg-purple">RQ-{{ str_pad($solicitud->id, 4, '0', STR_PAD_LEFT) }}</span>
+                                    <a href="{{ route('cotizacion.pdf', $solicitud->id) }}" target="_blank" class="action-btn-float pdf-btn" title="Descargar PDF de la Cotización">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </a>
+                                </div>
+                                
+                                <!-- Cuerpo de la Tarjeta -->
+                                <div class="card-body p-3">
+                                    <h5 class="fw-bold mb-0 text-truncate" style="color: var(--accent-purple);">{{ $solicitud->nombre }}</h5>
+                                    <small class="text-muted d-block mb-3"><i class="far fa-clock me-1"></i> hace {{ $solicitud->created_at->diffForHumans(null, true) }}</small>
+
+                                    <div class="d-flex gap-2 mb-3">
+                                        <span class="badge bg-light text-dark border"><i class="fas fa-ruler-vertical text-purple"></i> {{ $solicitud->medida_cm }} cm</span>
+                                        <span class="badge bg-light text-dark border"><i class="fas fa-paint-brush text-purple"></i> {{ $solicitud->acabado }}</span>
                                     </div>
-                                    <div class="col-6">
-                                        <span class="d-block fw-bold" style="color: var(--text-main);">{{ $solicitud->acabado }}</span>
-                                        Acabado
-                                    </div>
+
+                                    <p class="mb-1 text-sm"><i class="fas fa-palette text-purple"></i> <strong>Color/Modelo:</strong> {{ $solicitud->colores ?? 'N/A' }}</p>
+                                    <p class="mb-3 text-sm text-truncate-2"><i class="fas fa-comment-dots text-purple"></i> <strong>Detalles:</strong> {{ $solicitud->descripcion_diseno_especial ?: 'Sin detalles adicionales.' }}</p>
+                                </div>
+                                
+                                <!-- Botones de Acción -->
+                                <div class="card-footer d-flex justify-content-between align-items-center bg-transparent border-0 pt-0 pb-3 px-3">
+                                    <a href="https://wa.me/593{{ ltrim($solicitud->telefono, '0') }}?text={{ urlencode('Hola ' . $solicitud->nombre . ', recibí tu solicitud web. ¡Conversemos sobre tu diseño!') }}" target="_blank" class="btn btn-sm action-btn whatsapp-btn rounded-pill px-3">
+                                        <i class="fab fa-whatsapp me-1"></i> Escribir
+                                    </a>
+                                    
+                                    <a href="{{ route('cotizador.create', ['rq' => $solicitud->id]) }}" class="btn btn-sm action-btn cotizar-btn rounded-pill px-3">
+                                        <i class="fas fa-calculator me-1"></i> Cotizar
+                                    </a>
                                 </div>
                             </div>
-                            
-                            {{-- Resumen de la solicitud --}}
-                            <p class="small text-muted mb-4">
-                                <i class="fa-solid fa-palette me-1"></i> Cuerpo: {{ implode(', ', json_decode($solicitud->colores_cuerpo ?? '[]')) }}<br>
-                                @if($solicitud->incluye_cortina_lana)
-                                    <i class="fa-solid fa-check text-success me-1"></i> Cortina Lana<br>
-                                @endif
-                                <i class="fa-solid fa-comment-dots me-1"></i> <strong>Detalles:</strong> {{ $solicitud->descripcion_diseno_especial ?: 'Sin detalles adicionales.' }}
-                            </p>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
 
-                            {{-- Botones de Acción --}}
-                            <div class="d-flex gap-2 mt-auto">
-                                <a href="https://wa.me/593{{ ltrim($solicitud->telefono, '0') }}?text={{ urlencode('Hola ' . $solicitud->user->name . ', recibí tu solicitud para el bastón de ' . $solicitud->medida_cm . 'cm. ¡Conversemos sobre los detalles!') }}" 
-                                   target="_blank" 
-                                   class="btn btn-success flex-grow-1 rounded-3 fw-bold small">
-                                    <i class="fa-brands fa-whatsapp me-1"></i> WhatsApp
-                                </a>
-                                <a href="{{ route('cotizador.create') }}" class="btn glass-btn-primary flex-grow-1 rounded-3 fw-bold small">
-                                    <i class="fa-solid fa-calculator me-1"></i> Cotizar
-                                </a>
+        <!-- PESTAÑA 2: YA GESTIONADAS -->
+        <div class="tab-pane fade" id="gestionadas-pane" role="tabpanel">
+            @if($gestionadas->isEmpty())
+                <div class="alert text-center py-5 titi-glow-card">
+                    <i class="fas fa-box-open fa-3x mb-3 text-muted"></i>
+                    <h5 class="text-muted">Aún no hay historial</h5>
+                    <p class="small">Aquí verás las solicitudes que ya fueron cotizadas o vinculadas al inventario.</p>
+                </div>
+            @else
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 opacity-75">
+                    @foreach($gestionadas as $solicitud)
+                        <div class="col">
+                            <div class="titi-glow-card">
+                                <div class="card-img-wrapper is-managed">
+                                    @if($solicitud->imagen_path)
+                                        <div class="img-backdrop" style="background-image: url('{{ asset('storage/'.$solicitud->imagen_path) }}');"></div>
+                                        <img src="{{ asset('storage/' . $solicitud->imagen_path) }}" alt="Referencia" class="img-main">
+                                    @else
+                                        <div class="no-img"><i class="fas fa-image fa-2x mb-2"></i> Sin imagen</div>
+                                    @endif
+                                    <span class="badge top-badge bg-secondary">RQ-{{ str_pad($solicitud->id, 4, '0', STR_PAD_LEFT) }}</span>
+                                    <span class="badge top-badge bg-success" style="left: auto; right: 12px; top: 12px;">{{ strtoupper($solicitud->estado) }}</span>
+                                </div>
+                                <div class="card-body p-3">
+                                    <h5 class="fw-bold mb-0 text-muted text-truncate">{{ $solicitud->nombre }}</h5>
+                                    <p class="mb-1 mt-2 text-sm"><strong>Modelo:</strong> {{ $solicitud->colores ?? 'N/A' }}</p>
+                                    @if($solicitud->precio_final)
+                                        <p class="mb-0 text-sm text-success fw-bold"><i class="fas fa-tag"></i> Cotizado en: ${{ $solicitud->precio_final }}</p>
+                                    @endif
+                                </div>
+                                <div class="card-footer bg-transparent border-0 pb-3 text-center">
+                                    <a href="{{ route('cotizacion.pdf', $solicitud->id) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill w-100">
+                                        <i class="fas fa-file-pdf me-1"></i> Ver PDF de Respaldo
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    @endforeach
                 </div>
-            @endforeach
+            @endif
         </div>
-    @endif
+
+    </div>
 </div>
 @endsection

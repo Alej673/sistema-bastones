@@ -384,6 +384,8 @@ window.abrirConsultaRapida = function (titulo, nivel, tamano, imagen) {
     document.getElementById('mc-nivel').innerText = nivel;
     document.getElementById('mc-tamano').innerText = tamano;
     document.getElementById('mc-imagen').src = imagen;
+    document.getElementById('mc-producto-titulo').value = titulo;
+    document.getElementById('mc-producto-imagen').value = imagen;
 
     // Resetear formulario y guardar referencia del producto actual
     const form = document.getElementById('formConsultaRapida');
@@ -426,33 +428,98 @@ document.addEventListener('DOMContentLoaded', function () {
         if (modalConsulta) modalConsulta.hide();
     });
 
-    // Acción: Guardar en el Sistema (Mockup para la Fase Actual)
+    // --- ACCIÓN: ENVIAR AL SISTEMA DESDE EL MODAL DEL CATÁLOGO ---
     document.getElementById('btnGuardarSistema')?.addEventListener('click', function () {
+        // 1. Capturamos los datos básicos
         const nombreCliente = document.getElementById('clienteNombre').value.trim();
+        const telefonoCliente = document.getElementById('clienteTelefono').value.trim();
         const mensaje = document.getElementById('clienteMensaje').value.trim();
+        const producto = document.getElementById('mc-producto-titulo').value;
+        const urlImagenCatalogo = document.getElementById('mc-producto-imagen').value;
 
-        if (!nombreCliente || !mensaje) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Campos incompletos',
-                text: 'Por favor ingresa tu nombre y lo que deseas consultar.',
-                confirmButtonColor: '#9D5CE0'
-            });
+        // 2. Validación rápida
+        if (!nombreCliente || !telefonoCliente || !mensaje) {
+            mostrarToast('warning', 'Campos incompletos', 'Por favor llena tu nombre, teléfono y consulta.');
             return;
         }
 
-        // Aquí a futuro harás un fetch() o $.ajax() a tu Controlador.
-        // Por ahora, cerramos el modal y mostramos la alerta de éxito.
-        if (modalConsulta) modalConsulta.hide();
+        // 3. Cambiamos el botón a estado "Cargando"
+        const btn = this;
+        const textoOriginal = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Enviando...';
+        btn.disabled = true;
 
-        Swal.fire({
-            icon: 'success',
-            title: '¡Consulta Registrada!',
-            html: 'Hemos guardado tu solicitud en nuestro sistema.<br>En esta fase de pruebas, te recomendamos usar también el botón de WhatsApp.',
-            confirmButtonColor: '#6B2FA3',
-            background: '#FBF6FF',
-            color: '#3B2D4A'
-        });
+        // Usamos un try-catch para que, si algo falla internamente, el botón se destrabe
+        try {
+            // Leemos los badges visuales (con protección por si acaso no existen)
+            const badgeTamano = document.getElementById('mc-tamano');
+            const badgeNivel = document.getElementById('mc-nivel');
+            
+            const medidaBadge = badgeTamano ? badgeTamano.innerText.trim() : 'na';
+            const nivelBadge = badgeNivel ? badgeNivel.innerText.trim() : 'na';
+
+            // 4. Armamos el paquete de datos para Laravel
+            const formData = new FormData();
+            formData.append('nombre', nombreCliente);
+            formData.append('telefono', telefonoCliente);
+            formData.append('cantidad', 1);
+            formData.append('medida_cm', medidaBadge);
+            formData.append('acabado', nivelBadge === 'na' ? 'na' : 'Plata');
+            formData.append('colores', `Basado en modelo: ${producto}`);
+            formData.append('descripcion_diseno_especial', mensaje);
+
+            // Si hay URL de imagen, la adjuntamos
+            if (urlImagenCatalogo) {
+                formData.append('imagen_catalogo_url', urlImagenCatalogo);
+            }
+
+            // 5. Enviamos a la ruta /cotizar
+            fetch('/cotizar', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest' // Fundamental para que Laravel devuelva JSON
+                }
+            })
+            .then(async response => {
+                const data = await response.json();
+                if (!response.ok) throw data;
+                return data;
+            })
+            .then(data => {
+                // Éxito: Ocultamos el modal y mostramos la alerta
+                if (typeof modalConsulta !== 'undefined' && modalConsulta) {
+                    modalConsulta.hide();
+                }
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Consulta Registrada!',
+                    text: 'Tu solicitud de personalización ha sido enviada al taller.',
+                    confirmButtonColor: 'var(--color-lila-fuerte)',
+                    background: 'var(--color-fondo-claro)',
+                    color: 'var(--color-texto-principal)'
+                });
+            })
+            .catch(error => {
+                // Error de servidor o validación
+                console.error('Error al guardar consulta en el servidor:', error);
+                mostrarToast('error', 'Ups...', 'No se pudo registrar la consulta. Revisa los datos.');
+            })
+            .finally(() => {
+                // 6. PASE LO QUE PASE, devolvemos el botón a la normalidad
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
+            });
+
+        } catch (err) {
+            // Si hay un error de sintaxis en el JS, lo atrapamos aquí para que no se congele
+            console.error('Error interno de JavaScript:', err);
+            mostrarToast('error', 'Error', 'Ocurrió un problema procesando el formulario.');
+            btn.innerHTML = textoOriginal;
+            btn.disabled = false;
+        }
     });
 
 });

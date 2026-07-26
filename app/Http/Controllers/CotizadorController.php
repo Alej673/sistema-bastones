@@ -10,6 +10,7 @@ use App\Models\Pedido;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\NotaVentaMailable;
 use App\Models\QuoteRequest;
+use Illuminate\Support\Facades\Auth;
 
 class CotizadorController extends Controller
 {
@@ -459,13 +460,28 @@ class CotizadorController extends Controller
 
     public function generarPdfNota($id)
     {
-        // 1. Buscamos el pedido
+        // 1. Buscamos el pedido solo con los materiales (sin forzar relaciones que no existen)
         $pedido = Pedido::with('materiales')->findOrFail($id);
 
-        // 2. Cargamos la vista de la nota de venta (diseño comercial)
+        // 2. RASTREO DEL DUEÑO (A prueba de fallos):
+        // Intentamos obtener el user_id directamente del pedido.
+        $dueno_id = $pedido->user_id;
+
+        // Si el pedido no tiene user_id directamente, pero tiene el ID de la solicitud web vinculada:
+        if (!$dueno_id && $pedido->quote_request_id) {
+            // Buscamos la solicitud original para ver de quién era
+            $solicitudOriginal = \App\Models\QuoteRequest::find($pedido->quote_request_id);
+            $dueno_id = $solicitudOriginal ? $solicitudOriginal->user_id : null;
+        }
+
+        // 3. SEGURIDAD:
+        if ($dueno_id != Auth::id() && Auth::user()->role !== 'admin') {
+            abort(403, 'No tienes permiso para ver esta nota de venta.');
+        }
+
+        // 4. Generar el PDF
         $pdf = Pdf::loadView('reportes.nota', compact('pedido'));
 
-        // 3. Renderizamos y mostramos
         return $pdf->stream('Nota_Venta_Pedido_' . $pedido->id . '.pdf');
     }
 

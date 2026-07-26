@@ -9,9 +9,9 @@ class ClienteController extends Controller
 {
     public function dashboard()
     {
-        // Recuperamos los pedidos/cotizaciones del usuario logueado
-        $pedidos = QuoteRequest::where('user_id', Auth::id()) // Cambiamos auth()->id() por Auth::id()
-            ->orderBy('created_at', 'desc')
+
+        $pedidos = QuoteRequest::where('user_id', Auth::id())
+            ->orderBy('updated_at', 'desc')
             ->get();
 
         return view('cliente.dashboard', compact('pedidos'));

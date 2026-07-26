@@ -75,6 +75,22 @@
             border-top: 1px solid #eee;
             padding-top: 20px;
         }
+
+        .imagen-caja {
+            width: 45%;
+            float: left;
+            text-align: center;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px dashed #ccc;
+            margin-top: 10px;
+        }
+        .imagen-caja img {
+            max-width: 100%;
+            max-height: 180px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -121,6 +137,20 @@
             * Incluye ensamblaje profesional y materiales estructurales internos.
         </p>
     </div>
+
+    <!-- Si el pedido tiene una imagen guardada (o si está vinculada a la solicitud web) -->
+    @if(isset($pedido->imagen_path) && $pedido->imagen_path)
+        <div class="imagen-caja">
+            <div style="font-size: 12px; color: #7f8c8d; margin-bottom: 5px;">Referencia Visual del Diseño</div>
+            <img src="{{ public_path('storage/' . $pedido->imagen_path) }}" alt="Referencia">
+        </div>
+    @elseif(isset($pedido->quoteRequest->imagen_path) && $pedido->quoteRequest->imagen_path)
+        <!-- Respaldo por si la imagen está en la tabla de solicitudes web vinculada -->
+        <div class="imagen-caja">
+            <div style="font-size: 12px; color: #7f8c8d; margin-bottom: 5px;">Referencia Visual del Diseño</div>
+            <img src="{{ public_path('storage/' . $pedido->quoteRequest->imagen_path) }}" alt="Referencia">
+        </div>
+    @endif
 
     <table class="totales-caja">
         <tr>
