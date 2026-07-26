@@ -44,7 +44,7 @@
 
                 @auth
                     <!-- Logueado: Abre el Modal de Consulta Rápida -->
-                    <button onclick="abrirConsultaRapida('{{ $item->titulo }}', '{{ $item->nivel_diseno ?? 'Básico' }}', '{{ $item->medida_cm ?? '50 cm' }}', '{{ asset('storage/' . $item->imagen_path) }}')" class="btn w-100 rounded-pill shadow-sm btn-titi-action" style="font-weight: 600; font-family: 'Inter', sans-serif; padding: 10px 0;">
+                    <button onclick="abrirConsultaRapida('{{ $item->titulo }}', '{{ $item->nivel_diseno ?? 'Básico' }}', '{{ $item->medida_cm ?? '50 cm' }}', '{{ asset('storage/' . $item->imagen_path) }}', '{{ $item->categoria ?? 'na' }}')" class="btn w-100 rounded-pill shadow-sm btn-titi-action" style="font-weight: 600; font-family: 'Inter', sans-serif; padding: 10px 0;">
                         <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Personalizar Modelo
                     </button>
                 @endauth

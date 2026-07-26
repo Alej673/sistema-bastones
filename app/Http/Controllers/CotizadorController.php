@@ -157,7 +157,42 @@ class CotizadorController extends Controller
             ->take(10)
             ->get();
 
-        return response()->json($solicitudes);
+        // PASO CLAVE: Formatear el texto a medida según el tipo de producto
+        $resultados = $solicitudes->map(function ($solicitud) {
+            $categoriaOriginal = strtolower($solicitud->categoria ?? 'general');
+            $categoriaFormateada = ucfirst($solicitud->categoria ?? 'Varios');
+
+            // Verificamos si es un bastón
+            $esBaston = in_array($categoriaOriginal, ['baston', 'bastones']);
+
+            if ($esBaston) {
+                // Extraemos medida y acabado (ignorando 'na')
+                $medida = (strtolower($solicitud->medida_cm) !== 'na' && $solicitud->medida_cm) 
+                            ? $solicitud->medida_cm . 'cm' : '';
+                $acabado = (strtolower($solicitud->acabado) !== 'na' && $solicitud->acabado) 
+                            ? $solicitud->acabado : '';
+                
+                $detalles = trim("$medida $acabado");
+                
+                // Resultado visual: (Bastón - 60cm Plata)
+                $extra = $detalles ? "{$categoriaFormateada} - {$detalles}" : $categoriaFormateada;
+            } else {
+                // Para Manualidades, Flores o Lazos, solo mostramos la categoría
+                // Resultado visual: (Manualidad)
+                $extra = $categoriaFormateada;
+            }
+
+            // Armamos el texto final inyectando el $extra
+            $texto = 'RQ-' . str_pad($solicitud->id, 4, '0', STR_PAD_LEFT) . ' | ' . $solicitud->nombre . ' (' . $extra . ')';
+
+            // Inyectamos la propiedad 'text' al objeto para Select2
+            $solicitud->text = $texto;
+            
+            return $solicitud;
+        });
+
+        // Devolvemos los resultados ya limpios
+        return response()->json($resultados);
     }
 
     public function guardar(Request $request)

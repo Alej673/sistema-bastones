@@ -67,6 +67,7 @@
                     <!-- Campos Ocultos para capturar la referencia del bastón actual -->
                     <input type="hidden" id="mc-producto-titulo" name="producto_referencia">
                     <input type="hidden" id="mc-producto-imagen" name="imagen_referencia_url">
+                    <input type="hidden" id="mc-producto-categoria" name="categoria">
 
                     <div class="mb-3">
                         <label class="form-label" style="color: var(--color-texto-principal); font-weight: 500;">Tu Nombre *</label>
@@ -77,7 +78,7 @@
                     <div class="mb-3">
 
                         <label class="form-label" style="color: var(--color-texto-principal); font-weight: 500;">Teléfono de Contacto (WhatsApp) *</label>
-                        <input type="text" class="form-control" id="clienteTelefono" name="telefono" placeholder="Ej. 0984922541" required>
+                        <input type="text" class="form-control" id="clienteTelefono" name="telefono" placeholder="Ej. 098xxxxx21" required>
 
                     </div>
 

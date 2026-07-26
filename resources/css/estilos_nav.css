@@ -121,12 +121,13 @@ hr.border-secondary {
 /* ==========================================================================
    TARJETAS GLOW (Buzón Web)
    ========================================================================== */
+
 .titi-glow-card {
     background: var(--bg-base);
     border-radius: 16px;
     border: 1px solid rgba(157, 92, 224, 0.1);
     overflow: hidden;
-    box-shadow: 0 8px 20px rgba(157, 92, 224, 0.08), 0 4px 8px rgba(0,0,0,0.04);
+    box-shadow: 0 8px 20px rgba(157, 92, 224, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     height: 100%;
     display: flex;
@@ -135,11 +136,15 @@ hr.border-secondary {
 
 .titi-glow-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 25px rgba(157, 92, 224, 0.15), 0 6px 12px rgba(0,0,0,0.08);
+    box-shadow: 0 12px 25px rgba(157, 92, 224, 0.15), 0 6px 12px rgba(0, 0, 0, 0.08);
 }
 
 /* --------------------------------------------------------------------------
-   Cabecera visual de la tarjeta (imagen con fondo difuminado)
+   Cabecera visual de la tarjeta (imagen + fondo difuminado)
+   Estructura esperada (ver partial _solicitud_card_img.blade.php):
+     .card-img-wrapper
+       .img-backdrop   -> copia de la imagen, ampliada y difuminada, rellena el marco
+       img.img-main     -> imagen real, completa y centrada, nunca recortada
    -------------------------------------------------------------------------- */
 .card-img-wrapper {
     position: relative;
@@ -152,19 +157,21 @@ hr.border-secondary {
     border-bottom: 2px solid rgba(157, 92, 224, 0.05);
 }
 
-/* Capa de fondo: la misma imagen, ampliada y difuminada, rellena todo el espacio */
-.img-backdrop {
+/* Capa de fondo: la misma imagen, ampliada y difuminada, rellena todo el espacio.
+   Esto es lo que disimula cualquier proporción "rara" (vertical, cuadrada, panorámica)
+   sin recortar la imagen real. */
+.card-img-wrapper .img-backdrop {
     position: absolute;
-    inset: 0;
+    inset: -10px; /* un poco más grande que el marco para que el blur no deje bordes duros */
     background-size: cover;
     background-position: center;
-    filter: blur(20px) brightness(0.85) saturate(1.2);
-    transform: scale(1.3); /* evita ver bordes nítidos del blur */
+    filter: blur(22px) brightness(0.85) saturate(1.2);
+    transform: scale(1.35);
     z-index: 1;
 }
 
-/* Tinte morado sobre el difuminado para que combine con la marca, sea cual sea la foto */
-.img-backdrop::after {
+/* Tinte de marca sobre el difuminado, para que combine sea cual sea la foto */
+.card-img-wrapper .img-backdrop::after {
     content: '';
     position: absolute;
     inset: 0;
@@ -173,7 +180,7 @@ hr.border-secondary {
 }
 
 /* Imagen principal: siempre completa, nunca recortada, flotando centrada */
-.img-main {
+.card-img-wrapper .img-main {
     position: relative;
     z-index: 2;
     max-width: 85%;
@@ -182,11 +189,11 @@ hr.border-secondary {
     height: auto;
     object-fit: contain;
     border-radius: 10px;
-    box-shadow: 0 8px 22px rgba(0,0,0,0.35);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
     transition: transform 0.3s ease;
 }
 
-.titi-glow-card:hover .img-main {
+.titi-glow-card:hover .card-img-wrapper .img-main {
     transform: scale(1.04);
 }
 
@@ -205,8 +212,9 @@ hr.border-secondary {
 .card-img-wrapper.is-managed .img-main {
     filter: grayscale(80%);
 }
+
 .card-img-wrapper.is-managed .img-main {
-    filter: grayscale(80%) drop-shadow(0 6px 14px rgba(0,0,0,0.2));
+    filter: grayscale(80%) drop-shadow(0 6px 14px rgba(0, 0, 0, 0.2));
 }
 
 /* --------------------------------------------------------------------------
@@ -216,13 +224,13 @@ hr.border-secondary {
     position: absolute;
     top: 10px;
     left: 10px;
-    z-index: 3; /* clave: por encima del backdrop, si no queda tapado */
+    z-index: 3; /* siempre por encima del backdrop */
     padding: 5px 8px;
     border-radius: 6px;
     font-weight: 700;
     letter-spacing: 0.5px;
     font-size: 0.75rem;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .bg-purple {
@@ -230,7 +238,6 @@ hr.border-secondary {
     color: white;
 }
 
-/* Botón PDF: ahora vive dentro del marco (no se corta con overflow: hidden) */
 .action-btn-float {
     position: absolute;
     bottom: 12px;
@@ -244,7 +251,7 @@ hr.border-secondary {
     justify-content: center;
     color: white;
     font-size: 1rem;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s;
     text-decoration: none;
 }

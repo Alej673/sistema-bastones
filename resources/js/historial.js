@@ -332,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     results: $.map(data, function (item) {
                         return {
                             id: item.id,
-                            text: `RQ-${String(item.id).padStart(4, '0')} | ${item.user ? item.user.name : 'Cliente'} (${item.medida_cm}cm)`
+                            text: item.text 
                         };
                     })
                 };

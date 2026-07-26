@@ -25,6 +25,7 @@ class QuoteRequestController extends Controller
             'descripcion_diseno_especial' => 'nullable|string',
             'imagen_referencia' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'imagen_catalogo_url' => 'nullable|string',
+            'categoria' => 'nullable|string'
         ]);
 
         // 1. Si viene del formulario "Diseña desde cero" 

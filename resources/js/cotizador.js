@@ -347,8 +347,7 @@ $(document).ready(function () {
                     results: $.map(data, function (item) {
                         return {
                             id: item.id,
-                            // Formato amigable que verá tu mamá: "RQ-0045 | María Pérez (50cm Plata)"
-                            text: `RQ-${String(item.id).padStart(4, '0')} | ${item.user ? item.user.name : 'Cliente'} (${item.medida_cm}cm ${item.acabado})`
+                            text: item.text
                         };
                     })
                 };
