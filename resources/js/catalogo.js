@@ -405,8 +405,13 @@ window.abrirConsultaRapida = function (titulo, nivel, tamano, imagen, categoria)
 };
 
 // Función para usuarios NO logueados (Directo a WhatsApp sin modal)
-window.enviarWhatsAppDirecto = function(titulo) {
-    const textoWhatsapp = `Hola Taller Arte Titi_Val, me interesa el modelo *${titulo}*. ¿Me podrían dar más información?`;
+window.enviarWhatsAppDirecto = function(titulo, imagenUrl) {
+    const textoWhatsapp = 
+        `👋 Hola Taller Arte Titi_Val.%0A%0A` +
+        `Me interesa el modelo: *${titulo}*.%0A` +
+        `🔗 Link de referencia: ${imagenUrl}%0A%0A` +
+        `¿Me podrían dar más información o ayudarme a cotizar este diseño?`;
+
     window.open(`https://wa.me/${TELEFONO_TALLER}?text=${textoWhatsapp}`, '_blank');
 };
 
@@ -417,22 +422,37 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('btnConsultarWhatsapp')?.addEventListener('click', function () {
         const nombreCliente = document.getElementById('clienteNombre').value.trim();
         const mensaje = document.getElementById('clienteMensaje').value.trim();
-        const producto = document.getElementById('formConsultaRapida').dataset.productoActual;
+        
+        // Capturamos el producto y la URL de la imagen de los inputs ocultos que creamos antes
+        const producto = document.getElementById('mc-producto-titulo').value || document.getElementById('formConsultaRapida').dataset.productoActual;
+        const urlImagen = document.getElementById('mc-producto-imagen').value;
 
         if (!nombreCliente || !mensaje) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Campos incompletos',
-                text: 'Por favor ingresa tu nombre y lo que deseas consultar.',
-                confirmButtonColor: '#9D5CE0'
+                text: 'Por favor ingresa tu nombre y lo que deseas consultar para escribirte por WhatsApp.',
+                confirmButtonColor: '#25D366' // Color de WhatsApp para este botón
             });
             return;
         }
 
-        const textoWhatsapp = `Hola Taller Arte Titi_Val, soy ${nombreCliente}. Me interesa personalizar el modelo *${producto}*.%0A%0AMi consulta es: ${mensaje}`;
+        // Construimos un mensaje formateado con saltos de línea (%0A) y negritas de WhatsApp (*)
+        const textoWhatsapp = 
+            `👋 Hola Taller Arte Titi_Val, soy *${nombreCliente}*.%0A%0A` +
+            `Me interesa personalizar este modelo de su catálogo:%0A` +
+            `*${producto}*%0A` +
+            `🔗 Link de referencia: ${urlImagen}%0A%0A` +
+            `📝 *Mi consulta es:*%0A` +
+            `${mensaje}`;
 
+        // Abrimos WhatsApp en una nueva pestaña
         window.open(`https://wa.me/${TELEFONO_TALLER}?text=${textoWhatsapp}`, '_blank');
-        if (modalConsulta) modalConsulta.hide();
+        
+        // Ocultamos el modal para limpiar la pantalla
+        if (typeof modalConsulta !== 'undefined' && modalConsulta) {
+            modalConsulta.hide();
+        }
     });
 
     // --- ACCIÓN: ENVIAR AL SISTEMA DESDE EL MODAL DEL CATÁLOGO ---
@@ -645,23 +665,44 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!response.ok) throw data;
             return data;
         })
-        .then(data => {
+.       then(data => {
             if (!data.success) return;
 
+            // 1. Capturamos todos los valores directamente desde el formulario HTML
+            const nombre = form.querySelector('[name="nombre"]')?.value.trim() || 'Cliente';
             const cantidad = form.querySelector('#cantidad')?.value || '1';
-            let mensaje = `Hola Taller Arte Titi_Val, quiero cotizar *${cantidad} bastón/es* para bastoneras. `;
-            if (data.datos.colores) mensaje += `Colores: ${data.datos.colores}. `;
-            if (data.datos.detalles) mensaje += `Detalles: ${data.datos.detalles}. `;
-            if (data.url_imagen) mensaje += `Mi referencia visual: ${data.url_imagen}`;
+            const medida = form.querySelector('[name="medida_cm"]')?.value;
+            const acabado = form.querySelector('[name="acabado"]')?.value;
+            const colores = form.querySelector('[name="colores"]')?.value.trim();
+            const detalles = form.querySelector('[name="descripcion_diseno_especial"]')?.value.trim();
+            
+            // 2. Lógica para el plural
+            const textoCantidad = cantidad === '1' ? '1 bastón' : `${cantidad} bastones`;
+            
+            // 3. Construimos bloques individuales con emojis y saltos de línea (%0A)
+            const medidaTexto = medida ? `📏 *Medida:* ${medida} cm%0A` : '';
+            const acabadoTexto = acabado ? `✨ *Acabado del tubo:* ${acabado}%0A` : '';
+            const coloresTexto = colores ? `🎨 *Colores:* ${colores}%0A` : '';
+            const detallesTexto = detalles ? `📝 *Detalles extra:* ${detalles}%0A` : '';
+            // La imagen es lo único que sí leemos del servidor (data.url_imagen)
+            const imagenTexto = data.url_imagen ? `%0A🔗 *Referencia visual:* ${data.url_imagen}%0A` : '';
 
-            const urlWhatsApp = `https://wa.me/${TELEFONO_TALLER}?text=${encodeURIComponent(mensaje)}`;
+            // 4. Unimos todo con el formato limpio
+            const textoWhatsapp = 
+                `👋 Hola Taller Arte Titi_Val, soy *${nombre}*.%0A%0A` +
+                `Quiero cotizar *${textoCantidad}* diseñado desde cero con estas características:%0A%0A` +
+                medidaTexto +
+                acabadoTexto +
+                coloresTexto +
+                detallesTexto +
+                imagenTexto;
+
+            // 5. Enviamos a WhatsApp
+            const urlWhatsApp = `https://wa.me/${TELEFONO_TALLER}?text=${textoWhatsapp.trim()}`;
             window.open(urlWhatsApp, '_blank');
 
             mostrarToast('success', '¡Genial!', 'Te redirigimos a WhatsApp.');
             
-            // Si quieres limpiar el form después de mandarlo a WP, descomenta esto:
-            // form.reset();
-            // btnQuitarImagen.click();
         })
         .catch(error => {
             console.error('Error:', error);

@@ -25,24 +25,47 @@
     </div>
 
     <div class="content">
-        <h3>Datos del Cliente</h3>
+        <h3>Datos de la Solicitud</h3>
         <p><strong>Nombre:</strong> {{ $cotizacion->nombre }}</p>
         <p><strong>Teléfono:</strong> {{ $cotizacion->telefono }}</p>
         <p><strong>Estado:</strong> {{ ucfirst($cotizacion->estado) }}</p>
+        <!-- NUEVO: Agregamos la categoría para dar contexto inmediato a la orden de producción -->
+        <p><strong>Categoría:</strong> {{ ucfirst($cotizacion->categoria ?? 'General') }}</p>
 
         <h3>Detalles de Fabricación</h3>
+        @php
+            // Evaluamos si los datos son válidos y diferentes de "na"
+            $mostrarMedida = !empty($cotizacion->medida_cm) && strtolower($cotizacion->medida_cm) !== 'na';
+            $mostrarAcabado = !empty($cotizacion->acabado) && strtolower($cotizacion->acabado) !== 'na';
+        @endphp
+
         <table class="table">
             <tr>
                 <th>Cantidad</th>
-                <th>Medida</th>
-                <th>Acabado</th>
+                
+                <!-- Ocultamos la columna completa si no aplica -->
+                @if($mostrarMedida)
+                    <th>Medida</th>
+                @endif
+                
+                @if($mostrarAcabado)
+                    <th>Acabado</th>
+                @endif
+                
                 <th>Modelo / Colores</th>
             </tr>
             <tr>
                 <td>{{ $cotizacion->cantidad }}</td>
-                <td>{{ $cotizacion->medida_cm }} cm</td>
-                <td>{{ $cotizacion->acabado }}</td>
-                <td>{{ $cotizacion->colores }}</td>
+                
+                @if($mostrarMedida)
+                    <td>{{ $cotizacion->medida_cm }} cm</td>
+                @endif
+                
+                @if($mostrarAcabado)
+                    <td>{{ ucfirst($cotizacion->acabado) }}</td>
+                @endif
+                
+                <td>{{ $cotizacion->colores ?? 'N/A' }}</td>
             </tr>
         </table>
 

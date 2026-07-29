@@ -16,7 +16,7 @@
         <div class="row g-3 align-items-end justify-content-center">
 
             <!-- Filtro: Medida (SOLO APARECE PARA BASTONES) -->
-            @if($categoria === 'baston')
+            @if($categoria === 'baston' || $categoria === 'bastones')
             <div class="col-md-3">
                 <label class="filtro-label d-block">Medida Base</label>
                 <select name="medida" class="form-select filtro-select">
@@ -29,7 +29,7 @@
             </div>
             @endif
 
-            <!-- Filtro: Nivel de Diseño -->
+            <!-- Filtro: Nivel de Diseño (SIEMPRE VISIBLE) -->
             <div class="col-md-3">
                 <label class="filtro-label d-block">Nivel de Diseño</label>
                 <select name="diseno" class="form-select filtro-select">
@@ -40,7 +40,8 @@
                 </select>
             </div>
 
-            <!-- Filtro: Volumen de Accesorios -->
+            <!-- Filtro: Volumen de Accesorios (NO APARECE PARA LAZOS NI APLIQUES/FLORES) -->
+            @if(!in_array(strtolower($categoria), ['lazo', 'lazos', 'aplique', 'apliques', 'flor', 'flores', 'aplique-flor', 'aplique_flor']))
             <div class="col-md-3">
                 <label class="filtro-label d-block">Volumen Accesorios</label>
                 <select name="accesorios" class="form-select filtro-select">
@@ -50,6 +51,7 @@
                     <option value="personalizado_pro" {{ request('accesorios') == 'personalizado_pro' ? 'selected' : '' }}>Personalizado Pro</option>
                 </select>
             </div>
+            @endif
 
             <!-- Botones de Acción -->
             <div class="col-md-auto d-flex gap-2">

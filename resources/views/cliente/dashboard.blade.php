@@ -41,7 +41,7 @@
                             <tr>
                                 <th># Solicitud</th>
                                 <th>Fecha</th>
-                                <th>Detalles del Bastón</th>
+                                <th>Detalles del Producto</th>
                                 <th>Estado</th>
                                 <th>Total Cotizado</th>
                                 <th class="text-end">Acciones</th>
@@ -57,8 +57,28 @@
                                     {{ $pedido->created_at->format('d M, Y') }}
                                 </td>
                                 <td>
-                                    {{ $pedido->cantidad_bastones }}x Bastón ({{ $pedido->medida_cm }}cm) <br>
-                                    <small style="color: var(--color-texto-mutado);">Acabado: {{ $pedido->acabado }}</small>
+                                    @php
+                                        $categoriaFormateada = ucfirst($pedido->categoria ?? 'Bastón');
+                                        $cantidad = $pedido->cantidad ?? 1;
+                                        $mostrarMedida = !empty($pedido->medida_cm) && strtolower($pedido->medida_cm) !== 'na';
+                                        $mostrarAcabado = !empty($pedido->acabado) && strtolower($pedido->acabado) !== 'na';
+                                    @endphp
+
+                                    <span class="fw-bold" style="color: var(--color-texto-principal);">
+                                        {{ $cantidad }}x {{ $categoriaFormateada }}
+                                    </span>
+
+                                    @if($mostrarMedida)
+                                        <span class="text-muted">({{ $pedido->medida_cm }} cm)</span>
+                                    @endif
+
+                                    <br>
+
+                                    @if($mostrarAcabado)
+                                        <small style="color: var(--color-texto-mutado);">Acabado: {{ ucfirst($pedido->acabado) }}</small>
+                                    @else
+                                        <small style="color: var(--color-texto-mutado);">Modelo: {{ $pedido->colores ?? 'N/A' }}</small>
+                                    @endif
                                 </td>
                                 <td>
                                     @if($pedido->estado == 'pendiente')
@@ -84,13 +104,11 @@
                                 </td>
                                 <td class="text-end">
                                     <div class="d-inline-flex gap-2">
-                                        {{-- Siempre visible: la solicitud original enviada por el cliente --}}
                                         <a href="{{ route('cotizacion.pdf', $pedido->id) }}" target="_blank" class="btn btn-sm btn-ver-mas" title="Ver Solicitud Original">
                                             <i class="bi bi-clipboard-check"></i> Ver Pedido
                                         </a>
 
                                         @if($pedido->estado === 'pendiente')
-                                            {{-- Aún no hay cotización final: mostramos el estado / WhatsApp --}}
                                             <button class="btn btn-sm btn-ver-mas" onclick="verDetallePendiente('{{ $pedido->id }}')">
                                                 <i class="bi bi-eye"></i> Ver Estado
                                             </button>
@@ -114,6 +132,14 @@
                         </tbody>
                     </table>
                 </div>
+
+                {{-- Paginación --}}
+                @if($pedidos->hasPages())
+                <div class="d-flex justify-content-center mt-4 titi-pagination">
+                    {{ $pedidos->onEachSide(1)->links() }}
+                </div>
+                @endif
+
             @endif
         </div>
     </div>
@@ -123,10 +149,7 @@
 <script>
     function verDetallePendiente(id) {
         const idFormateado = String(id).padStart(4, '0');
-        
-        // Capturamos el número dinámico directamente del dataset del body
-        const numeroTaller = document.body.dataset.telefono; 
-        
+        const numeroTaller = document.body.dataset.telefono;
         const mensajeWa = encodeURIComponent(`Hola, quisiera consultar el estado de mi solicitud web RQ-${idFormateado}.`);
 
         Swal.fire({

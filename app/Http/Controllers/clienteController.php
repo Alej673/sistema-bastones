@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\QuoteRequest; 
-use Illuminate\Support\Facades\Auth; // Agregamos la fachada Auth
+use Illuminate\Support\Facades\Auth;
 
 class ClienteController extends Controller
 {
@@ -12,7 +12,8 @@ class ClienteController extends Controller
 
         $pedidos = QuoteRequest::where('user_id', Auth::id())
             ->orderBy('updated_at', 'desc')
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         return view('cliente.dashboard', compact('pedidos'));
     }

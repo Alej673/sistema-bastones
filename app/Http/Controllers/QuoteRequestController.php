@@ -20,7 +20,7 @@ class QuoteRequestController extends Controller
             'telefono' => 'required|string|max:20', 
             'cantidad' => 'required|integer|min:1', // Cambiado de cantidad_bastones
             'medida_cm' => 'required|in:45,50,55,60,na', 
-            'acabado' => 'required|in:Plata,Oro,na',
+            'acabado' => 'required|in:Plata,Dorado,na',
             'colores' => 'nullable|string', // Reemplaza a todos los arrays de colores
             'descripcion_diseno_especial' => 'nullable|string',
             'imagen_referencia' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',

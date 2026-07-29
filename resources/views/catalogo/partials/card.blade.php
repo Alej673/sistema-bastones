@@ -37,7 +37,7 @@
             <div class="mt-auto">
                 @guest
                     <!-- Invitado: Directo a WhatsApp -->
-                    <button onclick="enviarWhatsAppDirecto('{{ $item->titulo }}')" class="btn w-100 rounded-pill shadow-sm btn-titi-action" style="font-weight: 600; font-family: 'Inter', sans-serif; padding: 10px 0;">
+                    <button onclick="enviarWhatsAppDirecto('{{ $item->titulo }}', '{{ asset('storage/' . $item->imagen_path) }}')" class="btn w-100 rounded-pill shadow-sm btn-titi-action" style="font-weight: 600; font-family: 'Inter', sans-serif; padding: 10px 0;">
                         <i class="fa-brands fa-whatsapp me-2"></i> Consultar Modelo
                     </button>
                 @endguest

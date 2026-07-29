@@ -20,7 +20,7 @@
     <!-- 1. FORMULARIO DE SUBIDA -->
     <div class="card card-catalogo mb-4 shadow-sm">
         <div class="card-header card-header-purple fw-bold py-3">
-            <i class="fa-solid fa-plus-circle me-2"></i> Añadir Nuevo Modelo a la Landing Page
+            <i class="fa-solid fa-plus-circle me-2"></i> Añadir Nuevo Modelo al Catálogo
         </div>
         <div class="card-body p-4">
             <form action="{{ route('admin.catalogo.store') }}" method="POST" enctype="multipart/form-data">

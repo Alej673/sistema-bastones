@@ -15,12 +15,12 @@
     <ul class="nav nav-pills mb-4 titi-nav-pills" id="inboxTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="pendientes-tab" data-bs-toggle="pill" data-bs-target="#pendientes-pane" type="button" role="tab">
-                <i class="fas fa-bell me-1"></i> Nuevas (Pendientes) <span class="badge bg-white text-dark ms-1">{{ $pendientes->count() }}</span>
+                <i class="fas fa-bell me-1"></i> Nuevas (Pendientes) <span class="badge bg-white text-dark ms-1">{{ $pendientes->total() }}</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="gestionadas-tab" data-bs-toggle="pill" data-bs-target="#gestionadas-pane" type="button" role="tab">
-                <i class="fas fa-check-double me-1"></i> Ya Gestionadas <span class="badge bg-white text-dark ms-1">{{ $gestionadas->count() }}</span>
+                <i class="fas fa-check-double me-1"></i> Ya Gestionadas <span class="badge bg-white text-dark ms-1">{{ $gestionadas->total() }}</span>
             </button>
         </li>
     </ul>
@@ -77,6 +77,12 @@
                     </div>
                 @endforeach
                 </div>
+
+                @if($pendientes->hasPages())
+                <div class="d-flex justify-content-center mt-4 titi-pagination">
+                    {{ $pendientes->onEachSide(1)->links() }}
+                </div>
+                @endif
             @endif
         </div>
 
@@ -112,9 +118,32 @@
                     </div>
                 @endforeach
                 </div>
+
+                @if($gestionadas->hasPages())
+                <div class="d-flex justify-content-center mt-4 titi-pagination">
+                    {{ $gestionadas->onEachSide(1)->links() }}
+                </div>
+                @endif
             @endif
         </div>
 
     </div>
 </div>
+
+@push('js')
+<script>
+    // Reactiva la pestaña correcta al recargar la página tras paginar
+    // (Bootstrap pills no conservan estado entre recargas por defecto)
+    document.addEventListener('DOMContentLoaded', function () {
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.has('gestionadas_page') && !params.has('pendientes_page')) {
+            const gestionadasTabBtn = document.getElementById('gestionadas-tab');
+            if (gestionadasTabBtn) {
+                new bootstrap.Tab(gestionadasTabBtn).show();
+            }
+        }
+    });
+</script>
+@endpush
 @endsection
