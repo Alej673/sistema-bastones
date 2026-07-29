@@ -108,11 +108,21 @@ class VentasController extends Controller
 
             // 1. Vincular a la Web (Si se seleccionó un ID)
             if ($request->filled('quote_request_id')) {
-                // Actualizamos el pedido físico
-                $pedido->quote_request_id = $request->quote_request_id;
-                $pedido->save();
+                
+                // --- LÓGICA DE LIMPIEZA (La que ya pusimos) ---
+                if ($pedido->quote_request_id != null && $pedido->quote_request_id != $request->quote_request_id) {
+                    $solicitudAnterior = \App\Models\QuoteRequest::find($pedido->quote_request_id);
+                    if ($solicitudAnterior) {
+                        $solicitudAnterior->estado = 'pendiente';
+                        $solicitudAnterior->precio_final = null; 
+                        $solicitudAnterior->save();
+                    }
+                }
 
-                // Actualizamos el estado y precio de la solicitud web para el cliente
+                // Actualizamos el pedido físico con el NUEVO ID
+                $pedido->quote_request_id = $request->quote_request_id;
+                
+                // Actualizamos el estado y precio de la solicitud web para el NUEVO cliente
                 $solicitudWeb = \App\Models\QuoteRequest::find($request->quote_request_id);
                 if ($solicitudWeb) {
                     $solicitudWeb->precio_final = $pedido->costo_total;
@@ -126,19 +136,32 @@ class VentasController extends Controller
                     } else {
                         $solicitudWeb->estado = 'cotizado';
                     }
-                    
                     $solicitudWeb->save();
+
+                    // --- NUEVO: ACTUALIZAR DATOS DEL CLIENTE EN EL PEDIDO ---
+                    // Usamos 'cliente_nombre' tal como está en tu base de datos
+                    $pedido->cliente_nombre = $solicitudWeb->nombre; 
+
+                    // Si el usuario web tiene correo, lo forzamos en el pedido para no mandar correos al cliente equivocado
+                    if ($solicitudWeb->user) {
+                        $pedido->correo_cliente = $solicitudWeb->user->email;
+                    }
+                    // --- FIN DE LO NUEVO ---
                 }
+
+                // Guardamos los cambios del nombre, correo y el nuevo ID en el pedido
+                $pedido->save();
             }
 
-            // 2. Reenviar Correo (Si escribió un email)
-            if ($request->filled('correo')) {
-                // Actualizamos el correo en el pedido
+            // 2. Reenviar Correo (Si escribió un email en el modal y NO se reescribió arriba)
+            if ($request->filled('correo') && !$request->filled('quote_request_id')) {
                 $pedido->correo_cliente = $request->correo;
                 $pedido->save();
+            }
 
-                // Aquí llamas a tu mailable existente (NotaVentaMailable)
-                \Illuminate\Support\Facades\Mail::to($request->correo)
+            // Si hay correo, mandamos la nota de venta
+            if ($pedido->correo_cliente) {
+                \Illuminate\Support\Facades\Mail::to($pedido->correo_cliente)
                     ->send(new \App\Mail\NotaVentaMailable($pedido));
             }
 

@@ -11,7 +11,6 @@
 
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <!-- Eliminado text-white -->
         <h2 class="fw-bold brand-glow-purple" style="color: var(--text-main);">
             <i class="fa-solid fa-images me-2" style="color: var(--accent-purple);"></i> Gestión de Catálogo
         </h2>
@@ -59,7 +58,7 @@
                         @error('categoria') <span class="text-danger small">{{ $message }}</span> @enderror
                     </div>
 
-                <!-- Medida Base -->
+                    <!-- Medida Base -->
                     <div class="col-md-3" id="wrapper_medida">
                         <label for="medida_cm" class="form-label" style="color: var(--text-main);">Medida Base</label>
                         <select name="medida_cm" id="medida_cm"
@@ -141,7 +140,6 @@
         <div class="card-body p-4">
 
             <!-- MOTOR DE BÚSQUEDA Y FILTROS -->
-            <!-- Cambiamos el fondo oscuro por un inset neumórfico suave -->
             <form id="form-filtros" method="GET" action="{{ url()->current() }}" class="mb-4 p-3" 
                   style="background: var(--bg-elevated); border-radius: 12px; border: 1px solid rgba(199, 186, 219, 0.4); box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px #ffffff;">
                 <div class="row g-2">
@@ -201,7 +199,6 @@
                             </button>
 
                             <!-- TARJETA SOFT UI -->
-                            <!-- Quitamos text-white para que herede el color de .item-card -->
                             <div class="card item-card h-100">
 
                                 <div class="card-image-wrapper">
@@ -214,12 +211,10 @@
                                     <h5 class="card-title mb-3">{{ $item->titulo }}</h5>
                                     
                                     <div class="mb-3 mt-1">
-                                        <!-- Tag 1: Categoría Principal (Pastel Morado) -->
                                         <span class="badge" style="background-color: #f3e8ff; color: var(--accent-purple); border: 1px solid #d8b4fe; letter-spacing: 0.5px; font-weight: 600; border-radius: 8px; padding: 0.5em 0.8em;">
                                             {{ strtoupper($item->categoria) }}
                                         </span>
                                         
-                                        <!-- Tag 2: Medida Base (Pastel Azul) -->
                                         @if(isset($item->medida_cm) && $item->medida_cm !== 'na' && $item->categoria === 'baston')
                                             <span class="badge ms-1" style="background-color: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-weight: 600; border-radius: 8px; padding: 0.5em 0.8em;">
                                                 {{ $item->medida_cm }} CM
@@ -229,11 +224,8 @@
                                     
                                     <p class="card-text small flex-grow-1" style="color: var(--text-muted); line-height: 1.5;">{{ $item->descripcion ?? 'Sin descripción.' }}</p>
 
-                                    <!-- Bandejas de acciones -->
-                                    <!-- Cambiamos el color del borde superior -->
                                     <div class="d-flex flex-wrap actions-row justify-content-between align-items-center mt-3 pt-3" style="border-top: 1px solid rgba(199, 186, 219, 0.4);">
 
-                                        <!-- BANDEJA 1 -->
                                         <div class="actions-tray">
                                             <form action="{{ route('admin.catalogo.carrusel', $item->id) }}" method="POST" class="d-inline form-carrusel-toggle">
                                                 @csrf
@@ -252,7 +244,6 @@
                                             </form>
                                         </div>
 
-                                        <!-- BANDEJA 2 -->
                                         <div class="actions-tray">
                                             <form action="{{ route('admin.catalogo.toggle', $item->id) }}" method="POST" class="d-inline">
                                                 @csrf
@@ -295,14 +286,11 @@
 </div>
 
 <!-- MODAL DE EDICIÓN -->
-<!-- Quitamos estilos en línea oscuros -->
 <div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <!-- Quitamos text-white y arreglamos icono -->
                 <h5 class="modal-title" style="color: var(--text-main);"><i class="fa-solid fa-pen-to-square me-2" style="color: var(--accent-purple);"></i> Editar Modelo</h5>
-                <!-- Quitamos btn-close-white -->
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
@@ -312,7 +300,6 @@
                 <div class="modal-body">
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <!-- Quitamos text-light -->
                             <label for="edit_titulo" class="form-label">Título del Producto</label>
                             <input type="text" name="titulo" id="edit_titulo" class="form-control form-control-dark" required>
                         </div>
@@ -334,7 +321,9 @@
                                 <option value="manualidad">Manualidades (Extra)</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
+
+                        <!-- ID añadido: edit_wrapper_medida -->
+                        <div class="col-md-3" id="edit_wrapper_medida">
                             <label for="edit_medida_cm" class="form-label">Medida Base</label>
                             <select name="medida_cm" id="edit_medida_cm" class="form-select form-control-dark select2-modal" data-placeholder="Elegir medida...">
                                 <option value=""></option>
@@ -342,24 +331,31 @@
                                 <option value="45">45 cm</option>
                                 <option value="55">55 cm</option>
                                 <option value="60">60 cm</option>
+                                <option value="na" class="d-none">N/A</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
+
+                        <!-- ID añadido: edit_wrapper_diseno -->
+                        <div class="col-md-3" id="edit_wrapper_diseno">
                             <label for="edit_nivel_diseno" class="form-label">Nivel Diseño</label>
                             <select name="nivel_diseno" id="edit_nivel_diseno" class="form-select form-control-dark select2-modal" data-placeholder="Elegir diseño...">
                                 <option value=""></option>
                                 <option value="basico">Básico</option>
                                 <option value="intermedio">Intermedio</option>
                                 <option value="premium">Premium</option>
+                                <option value="na" class="d-none">N/A</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
+
+                        <!-- ID añadido: edit_wrapper_accesorios -->
+                        <div class="col-md-3" id="edit_wrapper_accesorios">
                             <label for="edit_nivel_accesorios" class="form-label">Accesorios</label>
                             <select name="nivel_accesorios" id="edit_nivel_accesorios" class="form-select form-control-dark select2-modal" data-placeholder="Elegir accesorios...">
                                 <option value=""></option>
                                 <option value="estandar">Estándar</option>
                                 <option value="detallado">Detallado</option>
                                 <option value="personalizado_pro">Personalizado Pro</option>
+                                <option value="na" class="d-none">N/A</option>
                             </select>
                         </div>
                     </div>
@@ -402,10 +398,6 @@
         });
 
         // ===== LÍMITES DE CARRUSEL Y DESTACADOS =====
-        // Estos totales son globales (idealmente vienen del controller vía
-        // $totalEnCarrusel / $totalEnDestacados). Como los botones hacen un
-        // submit normal (recarga completa), el valor siempre se refresca
-        // con el dato real del servidor en cada carga de página.
         const LIMITES = {
             carrusel:  { max: {{ $LIMITE_CARRUSEL }}, actual: {{ $totalEnCarrusel }} },
             destacado: { max: {{ $LIMITE_DESTACADOS }}, actual: {{ $totalEnDestacados }} }
@@ -434,9 +426,6 @@
             });
         }
 
-        // Marca visualmente (opacidad reducida) los botones que ya no se
-        // pueden activar porque se llegó al límite, sin deshabilitarlos:
-        // así el clic sigue disparando la alerta explicativa.
         function aplicarEstadoLimiteVisual() {
             document.querySelectorAll('.form-carrusel-toggle button').forEach(boton => {
                 const activo = boton.classList.contains('is-on-info');
@@ -477,6 +466,59 @@
             aplicarEstadoLimiteVisual();
         }
 
+        // ===== LÓGICA DE CATEGORÍAS DINÁMICAS (creación y edición) =====
+        // categoriaSelec: el elemento <select> de categoría (this)
+        // prefix: '' para el formulario de creación, 'edit_' para el modal de edición
+        function adaptarCamposPorCategoria(categoriaSelec, prefix = '') {
+            let categoria = $(categoriaSelec).val();
+
+            let wrapMedida = $('#' + prefix + 'wrapper_medida');
+            let wrapDiseno = $('#' + prefix + 'wrapper_diseno');
+            let wrapAccesorios = $('#' + prefix + 'wrapper_accesorios');
+
+            let selMedida = $('#' + prefix + 'medida_cm');
+            let selDiseno = $('#' + prefix + 'nivel_diseno');
+            let selAccesorios = $('#' + prefix + 'nivel_accesorios');
+
+            if (categoria === 'baston') {
+                // BASTÓN: se muestran los 3 campos
+                wrapMedida.show();
+                wrapDiseno.show();
+                wrapAccesorios.show();
+
+                selMedida.prop('required', true);
+
+                if (selMedida.val() === 'na') selMedida.val('').trigger('change');
+                if (selDiseno.val() === 'na') selDiseno.val('').trigger('change');
+                if (selAccesorios.val() === 'na') selAccesorios.val('').trigger('change');
+
+            } else if (categoria === 'manualidad') {
+                // MANUALIDAD: solo se muestra Nivel de Diseño
+                wrapMedida.hide();
+                wrapAccesorios.hide();
+                wrapDiseno.show();
+
+                selMedida.prop('required', false);
+
+                selMedida.val('na').trigger('change');
+                selAccesorios.val('na').trigger('change');
+
+                if (selDiseno.val() === 'na') selDiseno.val('').trigger('change');
+
+            } else {
+                // LAZO / APLIQUE (o vacío): se ocultan los 3 campos
+                wrapMedida.hide();
+                wrapDiseno.hide();
+                wrapAccesorios.hide();
+
+                selMedida.prop('required', false);
+
+                selMedida.val('na').trigger('change');
+                selDiseno.val('na').trigger('change');
+                selAccesorios.val('na').trigger('change');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
 
             function initSelect2() {
@@ -503,7 +545,6 @@
 
             initSelect2();
 
-            // Mensajes de éxito - ACTUALIZADO A TEMA CLARO
             @if(session('success'))
                 Swal.fire({
                     icon: 'success',
@@ -517,8 +558,6 @@
                 });
             @endif
 
-            // Mensaje de error (por ejemplo, cuando el controller rechace
-            // por límite de carrusel/destacados alcanzado)
             @if(session('error'))
                 Swal.fire({
                     icon: 'error',
@@ -531,6 +570,23 @@
             @endif
 
             bindLimitesToggle();
+
+            // 1. Categoría en el formulario de creación
+            $('#categoria').on('change', function() {
+                adaptarCamposPorCategoria(this, '');
+            });
+
+            // 2. Categoría dentro del modal de edición
+            $('#edit_categoria').on('change', function() {
+                adaptarCamposPorCategoria(this, 'edit_');
+            });
+
+            // 3. Refuerzo: al terminar de abrirse el modal, recalcular visibilidad
+            //    (por si el trigger('change') se disparó antes de que el modal
+            //    fuera visible, evita que Select2 calcule mal anchuras ocultas)
+            $('#modalEditar').on('shown.bs.modal', function () {
+                adaptarCamposPorCategoria(document.getElementById('edit_categoria'), 'edit_');
+            });
 
             // Lógica AJAX
             $('#filtro_categoria, #filtro_estado').on('change', function () {
@@ -579,7 +635,6 @@
                 });
             }
 
-            // CONFIRMACIÓN DE ELIMINAR - ACTUALIZADO A TEMA CLARO
             function bindSweetAlertEliminar() {
                 const botonesEliminar = document.querySelectorAll('.btn-eliminar');
                 botonesEliminar.forEach(boton => {
@@ -628,76 +683,11 @@
             $('#edit_medida_cm').val(medida || '').trigger('change');
             $('#edit_nivel_diseno').val(diseno || '').trigger('change');
             $('#edit_nivel_accesorios').val(accesorios || '').trigger('change');
+
+            // Llamada directa además del trigger('change'), como refuerzo
+            // por si el modal aún no está visible cuando esto se ejecuta.
+            adaptarCamposPorCategoria(document.getElementById('edit_categoria'), 'edit_');
         }
-
-        // ===== LÓGICA DE CATEGORÍAS DINÁMICAS =====
-        function adaptarCamposPorCategoria(categoriaSelec, prefix = '') {
-            let categoria = $(categoriaSelec).val();
-            
-            // Los wrappers que vamos a mostrar/ocultar
-            let wrapMedida = $('#' + prefix + 'wrapper_medida');
-            let wrapDiseno = $('#' + prefix + 'wrapper_diseno');
-            let wrapAccesorios = $('#' + prefix + 'wrapper_accesorios');
-            
-            // Los selects a los que les cambiaremos el valor
-            let selMedida = $('#' + prefix + 'medida_cm');
-            let selDiseno = $('#' + prefix + 'nivel_diseno');
-            let selAccesorios = $('#' + prefix + 'nivel_accesorios');
-
-            if (categoria === 'baston') {
-                // Si es bastón: Mostramos las columnas y obligamos a llenar la medida
-                wrapMedida.show();
-                wrapDiseno.show();
-                wrapAccesorios.show();
-                
-                selMedida.prop('required', true);
-                
-                // Si estaba en 'na', lo limpiamos para que elija uno real
-                if(selMedida.val() === 'na') selMedida.val('').trigger('change');
-                if(selDiseno.val() === 'na') selDiseno.val('').trigger('change');
-                if(selAccesorios.val() === 'na') selAccesorios.val('').trigger('change');
-
-            } else if (categoria === 'manualidad') {
-                // ESCENARIO 2 (Manualidad): Solo mostramos el Nivel de Diseño
-                wrapMedida.hide();
-                wrapAccesorios.hide();
-                wrapDiseno.show(); // <-- ¡Aquí lo mantenemos visible!
-                
-                selMedida.prop('required', false);
-                
-                // Forzamos 'na' solo para Medida y Accesorios
-                selMedida.val('na').trigger('change');
-                selAccesorios.val('na').trigger('change');
-                
-                // Si Diseño estaba en 'na' (porque antes eligió un lazo, por ejemplo), lo limpiamos
-                if(selDiseno.val() === 'na') selDiseno.val('').trigger('change');
-
-            } else {
-                // Si es lazo, manualidad o aplique: Ocultamos y forzamos el valor 'na'
-                wrapMedida.hide();
-                wrapDiseno.hide();
-                wrapAccesorios.hide();
-                
-                selMedida.prop('required', false);
-                
-                // Forzamos el valor 'na' y avisamos a Select2 que se actualice
-                selMedida.val('na').trigger('change');
-                selDiseno.val('na').trigger('change');
-                selAccesorios.val('na').trigger('change');
-            }
-        }
-
-        // 1. Escuchar cambios en el formulario de creación
-        $('#categoria').on('change', function() {
-            adaptarCamposPorCategoria(this, '');
-        });
-
-        // (Opcional) Si en tu modal de Edición tienes los mismos campos, 
-        // puedes hacer que también reaccione agregándole el id '#edit_categoria'
-        $('#edit_categoria').on('change', function() {
-            // Asume que a los wrappers del modal de edición les pusiste id="edit_wrapper_medida", etc.
-            adaptarCamposPorCategoria(this, 'edit_'); 
-        });
     </script>
 
     <style>
