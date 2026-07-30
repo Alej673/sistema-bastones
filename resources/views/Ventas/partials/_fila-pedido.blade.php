@@ -6,8 +6,31 @@
     <!-- 1. CORRECCIÓN: variable cliente_nombre -->
     <td class="fw-bold">{{ $pedido->cliente_nombre }}</td>
     
-    <!-- 2. CORRECCIÓN: variable cantidad_total_bastones -->
-    <td class="text-lavanda">{{ $pedido->cantidad_total_bastones }} Bastones</td>
+    <!-- 2. RESUMEN DE PEDIDO (Lógica de Detección Dual) -->
+    <td class="text-lavanda">
+        @php
+            // Verificamos si es una cotización rápida buscando nuestro tag oculto
+            $esRapida = $pedido->materiales->count() === 1 && str_starts_with($pedido->materiales->first()->nombre_material, '[COTI-RÁPIDA]');
+        @endphp
+
+        @if($esRapida)
+            @php
+                // Limpiamos el texto para mostrar solo el nombre (Ej. "Fufucha de Primera Comunión")
+                $nombreProducto = str_replace('[COTI-RÁPIDA] ', '', $pedido->materiales->first()->nombre_material);
+            @endphp
+            <span class="badge" style="background-color: var(--accent-purple); color: white; font-weight: 600;">
+                <i class="fa-solid fa-star me-1" style="font-size: 0.75rem;"></i> Manualidad
+            </span>
+            <div class="text-muted mt-1" style="font-size: 0.75rem; line-height: 1.1; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $nombreProducto }}">
+                {{ $nombreProducto }}
+            </div>
+        @else
+            <span class="fw-semibold">
+                <i class="fa-solid fa-wand-magic-sparkles me-1 text-muted" style="font-size: 0.8rem;"></i>
+                {{ $pedido->cantidad_total_bastones }} Bastones
+            </span>
+        @endif
+    </td>
     
     <!-- 3. CORRECCIÓN: variable costo_total -->
     <td class="fw-bold" style="color: #16a34a;">$ {{ number_format($pedido->costo_total, 2) }}</td>
@@ -15,7 +38,6 @@
     <td>
         <div class="dropdown">
             <!-- 4. CORRECCIÓN: La clase del badge ahora lee exactamente el ENUM -->
-            <!-- AQUÍ AGREGAMOS EL BLOQUEO: Si es realizado, se desactiva el botón -->
             <button class="btn btn-sm dropdown-toggle badge-estado {{ $pedido->estado }}" 
                     type="button" 
                     data-bs-toggle="dropdown" 
@@ -41,8 +63,13 @@
                 title="Vincular a cliente web o enviar por correo">
             <i class="fa-solid fa-link"></i>
         </button>
-        <button class="btn btn-sm btn-ver-detalle me-1" title="Ver Materiales" data-id="{{ $pedido->id }}">👁️</button>
+        
+        <!-- Ocultamos el botón de Receta Interna (Materiales) si es una manualidad rápida, ya que no usa el Kardex -->
+        @if(!$esRapida)
+            <button class="btn btn-sm btn-ver-detalle me-1" title="Ver Materiales" data-id="{{ $pedido->id }}">👁️</button>
+            <button class="btn btn-sm btn-accion" title="Receta Interna" onclick="window.open('{{ route('pedidos.pdf_receta', $pedido->id) }}', '_blank')">📋</button>
+        @endif
+        
         <button class="btn btn-sm btn-accion-secundaria" title="Nota de Venta" onclick="window.open('{{ route('pedidos.pdf_nota', $pedido->id) }}', '_blank')">📄</button>
-        <button class="btn btn-sm btn-accion" title="Receta Interna" onclick="window.open('{{ route('pedidos.pdf_receta', $pedido->id) }}', '_blank')">📋</button>
     </td>
 </tr>

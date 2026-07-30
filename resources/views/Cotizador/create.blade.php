@@ -14,330 +14,473 @@
 
 <div class="dark-glass-cotizador pb-5">
 
-    {{-- ENCABEZADO DE PÁGINA --}}
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-4 border-bottom glass-border">
-        <h2 class="h3 fw-bold">Cotizador Automático de Producción</h2>
+    {{-- ENCABEZADO DE PÁGINA Y SWITCH DE MODO --}}
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center pb-3 mb-4 border-bottom glass-border gap-3">
+        
+        <h2 class="h3 fw-bold mb-0" style="color: var(--text-main);">Cotizador de Producción</h2>
+        
+        {{-- EL SWITCH DUAL (Neumórfico y Responsivo) --}}
+        <div class="d-flex align-items-center justify-content-center p-1 rounded-pill shadow-sm" 
+             style="background: rgba(255, 255, 255, 0.5); border: 1px solid var(--shadow-dark); backdrop-filter: blur(10px);">
+            
+            {{-- Label Izquierdo (Bastones) --}}
+            <label for="swModoCotizacion" 
+                   class="mb-0 px-3 py-1 fw-bold rounded-pill user-select-none" 
+                   id="lblModoBaston" 
+                   style="color: var(--accent-purple); transition: all 0.3s ease; cursor: pointer; font-size: 0.85rem;">
+                <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Bastones
+            </label>
+
+            {{-- El Switch real (Bootstrap) --}}
+            <div class="form-check form-switch mx-1 mb-0 d-flex align-items-center">
+                <input class="form-check-input glass-switch m-0 shadow-none" 
+                       type="checkbox" 
+                       id="swModoCotizacion" 
+                       style="width: 3.2em; height: 1.6em; cursor: pointer; border-color: var(--shadow-dark);">
+            </div>
+
+            {{-- Label Derecho (Rápido) --}}
+            <label for="swModoCotizacion" 
+                   class="text-muted mb-0 px-3 py-1 fw-bold rounded-pill user-select-none" 
+                   id="lblModoRapido" 
+                   style="transition: all 0.3s ease; cursor: pointer; font-size: 0.85rem;">
+                <i class="fa-solid fa-bolt me-1"></i> Rápido
+            </label>
+            
+        </div>
     </div>
 
-    {{-- LAYOUT PRINCIPAL: FORMULARIO + RESULTADO --}}
-    <div class="row align-items-start">
-
-        {{-- ======================================
-             COLUMNA IZQUIERDA — FORMULARIO
-        ====================================== --}}
-        <div class="col-lg-5 mb-4">
-            <div class="card glass-card shadow-sm mb-3">
-
-                <div class="card-header glass-card-header fw-bold py-3">
-                    Configuración del Pedido
-                </div>
-
-                <div class="card-body">
-                    <form id="formCotizador">
-
-                        {{-- MÓDULO 1: ESTRUCTURA BASE --}}
-                        <div class="card glass-subcard mb-3 border-0 shadow-sm">
-                            <div class="card-body p-3">
-                                <h6 class="text-secondary fw-bold mb-3 small">1. ESTRUCTURA BASE</h6>
-                                <div class="row g-2">
-                                    <div class="col-sm-4 col-12">
-                                        <label class="form-label text-muted small mb-1">Cant. Bastones</label>
-                                        <input type="number" id="inputCantidad" name="cantidad_total_bastones" class="form-control glass-input" value="1" min="1">
-                                    </div>
-                                    <div class="col-sm-8 col-12">
-                                        <label class="form-label text-muted small mb-1">Tamaño Específico</label>
-                                        <select id="selectTamano" class="form-select glass-select">
-                                            <option value="" selected disabled>Seleccione medida...</option>
-                                            <option value="45">45 cm (Consumo Pequeño)</option>
-                                            <option value="50">50 cm (Consumo Pequeño)</option>
-                                            <option value="55">55 cm (Consumo Grande)</option>
-                                            <option value="60">60 cm (Consumo Grande)</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-12 mt-2">
-                                        <label class="form-label text-muted small mb-1">Acabado del Bastón</label>
-                                        <select id="selectAcabado" class="form-select glass-select">
-                                            <option value="plata" selected>Plata</option>
-                                            <option value="dorado">Dorado</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- MÓDULO 2: CUERPO (LANA) --}}
-                        <div class="card glass-subcard mb-3 border-0 shadow-sm">
-                            <div class="card-body p-3">
-                                <h6 class="text-secondary fw-bold mb-3 small">2. CUERPO (LANA)</h6>
-                                <div class="mb-2">
-                                    <label class="form-label text-muted small mb-1">Cantidad de Colores</label>
-                                    <select id="selectCantidadColores" class="form-select glass-select">
-                                        <option value="1" selected>1 Color (Sólido)</option>
-                                        <option value="2">2 Colores (50/50)</option>
-                                        <option value="3">3 Colores (33/33/33)</option>
-                                    </select>
-                                </div>
-                                <div id="contenedorColoresLana" class="d-flex flex-column gap-2 mt-2"></div>
-                            </div>
-                        </div>
-
-                        {{-- MÓDULO 3: CORTINAS --}}
-                        <div class="card glass-subcard mb-3 border-0 shadow-sm">
-                            <div class="card-body p-3">
-                                <h6 class="text-secondary fw-bold mb-3 small">3. CORTINAS (OPCIONALES)</h6>
-
-                                {{-- Cortina de Lana --}}
-                                <div class="border glass-border rounded p-3 mb-3">
-                                    <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input glass-switch" type="checkbox" id="swCortinaLana">
-                                        <label class="form-check-label fw-bold" for="swCortinaLana">Incluir Cortina de Lana</label>
-                                    </div>
-                                    <div id="cajaCortinaLana" class="mt-2 d-none">
-                                        <label class="form-label text-muted small mb-1">Cantidad de Colores (Lana)</label>
-                                        <select id="selectCantCortinaLana" class="form-select glass-select form-select-sm mb-2">
-                                            <option value="1" selected>1 Color</option>
-                                            <option value="2">2 Colores</option>
-                                            <option value="3">3 Colores</option>
-                                        </select>
-                                        <div id="contenedorCortinasLana" class="d-flex flex-column gap-2 mt-2"></div>
-                                    </div>
-                                </div>
-
-                                {{-- Cortina de Fiesta --}}
-                                <div class="border glass-border rounded p-3">
-                                    <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input glass-switch" type="checkbox" id="swCortinaFiesta">
-                                        <label class="form-check-label fw-bold" for="swCortinaFiesta">Incluir Cortinas de Fiesta</label>
-                                    </div>
-                                    <div id="cajaCortinaFiesta" class="mt-2 d-none">
-                                        <label class="form-label text-muted small mb-1">Cantidad de Colores (Fiesta)</label>
-                                        <select id="selectCantCortinaFiesta" class="form-select glass-select form-select-sm mb-2">
-                                            <option value="1" selected>1 Color</option>
-                                            <option value="2">2 Colores</option>
-                                            <option value="3">3 Colores</option>
-                                        </select>
-                                        <div id="contenedorCortinasFiesta" class="d-flex flex-column gap-2 mt-2"></div>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-
-                        {{-- MÓDULO 4: DECORACIÓN Y APLIQUES --}}
-                        <div class="card glass-subcard mb-3 border-0 shadow-sm">
-                            <div class="card-body p-3">
-                                <h6 class="text-secondary fw-bold mb-3 small">4. DECORACIÓN Y APLIQUES</h6>
-
-                                <p class="text-muted small fw-bold border-bottom glass-border pb-1 mb-2">Lazos (Inventario)</p>
-
-                                <div class="border glass-border rounded p-2 mb-2">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input glass-switch" type="checkbox" id="swLazoSimple">
-                                        <label class="form-check-label fw-bold" for="swLazoSimple">Lazo Simple (1.5m)</label>
-                                    </div>
-                                    <div id="cajaLazoSimple" class="mt-2 d-none">
-                                        <select class="form-select glass-select select2-ajax-cintas" name="cinta_lazo_simple">
-                                            <option value="" selected disabled>Buscar color de cinta...</option>
-                                        </select>
-                                    </div>
-                                </div>  
-
-                                <div class="border glass-border rounded p-2 mb-2">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input glass-switch" type="checkbox" id="swLazoFlor">
-                                        <label class="form-check-label fw-bold" for="swLazoFlor">Flores (1.0m c/u)</label>
-                                    </div>
-                                    <div id="cajaLazoFlor" class="mt-2 d-none">
-                                        <label class="form-label text-muted small mb-1">Cantidad de Flores</label>
-                                        <select id="selectCantFlores" class="form-select glass-select form-select-sm mb-2">
-                                            <option value="1" selected>1 Flor</option>
-                                            <option value="2">2 Flores</option>
-                                            <option value="3">3 Flores</option>
-                                            <option value="4">4 Flores</option>
-                                            <option value="5">5 Flores</option>
-                                        </select>
-                                        <div id="contenedorFlores" class="d-flex flex-column gap-2 mt-2"></div>
-                                    </div> 
-                                </div> 
-
-                                <div class="border glass-border rounded p-2 mb-2">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input glass-switch" type="checkbox" id="swLazoNombre">
-                                        <label class="form-check-label fw-bold" for="swLazoNombre">Lazo c/ Nombre (1.0m + $0.70)</label>
-                                    </div>
-                                    <div id="cajaLazoNombre" class="mt-2 d-none">
-                                        <select class="form-select glass-select select2-ajax-cintas" name="cinta_lazo_nombre">
-                                            <option value="" selected disabled>Buscar color de cinta...</option>
-                                        </select>
-                                    </div>
-                                </div> 
-
-                                <p class="text-muted small fw-bold border-bottom glass-border pb-1 mb-2 mt-3">Detalles Manuales (Solo Cotización)</p>
-
-                                <div class="border glass-border rounded p-2 mb-2">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input glass-switch" type="checkbox" id="swApliques">
-                                        <label class="form-check-label fw-bold" for="swApliques">Incluir Apliques ($0.50 c/u)</label>
-                                    </div>
-                                    <div id="cajaApliques" class="mt-2 d-none">
-                                        <label class="form-label text-muted small mb-0">Cantidad de apliques por bastón</label>
-                                        <input type="number" class="form-control glass-input form-control-sm w-50" id="cantApliques" value="0" min="1">
-                                    </div>
-                                </div>  
-
-                            </div>  
-                        </div>  
-
-                        {{-- MÓDULO 5: DISEÑOS PERSONALIZADOS --}}
-                        <div class="card glass-subcard mb-3 border-0 shadow-sm">
-                            <div class="card-body p-3">
-                                <h6 class="text-secondary fw-bold mb-3 small">5. DISEÑOS PERSONALIZADOS (OPCIONAL)</h6>
-
-                                <div class="border glass-border rounded p-3">
-                                    <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input glass-switch" type="checkbox" id="swDisenoPersonalizado">
-                                        <label class="form-check-label fw-bold" for="swDisenoPersonalizado">
-                                            <i class="fa-solid"></i> Incluir Diseño Especial en Lana
-                                        </label>
-                                    </div>
-
-                                    <div id="cajaDisenoPersonalizado" class="mt-3 d-none">
-                                        <label class="form-label text-muted small mb-1">Nivel de Complejidad (Mano de Obra)</label>
-                                        <select class="form-select glass-select form-select-sm" id="selectNivelDiseno" name="tarifa_diseno">
-                                            <option value="1.50" selected>Básico ($1.50)</option>
-                                            <option value="2.00">Intermedio ($2.00)</option>
-                                            <option value="3.00">Premium ($3.00)</option>
-                                        </select>
-                                        <div class="form-text mt-2 text-muted" style="font-size: 0.75rem;">
-                                            <i class="fa-solid fa-circle-info"></i> Este valor se sumará como costo directo al precio base de cada bastón cotizado.
+    {{-- ========================================================
+         CONTENEDOR 1: MODO BASTONES (La calculadora pesada)
+    ======================================================== --}}
+    <div id="contenedorModoBaston">
+        
+        {{-- LAYOUT PRINCIPAL: FORMULARIO + RESULTADO --}}
+        <div class="row align-items-start">
+            
+            {{-- ======================================
+                 COLUMNA IZQUIERDA — FORMULARIO
+            ====================================== --}}
+            <div class="col-lg-5 mb-4">
+                <div class="card glass-card shadow-sm mb-3">
+                    <div class="card-header glass-card-header fw-bold py-3">
+                        Configuración del Pedido
+                    </div>
+                    <div class="card-body">
+                        <form id="formCotizador">
+                            
+                            {{-- MÓDULO 1: ESTRUCTURA BASE --}}
+                            <div class="card glass-subcard mb-3 border-0 shadow-sm">
+                                <div class="card-body p-3">
+                                    <h6 class="text-secondary fw-bold mb-3 small">1. ESTRUCTURA BASE</h6>
+                                    <div class="row g-2">
+                                        <div class="col-sm-4 col-12">
+                                            <label class="form-label text-muted small mb-1">Cant. Bastones</label>
+                                            <input type="number" id="inputCantidad" name="cantidad_total_bastones" class="form-control glass-input" value="1" min="1">
+                                        </div>
+                                        <div class="col-sm-8 col-12">
+                                            <label class="form-label text-muted small mb-1">Tamaño Específico</label>
+                                            <select id="selectTamano" class="form-select glass-select">
+                                                <option value="" selected disabled>Seleccione medida...</option>
+                                                <option value="45">45 cm (Consumo Pequeño)</option>
+                                                <option value="50">50 cm (Consumo Pequeño)</option>
+                                                <option value="55">55 cm (Consumo Grande)</option>
+                                                <option value="60">60 cm (Consumo Grande)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12 mt-2">
+                                            <label class="form-label text-muted small mb-1">Acabado del Bastón</label>
+                                            <select id="selectAcabado" class="form-select glass-select">
+                                                <option value="plata" selected>Plata</option>
+                                                <option value="dorado">Dorado</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
-                                
                             </div>
-                        </div>
-                    </form>
+
+                            {{-- MÓDULO 2: CUERPO (LANA) --}}
+                            <div class="card glass-subcard mb-3 border-0 shadow-sm">
+                                <div class="card-body p-3">
+                                    <h6 class="text-secondary fw-bold mb-3 small">2. CUERPO (LANA)</h6>
+                                    <div class="mb-2">
+                                        <label class="form-label text-muted small mb-1">Cantidad de Colores</label>
+                                        <select id="selectCantidadColores" class="form-select glass-select">
+                                            <option value="1" selected>1 Color (Sólido)</option>
+                                            <option value="2">2 Colores (50/50)</option>
+                                            <option value="3">3 Colores (33/33/33)</option>
+                                        </select>
+                                    </div>
+                                    <div id="contenedorColoresLana" class="d-flex flex-column gap-2 mt-2"></div>
+                                </div>
+                            </div>
+
+                            {{-- MÓDULO 3: CORTINAS --}}
+                            <div class="card glass-subcard mb-3 border-0 shadow-sm">
+                                <div class="card-body p-3">
+                                    <h6 class="text-secondary fw-bold mb-3 small">3. CORTINAS (OPCIONALES)</h6>
+
+                                    {{-- Cortina de Lana --}}
+                                    <div class="border glass-border rounded p-3 mb-3">
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input glass-switch" type="checkbox" id="swCortinaLana">
+                                            <label class="form-check-label fw-bold" for="swCortinaLana">Incluir Cortina de Lana</label>
+                                        </div>
+                                        <div id="cajaCortinaLana" class="mt-2 d-none">
+                                            <label class="form-label text-muted small mb-1">Cantidad de Colores (Lana)</label>
+                                            <select id="selectCantCortinaLana" class="form-select glass-select form-select-sm mb-2">
+                                                <option value="1" selected>1 Color</option>
+                                                <option value="2">2 Colores</option>
+                                                <option value="3">3 Colores</option>
+                                            </select>
+                                            <div id="contenedorCortinasLana" class="d-flex flex-column gap-2 mt-2"></div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Cortina de Fiesta --}}
+                                    <div class="border glass-border rounded p-3">
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input glass-switch" type="checkbox" id="swCortinaFiesta">
+                                            <label class="form-check-label fw-bold" for="swCortinaFiesta">Incluir Cortinas de Fiesta</label>
+                                        </div>
+                                        <div id="cajaCortinaFiesta" class="mt-2 d-none">
+                                            <label class="form-label text-muted small mb-1">Cantidad de Colores (Fiesta)</label>
+                                            <select id="selectCantCortinaFiesta" class="form-select glass-select form-select-sm mb-2">
+                                                <option value="1" selected>1 Color</option>
+                                                <option value="2">2 Colores</option>
+                                                <option value="3">3 Colores</option>
+                                            </select>
+                                            <div id="contenedorCortinasFiesta" class="d-flex flex-column gap-2 mt-2"></div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            {{-- MÓDULO 4: DECORACIÓN Y APLIQUES --}}
+                            <div class="card glass-subcard mb-3 border-0 shadow-sm">
+                                <div class="card-body p-3">
+                                    <h6 class="text-secondary fw-bold mb-3 small">4. DECORACIÓN Y APLIQUES</h6>
+
+                                    <p class="text-muted small fw-bold border-bottom glass-border pb-1 mb-2">Lazos (Inventario)</p>
+
+                                    <div class="border glass-border rounded p-2 mb-2">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input glass-switch" type="checkbox" id="swLazoSimple">
+                                            <label class="form-check-label fw-bold" for="swLazoSimple">Lazo Simple (1.5m)</label>
+                                        </div>
+                                        <div id="cajaLazoSimple" class="mt-2 d-none">
+                                            <select class="form-select glass-select select2-ajax-cintas" name="cinta_lazo_simple">
+                                                <option value="" selected disabled>Buscar color de cinta...</option>
+                                            </select>
+                                        </div>
+                                    </div>  
+
+                                    <div class="border glass-border rounded p-2 mb-2">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input glass-switch" type="checkbox" id="swLazoFlor">
+                                            <label class="form-check-label fw-bold" for="swLazoFlor">Flores (1.0m c/u)</label>
+                                        </div>
+                                        <div id="cajaLazoFlor" class="mt-2 d-none">
+                                            <label class="form-label text-muted small mb-1">Cantidad de Flores</label>
+                                            <select id="selectCantFlores" class="form-select glass-select form-select-sm mb-2">
+                                                <option value="1" selected>1 Flor</option>
+                                                <option value="2">2 Flores</option>
+                                                <option value="3">3 Flores</option>
+                                                <option value="4">4 Flores</option>
+                                                <option value="5">5 Flores</option>
+                                            </select>
+                                            <div id="contenedorFlores" class="d-flex flex-column gap-2 mt-2"></div>
+                                        </div> 
+                                    </div> 
+
+                                    <div class="border glass-border rounded p-2 mb-2">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input glass-switch" type="checkbox" id="swLazoNombre">
+                                            <label class="form-check-label fw-bold" for="swLazoNombre">Lazo c/ Nombre (1.0m + $0.70)</label>
+                                        </div>
+                                        <div id="cajaLazoNombre" class="mt-2 d-none">
+                                            <select class="form-select glass-select select2-ajax-cintas" name="cinta_lazo_nombre">
+                                                <option value="" selected disabled>Buscar color de cinta...</option>
+                                            </select>
+                                        </div>
+                                    </div> 
+
+                                    <p class="text-muted small fw-bold border-bottom glass-border pb-1 mb-2 mt-3">Detalles Manuales (Solo Cotización)</p>
+
+                                    <div class="border glass-border rounded p-2 mb-2">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input glass-switch" type="checkbox" id="swApliques">
+                                            <label class="form-check-label fw-bold" for="swApliques">Incluir Apliques ($0.50 c/u)</label>
+                                        </div>
+                                        <div id="cajaApliques" class="mt-2 d-none">
+                                            <label class="form-label text-muted small mb-0">Cantidad de apliques por bastón</label>
+                                            <input type="number" class="form-control glass-input form-control-sm w-50" id="cantApliques" value="0" min="1">
+                                        </div>
+                                    </div>  
+
+                                </div>  
+                            </div>  
+
+                            {{-- MÓDULO 5: DISEÑOS PERSONALIZADOS --}}
+                            <div class="card glass-subcard mb-3 border-0 shadow-sm">
+                                <div class="card-body p-3">
+                                    <h6 class="text-secondary fw-bold mb-3 small">5. DISEÑOS PERSONALIZADOS (OPCIONAL)</h6>
+
+                                    <div class="border glass-border rounded p-3">
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input glass-switch" type="checkbox" id="swDisenoPersonalizado">
+                                            <label class="form-check-label fw-bold" for="swDisenoPersonalizado">
+                                                <i class="fa-solid"></i> Incluir Diseño Especial en Lana
+                                            </label>
+                                        </div>
+
+                                        <div id="cajaDisenoPersonalizado" class="mt-3 d-none">
+                                            <label class="form-label text-muted small mb-1">Nivel de Complejidad (Mano de Obra)</label>
+                                            <select class="form-select glass-select form-select-sm" id="selectNivelDiseno" name="tarifa_diseno">
+                                                <option value="1.50" selected>Básico ($1.50)</option>
+                                                <option value="2.00">Intermedio ($2.00)</option>
+                                                <option value="3.00">Premium ($3.00)</option>
+                                            </select>
+                                            <div class="form-text mt-2 text-muted" style="font-size: 0.75rem;">
+                                                <i class="fa-solid fa-circle-info"></i> Este valor se sumará como costo directo al precio base de cada bastón cotizado.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        {{-- ======================================
-             COLUMNA DERECHA — VISTA PREVIA
-        ====================================== --}}
-        <div class="col-lg-7">
-            
-            <div class="vista-previa-container">
+            {{-- ======================================
+                 COLUMNA DERECHA — VISTA PREVIA
+            ====================================== --}}
+            <div class="col-lg-7">
                 
-                <div class="card glass-card shadow-sm mb-3 card-vista-previa">
-                    <div class="card-header glass-card-header fw-bold py-3 d-flex justify-content-between align-items-center">
-                        <span><i class="fa-solid fa-boxes-stacked"></i> Vista Previa: Impacto en Inventario</span>
-                        <span id="lblResumenBastones" class="badge glass-badge-warning">0 Bastones</span>
-                    </div>
+                <div class="vista-previa-container">
                     
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table glass-table align-middle mb-0" id="tablaImpacto">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 35%;">Material</th>
-                                        <th style="width: 30%;">Cálculo Interno</th>
-                                        <th style="width: 15%;">Subtotal</th>
-                                        <th class="text-end" style="width: 20%;">A Descontar</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="cuerpoTablaImpacto">
-                                    <tr>
-                                        <td colspan="4" class="text-center text-muted py-5">
-                                            <i class="fa-solid fa-calculator fa-2x mb-2" style="opacity: 0.5;"></i><br>
-                                            Esperando configuración del pedido...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card glass-card shadow-sm card-costos-totales">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center border-bottom glass-border pb-2 mb-2">
-                            <span class="text-muted fw-bold">Costo Base Materiales:</span>
-                            <span class="fs-5 fw-bold" id="txtCostoMateriales">$ 0.00</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center border-bottom glass-border pb-2 mb-2">
-                            <span class="text-muted fw-bold">Extras:</span>
-                            <span class="fs-5 fw-bold" id="txtCostoManoObra">$ 0.00</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="text-secondary fw-bold">Mano de Obra (Ganancia Base):</span>
-                            <span class="fs-5 fw-bold" id="txtGananciaFija">$ 0.00</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <span class="fw-bold fs-5" style="color: #16a34a;">COSTO TOTAL PRODUCCIÓN:</span>
-                            <span class="fs-3 fw-bold" style="color: #16a34a;" id="txtCostoTotal">$ 0.00</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mt-1">
-                            <span class="text-muted small">Costo sugerido por unidad:</span>
-                            <span class="fw-bold text-secondary" id="txtCostoUnitario">$ 0.00 c/u</span>
+                    <div class="card glass-card shadow-sm mb-3 card-vista-previa">
+                        <div class="card-header glass-card-header fw-bold py-3 d-flex justify-content-between align-items-center">
+                            <span><i class="fa-solid fa-boxes-stacked"></i> Vista Previa: Impacto en Inventario</span>
+                            <span id="lblResumenBastones" class="badge glass-badge-warning">0 Bastones</span>
                         </div>
                         
-                        <button type="button" class="btn glass-btn-primary w-100 fw-bold mt-4 py-2" id="btnGuardarCotizacion" disabled>
-                            <i class="fa-solid fa-floppy-disk"></i> Confirmar y Guardar Pedido
-                        </button>
-                    </div>
-                </div>
-
-                {{-- PANEL DE EXPORTACIÓN --}}
-                <div id="panelExportar" class="panel-exportar mt-4 d-none">
-                    <div class="card glass-card border-0 rounded-4">
-                        <div class="card-body p-4">
-
-                            <div class="d-flex align-items-center gap-3 mb-4">
-                                <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
-                                     style="width:44px; height:44px; min-width:44px; background: rgba(22, 163, 74, 0.12); border: 1px solid rgba(22, 163, 74, 0.3);">
-                                    <i class="fa-solid fa-check" style="font-size:17px; color: #16a34a;"></i>
-                                </div>
-                                <div>
-                                    <p class="fw-semibold mb-0" style="font-size:15px;">
-                                        Pedido guardado &mdash; #<span id="txtNumeroCotizacionExport">---</span>
-                                    </p>
-                                    <p class="text-muted mb-0" style="font-size:13px;">¿Qué deseas hacer ahora?</p>
-                                </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table glass-table align-middle mb-0" id="tablaImpacto">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 35%;">Material</th>
+                                            <th style="width: 30%;">Cálculo Interno</th>
+                                            <th style="width: 15%;">Subtotal</th>
+                                            <th class="text-end" style="width: 20%;">A Descontar</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cuerpoTablaImpacto">
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-5">
+                                                <i class="fa-solid fa-calculator fa-2x mb-2" style="opacity: 0.5;"></i><br>
+                                                Esperando configuración del pedido...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
-
-                            <div class="d-grid gap-2">
-                                <div class="row g-2">
-                                    <div class="col-12 col-md-6">
-                                        <a href="#" target="_blank" class="btn glass-btn-action w-100 py-2" id="btnPdfReceta" style="color: var(--color-error) !important;">
-                                            <i class="fa-solid fa-clipboard-list me-2"></i> Receta Bodega
-                                        </a>
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <a href="#" target="_blank" class="btn glass-btn-action w-100 py-2" id="btnPdfNota" style="color: var(--accent-purple) !important;">
-                                            <i class="fa-solid fa-file-invoice-dollar me-2"></i> Nota de Venta
-                                        </a>
-                                    </div>
-                                </div>
-
-                                <button type="button" class="btn glass-btn-primary w-100 py-2" data-bs-toggle="modal" data-bs-target="#modalEnviarCorreo">
-                                    <i class="fa-solid fa-paper-plane me-2"></i> Enviar Nota por Correo
-                                </button>
-
-                                <hr class="glass-border opacity-25 my-2">
-
-                                <button type="button" class="btn glass-btn-action text-secondary w-100 py-2" id="btnCerrarFlujoExportacion">
-                                    <i class="fa-solid fa-rotate-right me-2"></i> Cerrar y Crear Nuevo Pedido
-                                </button>
-                            </div>
-
                         </div>
                     </div>
+
+                    <div class="card glass-card shadow-sm card-costos-totales">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center border-bottom glass-border pb-2 mb-2">
+                                <span class="text-muted fw-bold">Costo Base Materiales:</span>
+                                <span class="fs-5 fw-bold" id="txtCostoMateriales">$ 0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center border-bottom glass-border pb-2 mb-2">
+                                <span class="text-muted fw-bold">Extras:</span>
+                                <span class="fs-5 fw-bold" id="txtCostoManoObra">$ 0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="text-secondary fw-bold">Mano de Obra (Ganancia Base):</span>
+                                <span class="fs-5 fw-bold" id="txtGananciaFija">$ 0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="fw-bold fs-5" style="color: #16a34a;">COSTO TOTAL PRODUCCIÓN:</span>
+                                <span class="fs-3 fw-bold" style="color: #16a34a;" id="txtCostoTotal">$ 0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-1">
+                                <span class="text-muted small">Costo sugerido por unidad:</span>
+                                <span class="fw-bold text-secondary" id="txtCostoUnitario">$ 0.00 c/u</span>
+                            </div>
+                            
+                            <button type="button" class="btn glass-btn-primary w-100 fw-bold mt-4 py-2" id="btnGuardarCotizacion" disabled>
+                                <i class="fa-solid fa-floppy-disk"></i> Confirmar y Guardar Pedido
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- PANEL DE EXPORTACIÓN --}}
+                    <div id="panelExportar" class="panel-exportar mt-4 d-none">
+                        <div class="card glass-card border-0 rounded-4">
+                            <div class="card-body p-4">
+
+                                <div class="d-flex align-items-center gap-3 mb-4">
+                                    <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
+                                         style="width:44px; height:44px; min-width:44px; background: rgba(22, 163, 74, 0.12); border: 1px solid rgba(22, 163, 74, 0.3);">
+                                        <i class="fa-solid fa-check" style="font-size:17px; color: #16a34a;"></i>
+                                    </div>
+                                    <div>
+                                        <p class="fw-semibold mb-0" style="font-size:15px;">
+                                            Pedido guardado &mdash; #<span id="txtNumeroCotizacionExport">---</span>
+                                        </p>
+                                        <p class="text-muted mb-0" style="font-size:13px;">¿Qué deseas hacer ahora?</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <div class="row g-2">
+                                        <div class="col-12 col-md-6">
+                                            <a href="#" target="_blank" class="btn glass-btn-action w-100 py-2" id="btnPdfReceta" style="color: var(--color-error) !important;">
+                                                <i class="fa-solid fa-clipboard-list me-2"></i> Receta Bodega
+                                            </a>
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <a href="#" target="_blank" class="btn glass-btn-action w-100 py-2" id="btnPdfNota" style="color: var(--accent-purple) !important;">
+                                                <i class="fa-solid fa-file-invoice-dollar me-2"></i> Nota de Venta
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <button type="button" class="btn glass-btn-primary w-100 py-2" data-bs-toggle="modal" data-bs-target="#modalEnviarCorreo">
+                                        <i class="fa-solid fa-paper-plane me-2"></i> Enviar Nota por Correo
+                                    </button>
+
+                                    <hr class="glass-border opacity-25 my-2">
+
+                                    <button type="button" class="btn glass-btn-action text-secondary w-100 py-2" id="btnCerrarFlujoExportacion">
+                                        <i class="fa-solid fa-rotate-right me-2"></i> Cerrar y Crear Nuevo Pedido
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>{{-- /vista-previa-container --}}
+
+            </div>
+        </div>{{-- /row --}}
+    </div>{{-- /contenedorModoBaston --}}
+
+
+    {{-- ========================================================
+         CONTENEDOR 2: MODO RÁPIDO (Manualidades, Lazos, Flores)
+    ======================================================== --}}
+    <div id="contenedorModoRapido" class="d-none">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                
+                {{-- Tarjeta Principal --}}
+                <div class="card glass-card shadow-sm mb-4">
+                    <div class="card-header glass-card-header text-center py-4 border-bottom-0">
+                        <h4 class="fw-bold mb-1" style="color: var(--accent-purple);">Cotización Rápida</h4>
+                        <p class="text-muted small mb-0">Ideal para Fufuchas, Flores, Lazos o productos sin consumo estructural.</p>
+                    </div>
+
+                    <div class="card-body px-4 px-md-5 pb-5">
+                        <form id="formCotizadorRapido">
+                            
+                            {{-- SECCIÓN 1: VINCULACIÓN --}}
+                            <div class="card glass-subcard mb-4 border-0 shadow-sm">
+                                <div class="card-body p-3 p-md-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">
+                                        <i class="fa-solid fa-link" style="color: var(--accent-purple);"></i> Vincular Solicitud Web (Opcional)
+                                    </label>
+                                    <select class="form-select glass-select" id="selectSolicitudWebRapida" style="width: 100%;">
+                                        <option value="">-- Cliente Presencial (Ninguna) --</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {{-- SECCIÓN 2: DATOS Y DETALLES --}}
+                            <div class="card glass-subcard mb-4 border-0 shadow-sm">
+                                <div class="card-body p-3 p-md-4">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small text-muted">Nombre del Cliente *</label>
+                                            <input type="text" class="form-control glass-input" id="inputNombreClienteRapido" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small text-muted">Correo (Opcional)</label>
+                                            <input type="email" class="form-control glass-input" id="inputCorreoClienteRapido">
+                                        </div>
+
+                                        <div class="col-12 mt-4">
+                                            <label class="form-label fw-bold small text-muted">Concepto / Nombre del Producto *</label>
+                                            <input type="text" class="form-control glass-input" id="inputConceptoRapido" placeholder="Ej. Fufucha de Primera Comunión" required>
+                                        </div>
+                                        <div class="col-12 mt-3">
+                                            <label class="form-label fw-bold small text-muted">Detalles o Especificaciones</label>
+                                            <textarea class="form-control glass-input" id="inputDetallesRapido" rows="2" placeholder="Ej. Muñeca de 30cm con vestido blanco..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- SECCIÓN 3: PRECIO Y GUARDADO --}}
+                            <div class="card glass-subcard border-0 shadow-sm">
+                                <div class="card-body p-3 p-md-4 text-center">
+                                    <label class="form-label fw-bold mb-2" style="color: #16a34a;">PRECIO TOTAL (Acordado con el cliente) *</label>
+                                    <div class="input-group input-group-lg w-75 mx-auto mb-4" style="box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -3px -3px 7px rgba(255,255,255, 0.7); border-radius: 0.5rem; overflow: hidden;">
+                                        <span class="input-group-text border-0 bg-transparent fw-bold" style="color: #16a34a;">$</span>
+                                        <input type="number" step="0.01" class="form-control border-0 bg-transparent fw-bold fs-4 text-center" style="color: #16a34a;" id="inputPrecioRapido" value="" required>
+                                    </div>
+
+                                    <button type="button" class="btn glass-btn-primary w-100 fw-bold py-2" id="btnGuardarCotizacionRapida">
+                                        <i class="fa-solid fa-floppy-disk me-2"></i> Confirmar y Generar Pedido
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        {{-- PANEL DE ÉXITO (Estilo idéntico a Bastones) --}}
+                        <div id="panelExitoRapido" class="mt-4 d-none">
+                            <div class="card glass-card border-0 rounded-4">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center gap-3 mb-4">
+                                        <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
+                                             style="width:44px; height:44px; min-width:44px; background: rgba(22, 163, 74, 0.12); border: 1px solid rgba(22, 163, 74, 0.3);">
+                                            <i class="fa-solid fa-check" style="font-size:17px; color: #16a34a;"></i>
+                                        </div>
+                                        <div class="text-start">
+                                            <p class="fw-semibold mb-0" style="font-size:15px; color: var(--text-main);">
+                                                Pedido guardado &mdash; #<span id="txtIdPedidoRapido">---</span>
+                                            </p>
+                                            <p class="text-muted mb-0" style="font-size:13px;">¿Qué deseas hacer ahora?</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-grid gap-2">
+                                        <a href="#" target="_blank" class="btn glass-btn-action w-100 py-2" id="btnPdfNotaRapida" style="color: var(--accent-purple) !important;">
+                                            <i class="fa-solid fa-file-invoice-dollar me-2"></i> Ver Nota de Venta
+                                        </a>
+                                        <hr class="glass-border opacity-25 my-2">
+                                        <button type="button" class="btn glass-btn-action text-secondary w-100 py-2" id="btnResetRapido">
+                                            <i class="fa-solid fa-rotate-right me-2"></i> Cerrar y Crear Nuevo Pedido
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
 
-            </div>{{-- /vista-previa-container --}}
-
+            </div>
         </div>
-    </div>{{-- /row --}}
+    </div>
 
     {{-- ==========================================
          MODALES CON ESTILO NEUMÓRFICO PASTEL
@@ -512,7 +655,7 @@
 </script>
 
 @push('js')
-    @vite(['resources/js/cotizador.js'])
+    @vite(['resources/js/cotizador.js', 'resources/js/cotizador_rapido.js'])
 @endpush
 
 @endsection

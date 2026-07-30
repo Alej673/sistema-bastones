@@ -195,18 +195,97 @@ class CotizadorController extends Controller
         return response()->json($resultados);
     }
 
-    public function guardar(Request $request)
+public function guardar(Request $request)
     {
+        // =======================================================
+        // 1. EL BYPASS: MODO RÁPIDO (Manualidades, Lazos, Flores)
+        // =======================================================
+        if ($request->filled('modo_rapido') && $request->modo_rapido == 'true') {
+            
+            // Validación exprés
+            $request->validate([
+                'nombre_cliente'  => 'required|string|max:255',
+                'costo_total'     => 'required|numeric',
+                'concepto_rapido' => 'required|string|max:255',
+            ]);
+
+            try {
+                DB::beginTransaction();
+
+                // A. Creamos el registro maestro del pedido
+                $pedido = new \App\Models\Pedido();
+                $pedido->quote_request_id = $request->input('quote_request_id');
+                $pedido->cliente_nombre   = $request->input('nombre_cliente');
+                $pedido->correo_cliente   = $request->input('correo_cliente');
+                
+                // Llenamos con "ceros" la estructura de bastones para no romper tu base de datos
+                $pedido->cantidad_total_bastones = 1; 
+                $pedido->costo_materiales = 0;
+                $pedido->costo_extras     = 0;
+                $pedido->ganancia_fija    = 0;
+                $pedido->costo_total      = (float) $request->input('costo_total');
+                $pedido->costo_unitario   = (float) $request->input('costo_total');
+                $pedido->estado           = 'pendiente'; 
+                $pedido->save();
+
+                // B. Sincronización BTO
+                if ($request->filled('quote_request_id')) {
+                    $solicitudWeb = \App\Models\QuoteRequest::find($request->input('quote_request_id'));
+                    if ($solicitudWeb) {
+                        $solicitudWeb->precio_final = (float) $request->input('costo_total');
+                        $solicitudWeb->estado = 'cotizado';
+                        $solicitudWeb->save();
+                    }
+                }
+
+                // C. TRUCO ARQUITECTÓNICO: Guardamos el concepto como un único "material".
+                $detalle = $request->input('concepto_rapido');
+                if ($request->filled('detalles_rapido')) {
+                    $detalle .= ' - ' . $request->input('detalles_rapido');
+                }
+
+                DB::table('pedido_materiales')->insert([
+                    'pedido_id'          => $pedido->id, 
+                    'insumo_id'          => null, 
+                    // Inyectamos el TAG para que el generador de PDF sepa qué es
+                    'nombre_material'    => '[COTI-RÁPIDA] ' . $detalle, 
+                    'cantidad_requerida' => 1,
+                    'subtotal_calculado' => (float) $request->input('costo_total'),
+                    'created_at'         => now(),
+                    'updated_at'         => now(),
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'mensaje' => 'Cotización rápida guardada con éxito.',
+                    'id'      => $pedido->id
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'mensaje' => 'Error crítico en el servidor: ' . $e->getMessage()
+                ], 500);
+            }
+        }
+
+        // =======================================================
+        // 2. FLUJO NORMAL: MODO BASTONES (La calculadora pesada)
+        // =======================================================
+        
         // 1. Validación de estructura: campos base + materiales como arreglo obligatorio
         $request->validate([
-            'quote_request_id'    =>     'nullable|exists:quote_requests,id',
-            'cantidad_total_bastones'            => 'required|numeric|min:1',
-            'costo_total'                         => 'required|numeric',
-            'correo_cliente'                      => 'nullable|email',
-            'materiales'                          => 'required|string',
+            'quote_request_id'        => 'nullable|exists:quote_requests,id',
+            'cantidad_total_bastones' => 'required|numeric|min:1',
+            'costo_total'             => 'required|numeric',
+            'correo_cliente'          => 'nullable|email',
+            'materiales'              => 'required|string',
         ]);
 
-        // 2. Decodificamos el carrito y validamos que sea un JSON válido y no esté vacío
+        // 2. Decodificamos el carrito...
         $listaMateriales = json_decode($request->input('materiales'), true);
 
         if (json_last_error() !== JSON_ERROR_NONE || empty($listaMateriales) || !is_array($listaMateriales)) {
@@ -215,7 +294,7 @@ class CotizadorController extends Controller
                 'mensaje' => 'El detalle de materiales llegó vacío o corrupto. No se puede guardar un pedido sin materiales.'
             ], 422);
         }
-
+        
         // 3. Validamos la estructura de CADA línea del carrito (defensa contra payloads manuales)
         foreach ($listaMateriales as $mat) {
             if (!isset($mat['nombre_material'], $mat['cantidad_requerida'], $mat['subtotal_calculado'])
@@ -495,31 +574,38 @@ class CotizadorController extends Controller
 
     public function generarPdfNota($id)
     {
-        // 1. Buscamos el pedido solo con los materiales (sin forzar relaciones que no existen)
+        // 1. Buscamos el pedido
         $pedido = Pedido::with('materiales')->findOrFail($id);
 
-        // 2. RASTREO DEL DUEÑO (A prueba de fallos):
-        // Intentamos obtener el user_id directamente del pedido.
+        // 2. RASTREO DEL DUEÑO
         $dueno_id = $pedido->user_id;
-
-        // Si el pedido no tiene user_id directamente, pero tiene el ID de la solicitud web vinculada:
         if (!$dueno_id && $pedido->quote_request_id) {
-            // Buscamos la solicitud original para ver de quién era
             $solicitudOriginal = \App\Models\QuoteRequest::find($pedido->quote_request_id);
             $dueno_id = $solicitudOriginal ? $solicitudOriginal->user_id : null;
         }
 
-        // 3. SEGURIDAD:
+        // 3. SEGURIDAD
         if ($dueno_id != Auth::id() && Auth::user()->role !== 'admin') {
             abort(403, 'No tienes permiso para ver esta nota de venta.');
         }
 
-        // 4. Generar el PDF
-        $pdf = Pdf::loadView('reportes.nota', compact('pedido'));
+        // 4. DETECCIÓN INTELIGENTE DE COTIZACIÓN RÁPIDA
+        $esCotizacionRapida = false;
+        
+        // Si el pedido solo tiene 1 "material" y su nombre empieza con nuestro tag oculto
+        if ($pedido->materiales->count() === 1 && str_starts_with($pedido->materiales->first()->nombre_material, '[COTI-RÁPIDA]')) {
+            $esCotizacionRapida = true;
+            
+            // Limpiamos el texto para borrar el tag técnico antes de que llegue a la vista Blade
+            $nombreLimpio = str_replace('[COTI-RÁPIDA] ', '', $pedido->materiales->first()->nombre_material);
+            $pedido->materiales->first()->nombre_material = $nombreLimpio;
+        }
+
+        // 5. Generar el PDF enviando la nueva variable de estado
+        $pdf = Pdf::loadView('reportes.nota', compact('pedido', 'esCotizacionRapida'));
 
         return $pdf->stream('Nota_Venta_Pedido_' . $pedido->id . '.pdf');
     }
-
     // =======================================================
     // ENVÍO DE CORREOS
     // =======================================================

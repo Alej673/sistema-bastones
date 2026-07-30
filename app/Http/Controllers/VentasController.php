@@ -139,7 +139,6 @@ class VentasController extends Controller
                     $solicitudWeb->save();
 
                     // --- NUEVO: ACTUALIZAR DATOS DEL CLIENTE EN EL PEDIDO ---
-                    // Usamos 'cliente_nombre' tal como está en tu base de datos
                     $pedido->cliente_nombre = $solicitudWeb->nombre; 
 
                     // Si el usuario web tiene correo, lo forzamos en el pedido para no mandar correos al cliente equivocado
@@ -199,12 +198,14 @@ class VentasController extends Controller
                     $nombreLower = strtolower($item->nombre_material);
 
                     // =======================================================
-                    // ARQUITECTURA BYPASS: Ignorar mano de obra y servicios
+                    // ARQUITECTURA BYPASS: Ignorar mano de obra, servicios y cotizaciones rápidas
                     // =======================================================
                     if (str_contains($nombreLower, 'aplique') || 
                         str_contains($nombreLower, 'diseño') || 
-                        str_contains($nombreLower, 'diseno')) {
-                        // Saltamos este ítem; no afecta inventario ni genera alerta.
+                        str_contains($nombreLower, 'diseno') ||
+                        str_contains($nombreLower, '[coti-rápida]') || 
+                        str_contains($nombreLower, '[coti-rapida]') || 
+                        str_contains($item->nombre_material, '[COTI-RÁPIDA]')) { 
                         continue;
                     }
 

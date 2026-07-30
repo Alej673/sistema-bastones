@@ -25,6 +25,8 @@ export default defineConfig({
                 'resources/css/auth-neumorphism.css',
                 'resources/css/variables.css',
                 'resources/js/catalogo.js',
+                'resources/js/inventario.js',
+                'resources/js/cotizador_rapido.js',
             ],
             refresh: true,
         }),
