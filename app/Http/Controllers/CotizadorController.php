@@ -195,7 +195,7 @@ class CotizadorController extends Controller
         return response()->json($resultados);
     }
 
-public function guardar(Request $request)
+    public function guardar(Request $request)
     {
         // =======================================================
         // 1. EL BYPASS: MODO RÁPIDO (Manualidades, Lazos, Flores)
@@ -247,7 +247,6 @@ public function guardar(Request $request)
                 DB::table('pedido_materiales')->insert([
                     'pedido_id'          => $pedido->id, 
                     'insumo_id'          => null, 
-                    // Inyectamos el TAG para que el generador de PDF sepa qué es
                     'nombre_material'    => '[COTI-RÁPIDA] ' . $detalle, 
                     'cantidad_requerida' => 1,
                     'subtotal_calculado' => (float) $request->input('costo_total'),
@@ -561,10 +560,20 @@ public function guardar(Request $request)
             $costoTotalMateriales += $subtotal;
         }
 
-        // 3. CÁLCULO DE MANO DE OBRA Y GRAN TOTAL
-        $costoManoObra = 3.00 * $pedido->cantidad_total_bastones;
-        $costoTotalProduccion = $costoTotalMateriales + $costoManoObra;
+        // 3. CÁLCULO DE MANO DE OBRA Y GRAN TOTAL (Alineado con el Frontend)
+        
+        // A. Aislamos el costo de los insumos físicos (restando los extras de diseño)
+        $costoTotalMateriales = $costoTotalMateriales - $costoDisenoPersonalizado;
+        
+        // B. La Mano de Obra ahora es exclusivamente la Ganancia Base (60% de materiales)
+        // Usamos la variable $costoManoObra para que tu Blade del PDF la reciba sin problemas
+        $costoManoObra = $costoTotalMateriales * 0.60;
+        
+        // C. Gran Total de Producción sumando las 3 partes por separado:
+        // Materiales + Extras (Diseño Personalizado) + Mano de Obra (60%)
+        $costoTotalProduccion = $costoTotalMateriales + $costoDisenoPersonalizado + $costoManoObra;
 
+        // Mandamos a generar el PDF
         $pdf = Pdf::loadView('reportes.receta', compact(
             'pedido', 'costoTotalMateriales', 'costoManoObra', 'costoTotalProduccion', 'costoDisenoPersonalizado'
         ));

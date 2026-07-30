@@ -3,6 +3,11 @@
 @push('css')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     @vite(['resources/css/formulario.css', 'resources/css/variables.css'])
+    <style>
+    .btn-limite-alcanzado {
+        opacity: 0.45;
+    }
+    </style>
 @endpush
 
 @section('titulo', 'Gestión de Catálogo')
@@ -143,11 +148,13 @@
             <form id="form-filtros" method="GET" action="{{ url()->current() }}" class="mb-4 p-3" 
                   style="background: var(--bg-elevated); border-radius: 12px; border: 1px solid rgba(199, 186, 219, 0.4); box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px #ffffff;">
                 <div class="row g-2">
-                    <div class="col-md-4">
+                    <!-- Reduje a col-md-3 para dar espacio al nuevo filtro -->
+                    <div class="col-md-3">
                         <input type="text" name="buscar" id="filtro_buscar" class="form-control form-control-dark" placeholder="Buscar por nombre..." value="{{ request('buscar') }}">
                     </div>
 
-                    <div class="col-md-3">
+                    <!-- Reduje a col-md-2 -->
+                    <div class="col-md-2">
                         <select name="categoria" id="filtro_categoria" class="form-select form-control-dark select2-filtro">
                             <option value="todas" {{ request('categoria', 'todas') == 'todas' ? 'selected' : '' }}>Todas las categorías</option>
                             <option value="baston" {{ request('categoria') == 'baston' ? 'selected' : '' }}>Bastones Completos</option>
@@ -157,7 +164,8 @@
                         </select>
                     </div>
 
-                    <div class="col-md-3">
+                    <!-- Reduje a col-md-2 -->
+                    <div class="col-md-2">
                         <select name="estado" id="filtro_estado" class="form-select form-control-dark select2-filtro">
                             <option value="todos" {{ request('estado', 'todos') == 'todos' ? 'selected' : '' }}>Todos los estados</option>
                             <option value="destacado" {{ request('estado') == 'destacado' ? 'selected' : '' }}>Destacados</option>
@@ -166,6 +174,16 @@
                         </select>
                     </div>
 
+                    <!-- NUEVO FILTRO DE FECHA (col-md-3) -->
+                    <div class="col-md-3">
+                        <select name="fecha" id="filtro_fecha" class="form-select form-control-dark select2-filtro">
+                            <option value="recientes" {{ request('fecha', 'recientes') == 'recientes' ? 'selected' : '' }}>Más recientes</option>
+                            <option value="antiguos" {{ request('fecha') == 'antiguos' ? 'selected' : '' }}>Más antiguos</option>
+                            <option value="ultimos_7_dias" {{ request('fecha') == 'ultimos_7_dias' ? 'selected' : '' }}>Últimos 7 días</option>
+                        </select>
+                    </div>
+
+                    <!-- Botones (col-md-2 se mantiene igual) -->
                     <div class="col-md-2 d-flex gap-2">
                         <button type="submit" class="btn btn-purple w-100" title="Aplicar filtros"><i class="fa-solid fa-magnifying-glass"></i></button>
                         <a href="{{ url()->current() }}" id="btn-limpiar-filtros" class="btn btn-outline-secondary w-100" title="Limpiar filtros" style="background: #fff; border-color: rgba(199, 186, 219, 0.8);"><i class="fa-solid fa-eraser"></i></a>
@@ -381,318 +399,20 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    <script>
-        window.addEventListener('beforeunload', function() {
-            sessionStorage.setItem('scrollPosition', window.scrollY);
-        });
-
-        window.addEventListener('load', function() {
-            let scrollPosition = sessionStorage.getItem('scrollPosition');
-            if (scrollPosition !== null) {
-                window.scrollTo({
-                    top: parseInt(scrollPosition),
-                    behavior: 'instant'
-                });
-                sessionStorage.removeItem('scrollPosition');
-            }
-        });
-
-        // ===== LÍMITES DE CARRUSEL Y DESTACADOS =====
-        const LIMITES = {
-            carrusel:  { max: {{ $LIMITE_CARRUSEL }}, actual: {{ $totalEnCarrusel }} },
-            destacado: { max: {{ $LIMITE_DESTACADOS }}, actual: {{ $totalEnDestacados }} }
-        };
-
-        function mostrarAlertaLimite(tipo) {
-            const mensajes = {
-                carrusel: {
-                    titulo: 'Límite del carrusel alcanzado',
-                    texto: `Ya tienes ${LIMITES.carrusel.max} diseños en el carrusel principal. Quita uno antes de añadir otro para no saturar la landing.`
-                },
-                destacado: {
-                    titulo: 'Límite de destacados alcanzado',
-                    texto: `Ya tienes ${LIMITES.destacado.max} diseños marcados como destacados. Quita uno antes de añadir otro.`
-                }
-            };
-
-            Swal.fire({
-                icon: 'warning',
-                title: mensajes[tipo].titulo,
-                text: mensajes[tipo].texto,
-                background: '#ffffff',
-                color: 'var(--text-main)',
-                confirmButtonColor: 'var(--accent-purple)',
-                confirmButtonText: 'Entendido'
-            });
+<script>
+    window.CatalogoConfig = {
+        limites: {
+            carrusel: { max: {{ $LIMITE_CARRUSEL ?? 3 }}, actual: {{ $totalEnCarrusel ?? 0 }} },
+            destacado: { max: {{ $LIMITE_DESTACADOS ?? 6 }}, actual: {{ $totalEnDestacados ?? 0 }} }
+        },
+        baseUrl: "{{ url('admin/catalogo') }}",
+        session: {
+            success: {!! json_encode(session('success')) !!},
+            error: {!! json_encode(session('error')) !!}
         }
+    };
+</script>
 
-        function aplicarEstadoLimiteVisual() {
-            document.querySelectorAll('.form-carrusel-toggle button').forEach(boton => {
-                const activo = boton.classList.contains('is-on-info');
-                const limiteAlcanzado = LIMITES.carrusel.actual >= LIMITES.carrusel.max;
-                boton.classList.toggle('btn-limite-alcanzado', !activo && limiteAlcanzado);
-            });
+@vite(['resources/js/formulario.js'])
 
-            document.querySelectorAll('.form-destacado-toggle button').forEach(boton => {
-                const activo = boton.classList.contains('is-on-warning');
-                const limiteAlcanzado = LIMITES.destacado.actual >= LIMITES.destacado.max;
-                boton.classList.toggle('btn-limite-alcanzado', !activo && limiteAlcanzado);
-            });
-        }
-
-        function bindLimitesToggle() {
-            document.querySelectorAll('.form-carrusel-toggle').forEach(form => {
-                form.addEventListener('submit', function (e) {
-                    const boton = form.querySelector('button');
-                    const estaActivo = boton.classList.contains('is-on-info');
-                    if (!estaActivo && LIMITES.carrusel.actual >= LIMITES.carrusel.max) {
-                        e.preventDefault();
-                        mostrarAlertaLimite('carrusel');
-                    }
-                });
-            });
-
-            document.querySelectorAll('.form-destacado-toggle').forEach(form => {
-                form.addEventListener('submit', function (e) {
-                    const boton = form.querySelector('button');
-                    const estaActivo = boton.classList.contains('is-on-warning');
-                    if (!estaActivo && LIMITES.destacado.actual >= LIMITES.destacado.max) {
-                        e.preventDefault();
-                        mostrarAlertaLimite('destacado');
-                    }
-                });
-            });
-
-            aplicarEstadoLimiteVisual();
-        }
-
-        // ===== LÓGICA DE CATEGORÍAS DINÁMICAS (creación y edición) =====
-        // categoriaSelec: el elemento <select> de categoría (this)
-        // prefix: '' para el formulario de creación, 'edit_' para el modal de edición
-        function adaptarCamposPorCategoria(categoriaSelec, prefix = '') {
-            let categoria = $(categoriaSelec).val();
-
-            let wrapMedida = $('#' + prefix + 'wrapper_medida');
-            let wrapDiseno = $('#' + prefix + 'wrapper_diseno');
-            let wrapAccesorios = $('#' + prefix + 'wrapper_accesorios');
-
-            let selMedida = $('#' + prefix + 'medida_cm');
-            let selDiseno = $('#' + prefix + 'nivel_diseno');
-            let selAccesorios = $('#' + prefix + 'nivel_accesorios');
-
-            if (categoria === 'baston') {
-                // BASTÓN: se muestran los 3 campos
-                wrapMedida.show();
-                wrapDiseno.show();
-                wrapAccesorios.show();
-
-                selMedida.prop('required', true);
-
-                if (selMedida.val() === 'na') selMedida.val('').trigger('change');
-                if (selDiseno.val() === 'na') selDiseno.val('').trigger('change');
-                if (selAccesorios.val() === 'na') selAccesorios.val('').trigger('change');
-
-            } else if (categoria === 'manualidad') {
-                // MANUALIDAD: solo se muestra Nivel de Diseño
-                wrapMedida.hide();
-                wrapAccesorios.hide();
-                wrapDiseno.show();
-
-                selMedida.prop('required', false);
-
-                selMedida.val('na').trigger('change');
-                selAccesorios.val('na').trigger('change');
-
-                if (selDiseno.val() === 'na') selDiseno.val('').trigger('change');
-
-            } else {
-                // LAZO / APLIQUE (o vacío): se ocultan los 3 campos
-                wrapMedida.hide();
-                wrapDiseno.hide();
-                wrapAccesorios.hide();
-
-                selMedida.prop('required', false);
-
-                selMedida.val('na').trigger('change');
-                selDiseno.val('na').trigger('change');
-                selAccesorios.val('na').trigger('change');
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-
-            function initSelect2() {
-                $('.select2-form').select2({
-                    width: '100%',
-                    placeholder: function(){ $(this).data('placeholder'); },
-                    allowClear: true,
-                    minimumResultsForSearch: Infinity
-                });
-
-                $('.select2-filtro').select2({
-                    width: '100%',
-                    minimumResultsForSearch: Infinity
-                });
-
-                $('.select2-modal').select2({
-                    width: '100%',
-                    dropdownParent: $('#modalEditar'),
-                    placeholder: function(){ $(this).data('placeholder'); },
-                    allowClear: true,
-                    minimumResultsForSearch: Infinity
-                });
-            }
-
-            initSelect2();
-
-            @if(session('success'))
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Operación Exitosa!',
-                    text: '{{ session('success') }}',
-                    background: '#ffffff',
-                    color: 'var(--text-main)',
-                    confirmButtonColor: 'var(--accent-purple)',
-                    timer: 3000,
-                    timerProgressBar: true
-                });
-            @endif
-
-            @if(session('error'))
-                Swal.fire({
-                    icon: 'error',
-                    title: 'No se pudo completar la acción',
-                    text: '{{ session('error') }}',
-                    background: '#ffffff',
-                    color: 'var(--text-main)',
-                    confirmButtonColor: 'var(--accent-purple)',
-                });
-            @endif
-
-            bindLimitesToggle();
-
-            // 1. Categoría en el formulario de creación
-            $('#categoria').on('change', function() {
-                adaptarCamposPorCategoria(this, '');
-            });
-
-            // 2. Categoría dentro del modal de edición
-            $('#edit_categoria').on('change', function() {
-                adaptarCamposPorCategoria(this, 'edit_');
-            });
-
-            // 3. Refuerzo: al terminar de abrirse el modal, recalcular visibilidad
-            //    (por si el trigger('change') se disparó antes de que el modal
-            //    fuera visible, evita que Select2 calcule mal anchuras ocultas)
-            $('#modalEditar').on('shown.bs.modal', function () {
-                adaptarCamposPorCategoria(document.getElementById('edit_categoria'), 'edit_');
-            });
-
-            // Lógica AJAX
-            $('#filtro_categoria, #filtro_estado').on('change', function () {
-                ejecutarFiltroAjax();
-            });
-
-            $('#form-filtros').on('submit', function (e) {
-                e.preventDefault();
-                ejecutarFiltroAjax();
-            });
-            
-            $('#btn-limpiar-filtros').on('click', function (e) {
-                e.preventDefault();
-                $('#filtro_buscar').val('');
-                $('#filtro_categoria').val('todas').trigger('change.select2');
-                $('#filtro_estado').val('todos').trigger('change.select2');
-                ejecutarFiltroAjax();
-            });
-
-            $(document).on('click', '#contenedor-resultados .pagination a', function(e) {
-                e.preventDefault();
-                let url = $(this).attr('href');
-                ejecutarFiltroAjax(url);
-            });
-
-            function ejecutarFiltroAjax(urlPaginacion = null) {
-                let form = $('#form-filtros');
-                let urlDestino = urlPaginacion ? urlPaginacion : (form.attr('action') + '?' + form.serialize());
-
-                $('#contenedor-resultados').css('opacity', '0.5');
-
-                $.ajax({
-                    url: urlDestino,
-                    type: 'GET',
-                    success: function(response) {
-                        let nuevoContenido = $(response).find('#contenedor-resultados').html();
-                        $('#contenedor-resultados').html(nuevoContenido).css('opacity', '1');
-                        window.history.pushState(null, '', urlDestino);
-                        bindSweetAlertEliminar();
-                        bindLimitesToggle();
-                    },
-                    error: function() {
-                        $('#contenedor-resultados').css('opacity', '1');
-                        console.error('Error al cargar los datos.');
-                    }
-                });
-            }
-
-            function bindSweetAlertEliminar() {
-                const botonesEliminar = document.querySelectorAll('.btn-eliminar');
-                botonesEliminar.forEach(boton => {
-                    boton.replaceWith(boton.cloneNode(true)); 
-                });
-                
-                document.querySelectorAll('.btn-eliminar').forEach(boton => {
-                    boton.addEventListener('click', function (e) {
-                        e.preventDefault();
-                        const formulario = this.closest('.form-eliminar');
-
-                        Swal.fire({
-                            title: '¿Eliminar este diseño?',
-                            text: "Se borrará del catálogo y de la landing page. Esta acción no se puede deshacer.",
-                            icon: 'warning',
-                            showCancelButton: true,
-                            background: '#ffffff',
-                            color: 'var(--text-main)',
-                            confirmButtonColor: 'var(--color-error)',
-                            cancelButtonColor: '#9ca3af',
-                            confirmButtonText: '<i class="fa-solid fa-trash-can"></i> Sí, eliminar',
-                            cancelButtonText: 'Cancelar',
-                            customClass: { popup: 'border border-light' }
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                formulario.submit();
-                            }
-                        });
-                    });
-                });
-            }
-
-            bindSweetAlertEliminar();
-        });
-
-        // Cargar datos en el modal
-        function cargarDatosEditar(id, titulo, descripcion, categoria, medida, diseno, accesorios) {
-            let baseUrl = "{{ url('admin/catalogo') }}";
-            document.getElementById('formEditar').action = baseUrl + '/' + id;
-
-            document.getElementById('edit_titulo').value = titulo;
-            document.getElementById('edit_descripcion').value = descripcion;
-            document.getElementById('edit_imagen').value = '';
-
-            $('#edit_categoria').val(categoria).trigger('change');
-            $('#edit_medida_cm').val(medida || '').trigger('change');
-            $('#edit_nivel_diseno').val(diseno || '').trigger('change');
-            $('#edit_nivel_accesorios').val(accesorios || '').trigger('change');
-
-            // Llamada directa además del trigger('change'), como refuerzo
-            // por si el modal aún no está visible cuando esto se ejecuta.
-            adaptarCamposPorCategoria(document.getElementById('edit_categoria'), 'edit_');
-        }
-    </script>
-
-    <style>
-        .btn-limite-alcanzado {
-            opacity: 0.45;
-        }
-    </style>
 @endpush

@@ -39,9 +39,26 @@ class CatalogController extends Controller
             }
         }
 
-        // Ejecutamos la consulta ordenando por los más nuevos y paginando de 9 en 9.
-        // withQueryString() asegura que al cambiar de página no se pierdan los filtros aplicados.
-        $items = $query->latest()->paginate(9)->withQueryString();
+        // Filtro 4 (NUEVO): Por Fecha
+        if ($request->filled('fecha')) {
+            if ($request->fecha === 'ultimos_7_dias') {
+                // Filtramos registros de los últimos 7 días y ordenamos por el más reciente
+                $query->where('created_at', '>=', now()->subDays(7))->latest();
+            } elseif ($request->fecha === 'antiguos') {
+                // Ordenamos del más viejo al más nuevo
+                $query->oldest();
+            } else {
+                // Opción 'recientes' (por defecto)
+                $query->latest();
+            }
+        } else {
+            // Si no hay filtro de fecha en la URL, el comportamiento por defecto es mostrar lo más nuevo
+            $query->latest();
+        }
+
+        // Ejecutamos la consulta paginando de 9 en 9.
+        // OJO: quitamos el latest() hardcodeado de aquí porque el Filtro 4 ya se encarga del orden.
+        $items = $query->paginate(9)->withQueryString();
 
         // Totales GLOBALES (no afectados por filtros/paginación) para los
         // contadores del blade y la validación visual de límites.

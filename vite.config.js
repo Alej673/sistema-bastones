@@ -27,6 +27,7 @@ export default defineConfig({
                 'resources/js/catalogo.js',
                 'resources/js/inventario.js',
                 'resources/js/cotizador_rapido.js',
+                'resources/js/formulario.js',
             ],
             refresh: true,
         }),

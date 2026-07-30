@@ -315,6 +315,9 @@
                                 <span class="fw-bold text-secondary" id="txtCostoUnitario">$ 0.00 c/u</span>
                             </div>
                             
+                            <!-- NUEVO: Input oculto que recibe el valor desde JavaScript -->
+                            <input type="hidden" name="costo_insumos" id="inputCostoInsumos" value="0">
+                            
                             <button type="button" class="btn glass-btn-primary w-100 fw-bold mt-4 py-2" id="btnGuardarCotizacion" disabled>
                                 <i class="fa-solid fa-floppy-disk"></i> Confirmar y Guardar Pedido
                             </button>

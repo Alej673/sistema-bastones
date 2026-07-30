@@ -56,15 +56,45 @@ class VentasController extends Controller
             ->whereYear('created_at', $anioActual)
             ->get();
 
-        // 1. Ingresos Brutos Totales del Mes
-        $ingresosMes = $pedidosMes->sum('costo_total');
+        // =======================================================
+        // NUEVO MODELO HÍBRIDO FINANCIERO
+        // =======================================================
+        $ingresosMes = 0;
+        $manoObraEstimada = 0;
+        $costoInsumosEstimado = 0;
 
-        // 2. Estimación de Mano de Obra ($3.00 por bastón fabricado)
-        $totalBastonesMes = $pedidosMes->sum('cantidad_total_bastones');
-        $manoObraEstimada = $totalBastonesMes * 3.00;
+        foreach ($pedidosMes as $pedido) {
+            $precioFinal = $pedido->costo_total ?? 0;
+            $ingresosMes += $precioFinal;
 
-        // 3. Estimación del Costo de Insumos (Diferencia)
-        $costoInsumosEstimado = $ingresosMes - $manoObraEstimada;
+            // Evaluamos la categoría (Asegúrate de que 'categoria' exista en tu modelo Pedido, 
+            // si viene de una relación usa algo como $pedido->quoteRequest->categoria)
+            $esManualidad = in_array(strtolower($pedido->categoria ?? ''), ['manualidad', 'manualidades']);
+
+            if ($esManualidad) {
+                // FASE A: MODELO ARTESANAL (Regla del 60%)
+                // Venta directa sin desglose de materiales
+                $ganancia = $precioFinal * 0.60;
+                $insumos = $precioFinal * 0.40;
+                
+                $manoObraEstimada += $ganancia;
+                $costoInsumosEstimado += $insumos;
+                } else {
+                // FASE B: MODELO TOP-DOWN (Ensamblajes, Bastones, Lazos)
+                
+                // CORRECCIÓN: Leemos la columna correcta de tu BD (costo_materiales)
+                // Si es mayor a 0 usa el valor real, si no, usa la emergencia del 40%.
+                $insumos = (!empty($pedido->costo_materiales) && $pedido->costo_materiales > 0) 
+                            ? $pedido->costo_materiales 
+                            : ($precioFinal * 0.40);
+                
+                // La ganancia es la diferencia exacta: absorbe el margen base y diseños especiales.
+                $ganancia = $precioFinal - $insumos;
+
+                $costoInsumosEstimado += $insumos;
+                $manoObraEstimada += $ganancia;
+            }
+        }
 
         // Tarjeta 2: Cantidad de pedidos actualmente en producción
         $enProduccion = Pedido::where('estado', 'en_produccion')->count();

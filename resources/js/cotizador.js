@@ -906,9 +906,7 @@ $(document).ready(function () {
 
 
         // =======================================================
-        // FASE 6: DISEÑOS PERSONALIZADOS (MANO DE OBRA)
-        // Tarifa fija por nivel de complejidad (Básico/Intermedio/Premium),
-        // multiplicada por la cantidad de bastones del pedido.
+        // FASE 6: DISEÑOS PERSONALIZADOS (MANO DE OBRA EXTRA)
         // =======================================================
         if ($('#swDisenoPersonalizado').is(':checked')) {
             let tarifaDisenoUnidad = parseFloat($('#selectNivelDiseno').val()) || 0;
@@ -935,34 +933,35 @@ $(document).ready(function () {
             });
         }
 
-
         // Una sola escritura al DOM con todas las filas acumuladas.
         tabla.html(filasHtml.join(''));
 
-
         // =======================================================
-        // ACTUALIZACIÓN DEL PANEL FINANCIERO VISUAL
-        // "Ganancia fija" = mano de obra base por bastón, independiente
-        // de los extras (diseño, apliques, bordado) que ya se sumaron
-        // por separado en costoTotalManoObra.
+        // ACTUALIZACIÓN DEL PANEL FINANCIERO VISUAL (MARGEN 60%)
         // =======================================================
-        let tarifaManoObraFija = 3.00;
-        let totalGananciaFija  = tarifaManoObraFija * cantidadBastones;
+        
+        // 1. Calculamos la ganancia base dinámica (60% del costo de los insumos físicos)
+        let porcentajeGanancia = 0.60;
+        let gananciaBase       = costoTotalMateriales * porcentajeGanancia;
 
-        let granTotal     = costoTotalMateriales + costoTotalManoObra + totalGananciaFija;
+        // 2. El gran total es la suma de las 3 partes separadas: 
+        // Materiales + Extras de Diseño + Ganancia Base (60%)
+        let granTotal     = costoTotalMateriales + costoTotalManoObra + gananciaBase;
         let costoUnitario = granTotal / cantidadBastones;
 
+        // 3. Reflejamos en la interfaz respetando cada línea de tu HTML
         $('#txtCostoMateriales').text(`$ ${costoTotalMateriales.toFixed(2)}`);
-        $('#txtCostoManoObra').text(`$ ${costoTotalManoObra.toFixed(2)}`);
-        $('#txtGananciaFija').text(`$ ${totalGananciaFija.toFixed(2)}`);
+        $('#txtCostoManoObra').text(`$ ${costoTotalManoObra.toFixed(2)}`); 
+        $('#txtGananciaFija').text(`$ ${gananciaBase.toFixed(2)} (60%)`);
 
+        // Totales
         $('#txtCostoTotal').text(`$ ${granTotal.toFixed(2)}`);
         $('#txtCostoUnitario').text(`$ ${costoUnitario.toFixed(2)} c/u`);
 
         $('#btnGuardarCotizacion').prop('disabled', false);
+        $('#inputCostoInsumos').val(costoTotalMateriales.toFixed(2));
 
     }
-
 
     // =======================================================
     // 5.4 TRIGGERS — Eventos que disparan el recálculo

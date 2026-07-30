@@ -1,22 +1,5 @@
 /**
  * catalogo.js
- * ---------------------------------------------------------------------
- * Lógica de front-end de la página de catálogo — Taller Arte Titi_Val.
- * Extraído de los <script> que estaban embebidos en el archivo .blade.php.
- *
- * ⚠️ IMPORTANTE (Blade -> JS puro):
- * Este archivo ya NO pasa por el motor de Blade, así que expresiones como
- * {{ csrf_token() }} o {{ url('/') }} NO se compilan aquí (se enviarían
- * como texto literal). Para conservar el mismo comportamiento, ahora esos
- * valores se leen desde atributos data-* en el <body>.
- *
- * En tu vista Blade, agrega esto al <body>:
- *
- *   <body data-csrf="{{ csrf_token() }}" data-home-url="{{ url('/') }}" data-telefono="{{ $telefonoTaller }}">
- *
- * Y luego incluye este archivo con:
- *   <script src="{{ asset('js/catalogo.js') }}" defer></script>
- * ---------------------------------------------------------------------
  */
 
 // ============================================================
@@ -25,19 +8,12 @@
 const CSRF_TOKEN = document.body.dataset.csrf;
 const HOME_URL = document.body.dataset.homeUrl;
 
-// Número de WhatsApp del taller (antes repetido dos veces en el código,
-// y una tercera vez quemado como "593900000000" en el bloque de subida
-// de imagen — ya unificado, ver sección 6)
-const TELEFONO_TALLER = document.body.dataset.telefono; // TODO: reemplazar con el número real de producción
+// Número de WhatsApp del taller
+const TELEFONO_TALLER = document.body.dataset.telefono; 
 
 
 // ============================================================
 // HELPER GLOBAL — Toast compacto con SweetAlert2
-// ------------------------------------------------------------
-// Antes vivía metido dentro del DOMContentLoaded de la sección 4
-// (comentarios), así que solo esa sección podía usarlo. Lo subo al
-// scope global del archivo para poder reutilizarlo también en la
-// sección 6 (envío del formulario de cotización con imagen).
 // ============================================================
 function mostrarToast(icon, titulo, texto = '') {
     Swal.fire({
@@ -127,13 +103,6 @@ document.addEventListener("DOMContentLoaded", function () {
 // ============================================================
 // 3. ESTRELLAS DE CALIFICACIÓN (versión simple / básica)
 // ------------------------------------------------------------
-// ⚠️ NOTA: en el blade original este bloque estaba DUPLICADO por otro
-// listener casi idéntico más abajo (sección 4.1), que además añade hover
-// y guarda "currentRating". Ambos quedan aquí IGUAL que en el original
-// para no cambiar el comportamiento, pero significa que un click en una
-// estrella dispara los dos listeners (redundante, aunque el resultado
-// visual final es el mismo). Si en algún momento quieres que lo limpie
-// y deje solo una versión, dímelo y lo hacemos en un paso aparte.
 // ============================================================
 document.addEventListener('DOMContentLoaded', function () {
     const stars = document.querySelectorAll('.star-btn');
@@ -342,23 +311,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // ============================================================
 // 5. MODAL DE CONSULTA RÁPIDA DEL CATÁLOGO
-// ------------------------------------------------------------
-// FIX (2): antes había DOS bloques que creaban CADA UNO su propia
-// instancia de "new bootstrap.Modal(...)" sobre el mismo <div>. Dos
-// instancias controlando el mismo modal es lo que rompía el backdrop
-// ("Cannot read properties of undefined (reading 'backdrop')").
-// Ahora hay UNA sola instancia, creada de forma "lazy" (solo la primera
-// vez que se necesita, dentro de abrirConsultaRapida).
-//
-// FIX (3): con Vite, catalogo.js se carga como módulo ES, así que las
-// funciones ya no quedan colgadas en `window` automáticamente. Como el
-// HTML llama a la función vía onclick="abrirConsultaRapida(...)",
-// necesita existir en el scope global -> se expone con
-// "window.abrirConsultaRapida = function (...) {...}".
-//
-// Si tu botón real en el blade usa otro nombre (ej. "abrirCotizador"),
-// solo cambia el nombre después de "window." en la línea de abajo para
-// que coincida EXACTO con el que aparece en el onclick="" del HTML.
 // ============================================================
 
 // Variable privada del módulo: guarda la instancia del modal de Bootstrap
