@@ -57,7 +57,6 @@ class CatalogController extends Controller
         }
 
         // Ejecutamos la consulta paginando de 9 en 9.
-        // OJO: quitamos el latest() hardcodeado de aquí porque el Filtro 4 ya se encarga del orden.
         $items = $query->paginate(9)->withQueryString();
 
         // Totales GLOBALES (no afectados por filtros/paginación) para los
@@ -222,5 +221,18 @@ class CatalogController extends Controller
         $item->save();
 
         return back()->with('success', 'Estado de producto destacado actualizado.');
+    }
+
+    // 8. Incrementar el contador de popularidad (AJAX)
+    public function registrarConsulta($id)
+    {
+        try {
+            $item = CatalogItem::findOrFail($id);
+            $item->increment('contador_consultas');
+
+            return response()->json(['success' => true, 'total' => $item->contador_consultas]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false], 500);
+        }
     }
 }

@@ -269,7 +269,7 @@
 <!-- MODAL: Desglose Financiero Referencial -->
 <div class="modal fade" id="modalFinanciero" tabindex="-1" aria-labelledby="modalFinancieroLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border-radius: 16px; border: none; background-color: var(--bg-base); box-shadow: 0 8px 24px rgba(59, 7, 100, 0.15);">
+        <div class="modal-content" style="border-radius: 16px; border: none; background-color: var(--bg-base); box-shadow: 0 8px 24px rgba(59, 7, 100, 0.15);">
 
             <div class="modal-header pb-0 border-0" style="background-color: transparent;">
                 <h5 class="modal-title fw-bold" id="modalFinancieroLabel" style="color: var(--text-main);">
@@ -313,7 +313,7 @@
                 <!-- Nota Aclaratoria Técnica -->
                 <div class="alert mt-4 mb-0" style="background-color: var(--bg-base); box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); color: var(--text-muted); font-size: 0.8rem; border-radius: 10px; border: none;">
                     <i class="fa-solid fa-triangle-exclamation me-1" style="color: #d97706;"></i>
-                    <strong style="color: var(--text-main);">Nota:</strong> Este es un cálculo referencial de flujo de caja para manufactura. El margen de mano de obra se estima en $3.00 base por bastón fabricado. No reemplaza un balance contable estricto.
+                    <strong style="color: var(--text-main);">Nota Metodológica:</strong> Este es un cálculo referencial de flujo de caja. Para ensamblajes, el margen se calcula restando el costo exacto de materiales al precio final (incluyendo diseños). Para manufactura directa, se proyecta un margen artesanal del 60%. No reemplaza un balance contable estricto.
                 </div>
 
             </div>

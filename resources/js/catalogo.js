@@ -316,22 +316,46 @@ document.addEventListener('DOMContentLoaded', function () {
 // Variable privada del módulo: guarda la instancia del modal de Bootstrap
 let modalConsulta = null;
 
-// Se expone a window porque se invoca desde un onclick="" en el HTML de Blade
-window.abrirConsultaRapida = function (titulo, nivel, tamano, imagen, categoria) { // <- 1. NUEVO PARÁMETRO AQUÍ
+// Función auxiliar segura para obtener el token CSRF
+function obtenerTokenCSRF() {
+    const metaTag = document.querySelector('meta[name="csrf-token"]');
+    if (metaTag) {
+        return metaTag.getAttribute('content');
+    }
+    console.error('Falta la etiqueta <meta name="csrf-token" content="..."> en el <head> de esta vista.');
+    return '';
+}
+
+window.abrirConsultaRapida = function (id, titulo, nivel, tamano, imagen, categoria) { 
     const modalElement = document.getElementById('modalConsultaCat');
 
-    // Validación de seguridad por si el HTML del modal no está en esta página
     if (!modalElement) {
         console.error('El HTML del modal #modalConsultaCat no se encuentra en el DOM.');
         return;
     }
 
-    // Inicialización lazy: solo se crea la instancia una vez
+    // Petición silenciosa protegida
+    if (id) {
+        const token = obtenerTokenCSRF();
+        fetch(`/productos/${id}/consultar`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': token,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) console.log(`Popularidad sumada. Total: ${data.total}`);
+        })
+        .catch(err => console.error('Error sumando métrica:', err));
+    }
+
     if (!modalConsulta) {
         modalConsulta = new bootstrap.Modal(modalElement);
     }
 
-    // Inyectar datos en el modal
     document.getElementById('mc-nombre').innerText = titulo;
     document.getElementById('mc-nivel').innerText = nivel;
     document.getElementById('mc-tamano').innerText = tamano;
@@ -339,14 +363,11 @@ window.abrirConsultaRapida = function (titulo, nivel, tamano, imagen, categoria)
     document.getElementById('mc-producto-titulo').value = titulo;
     document.getElementById('mc-producto-imagen').value = imagen;
 
-    // 2. NUEVO: Inyectar la categoría en el campo oculto del modal
     const inputCategoria = document.getElementById('mc-producto-categoria');
     if (inputCategoria) {
-        // Si por alguna razón llega vacío, le ponemos 'na' por defecto
         inputCategoria.value = categoria || 'na'; 
     }
 
-    // Resetear formulario y guardar referencia del producto actual
     const form = document.getElementById('formConsultaRapida');
     if (form) {
         form.reset();
@@ -356,8 +377,19 @@ window.abrirConsultaRapida = function (titulo, nivel, tamano, imagen, categoria)
     modalConsulta.show();
 };
 
-// Función para usuarios NO logueados (Directo a WhatsApp sin modal)
-window.enviarWhatsAppDirecto = function(titulo, imagenUrl) {
+window.enviarWhatsAppDirecto = function(id, titulo, imagenUrl) {
+    if (id) {
+        const token = obtenerTokenCSRF();
+        fetch(`/productos/${id}/consultar`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': token,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        }).catch(err => console.error('Error sumando métrica:', err));
+    }
+
     const textoWhatsapp = 
         `👋 Hola Taller Arte Titi_Val.%0A%0A` +
         `Me interesa el modelo: *${titulo}*.%0A` +

@@ -37,8 +37,14 @@ Route::get('/', function (Request $request) {
     // Paginamos de 6 en 6. 
     // fragment('comentarios') hace que al cambiar de página, el navegador baje automáticamente a esta sección.
     $comentarios = $queryComentarios->paginate(6)->withQueryString()->fragment('comentarios');
+    // NUEVA CONSULTA: Los 5 con más interacciones
+    $top5Populares = CatalogItem::where('activo', true)
+                        ->where('contador_consultas', '>', 0) // Solo si ya tienen al menos 1 consulta
+                        ->orderBy('contador_consultas', 'desc')
+                        ->take(5)
+                        ->get();
 
-    return view('welcome', compact('carruselItems', 'destacados', 'recientes', 'comentarios'));
+    return view('welcome', compact('carruselItems', 'destacados', 'recientes', 'comentarios', 'top5Populares'));
 })->name('home');
 
 // ==========================================
@@ -51,6 +57,8 @@ Route::prefix('catalogo')->name('catalogo.')->group(function () {
     // Vista dedicada por categoría -> URL: /catalogo/baston, /catalogo/lazo, etc.
     Route::get('/{categoria}', [PublicCatalogController::class, 'showCategory'])->name('categoria');
 });
+
+  Route::post('/productos/{id}/consultar', [App\Http\Controllers\CatalogController::class, 'registrarConsulta'])->name('productos.registrar_consulta');
 
 // ==========================================
 // 2. RUTAS DEL CLIENTE EXTERNO

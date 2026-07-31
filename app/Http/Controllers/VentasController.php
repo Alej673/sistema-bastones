@@ -102,19 +102,24 @@ class VentasController extends Controller
         // Tarjeta 3: Cantidad de cotizaciones en estado pendiente
         $cotizacionesPendientes = Pedido::where('estado', 'pendiente')->count();
 
-        // Tarjeta 4: Base más solicitada
-        $baseMasSolicitada = DB::table('pedido_materiales')
-            ->join('insumos', 'pedido_materiales.insumo_id', '=', 'insumos.id')
-            ->select(
-                'insumos.nombre', 
-                DB::raw('SUM(pedido_materiales.cantidad_requerida) as total_unidades')
-            )
-            ->where('insumos.nombre', 'LIKE', '%Base%')
-            ->groupBy('pedido_materiales.insumo_id', 'insumos.nombre')
-            ->orderBy('total_unidades', 'desc')
-            ->first();
-
-        $nombreBaseEstrella = $baseMasSolicitada ? $baseMasSolicitada->nombre : 'Ninguna aún';
+        // Tarjeta 4: Diseño Más Popular y Top 5 (Marketing Web)
+        $top5Populares = \App\Models\CatalogItem::where('activo', true)
+                            ->where('contador_consultas', '>', 0)
+                            ->orderBy('contador_consultas', 'desc')
+                            ->take(5)
+                            ->get();
+        
+        // El modelo estrella será simplemente el primero de esa lista de 5
+        $modeloEstrella = $top5Populares->first();
+        
+        // Verificamos si existe
+        if ($modeloEstrella) {
+            $nombreModeloEstrella = $modeloEstrella->titulo;
+            $consultasModeloEstrella = $modeloEstrella->contador_consultas;
+        } else {
+            $nombreModeloEstrella = 'Ninguno aún';
+            $consultasModeloEstrella = 0;
+        }
 
         // 4. RETORNAR LA VISTA CON LOS DATOS COMPLETOS
         return view('Ventas.ventas', compact(
@@ -125,7 +130,9 @@ class VentasController extends Controller
             'costoInsumosEstimado',
             'enProduccion', 
             'cotizacionesPendientes', 
-            'nombreBaseEstrella'
+            'nombreModeloEstrella',
+            'consultasModeloEstrella',
+            'top5Populares' // <-- ¡AQUÍ AGREGAMOS LA NUEVA VARIABLE PARA EL MENÚ!
         ));
     }
 
