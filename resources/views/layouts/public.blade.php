@@ -12,6 +12,9 @@
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <!-- Tu CSS Personalizado -->
     @vite(['resources/css/welcome.css'])
@@ -126,10 +129,25 @@
                         </li>
                         <li>
                             <i class="fa-brands fa-whatsapp me-2" style="color: #25D366; font-size: 1.1rem;"></i> 
-                            <!-- El enlace wa.me abre directamente WhatsApp -->
-                            <a href="https://wa.me/{{ $ajustesTaller['telefono_whatsapp'] ?? '593999856725' }}" 
-                            target="_blank" class="text-decoration-none" style="color: #adb5bd; transition: 0.3s;" 
-                            onmouseover="this.style.color='#25D366'" onmouseout="this.style.color='#adb5bd'">
+                            
+                            @php
+                                // 1. Extraemos el número bruto del arreglo o usamos el valor por defecto
+                                $numeroBruto = $ajustesTaller['telefono_whatsapp'] ?? '593999856725';
+                                
+                                // 2. Limpiamos espacios y guiones, y quitamos el '0' o '+' al inicio si existe
+                                $numeroLimpio = preg_replace('/[^0-9]/', '', $numeroBruto);
+                                if (str_starts_with($numeroLimpio, '0')) {
+                                    $numeroLimpio = '593' . substr($numeroLimpio, 1);
+                                }
+                            @endphp
+
+                            <!-- El enlace wa.me abre directamente WhatsApp con el número estandarizado -->
+                            <a href="https://wa.me/{{ $numeroLimpio }}" 
+                            target="_blank" 
+                            class="text-decoration-none" 
+                            style="color: #adb5bd; transition: 0.3s;" 
+                            onmouseover="this.style.color='#25D366'" 
+                            onmouseout="this.style.color='#adb5bd'">
                                 {{ $ajustesTaller['telefono_whatsapp'] ?? '099 985 6725' }}
                             </a>
                         </li>
@@ -137,7 +155,7 @@
                     
                     <div class="mt-4">
                         <!-- Botón de TikTok -->
-                        <a href="https://www.tiktok.com/@USUARIO_DE_TU_MAMA" target="_blank" class="btn btn-outline-light rounded-circle me-2 d-inline-flex justify-content-center align-items-center" style="width: 45px; height: 45px; border-color: rgba(255,255,255,0.2);">
+                        <a href="https://www.tiktok.com/@titi_val_0905?lang=es-419" target="_blank" class="btn btn-outline-light rounded-circle me-2 d-inline-flex justify-content-center align-items-center" style="width: 45px; height: 45px; border-color: rgba(255,255,255,0.2);">
                             <i class="fa-brands fa-tiktok fs-5"></i>
                         </a>
                         <!-- Botón de Facebook (Opcional, puedes borrarlo si no tiene) -->

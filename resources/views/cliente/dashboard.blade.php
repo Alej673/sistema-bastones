@@ -103,11 +103,15 @@
                                     @endif
                                 </td>
                                 <td class="text-end">
-                                    <div class="d-inline-flex gap-2">
+                                    <!-- Agregué align-items-center para que la bolita de WhatsApp quede centrada con los botones -->
+                                    <div class="d-inline-flex gap-2 align-items-center">
+                                        
+                                        <!-- 1. Botón de Ver Pedido (Original) -->
                                         <a href="{{ route('cotizacion.pdf', $pedido->id) }}" target="_blank" class="btn btn-sm btn-ver-mas" title="Ver Solicitud Original">
                                             <i class="bi bi-clipboard-check"></i> Ver Pedido
                                         </a>
 
+                                        <!-- 2. Lógica de Botones Condicionales -->
                                         @if($pedido->estado === 'pendiente')
                                             <button class="btn btn-sm btn-ver-mas" onclick="verDetallePendiente('{{ $pedido->id }}')">
                                                 <i class="bi bi-eye"></i> Ver Estado
@@ -125,6 +129,14 @@
                                                 <span class="badge bg-light text-muted border">Error de enlace</span>
                                             @endif
                                         @endif
+
+                                        <!-- 3. NUEVO BOTÓN: WhatsApp Persistente -->
+                                        <button onclick="contactarWhatsappPedido('{{ $pedido->id }}')" 
+                                        class="btn btn-sm text-success d-inline-flex align-items-center justify-content-center shadow-sm" 
+                                        style="background-color: #dcfce7; width: 32px; height: 32px; border-radius: 50%; border: 1px solid #bbf7d0; padding: 0;" 
+                                        title="Contactar al taller por WhatsApp">
+                                            <i class="fa-brands fa-whatsapp" style="font-size: 1.1rem;"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -175,6 +187,19 @@
             background: 'rgba(255, 255, 255, 0.98)',
             backdrop: `rgba(107, 47, 163, 0.2)`
         });
+    }
+    
+    function contactarWhatsappPedido(id) {
+        const idFormateado = String(id).padStart(4, '0');
+        
+        // Capturamos el número directamente del body (como lo tienes configurado)
+        // Si por alguna razón falla, tiene el de fallback de tu mamá
+        const numeroTaller = document.body.dataset.telefono || '593999856725';
+        
+        const mensajeWa = encodeURIComponent(`Hola taller, tengo una consulta sobre mi solicitud/pedido RQ-${idFormateado}`);
+        
+        // Abrimos la pestaña de WhatsApp
+        window.open(`https://wa.me/${numeroTaller}?text=${mensajeWa}`, '_blank');
     }
 </script>
 @endpush

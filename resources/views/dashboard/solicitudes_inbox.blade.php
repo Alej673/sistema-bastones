@@ -109,9 +109,21 @@
                                     <p class="mb-0 text-sm text-success fw-bold"><i class="fas fa-tag"></i> Cotizado en: ${{ $solicitud->precio_final }}</p>
                                 @endif
                             </div>
-                            <div class="card-footer bg-transparent border-0 pb-3 text-center">
-                                <a href="{{ route('cotizacion.pdf', $solicitud->id) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill w-100">
-                                    <i class="fas fa-file-pdf me-1"></i> Ver PDF de Respaldo
+                            <div class="card-footer bg-transparent border-0 pb-3 px-3 d-flex gap-2">
+                                <!-- 1. Botón de WhatsApp Restaurado -->
+                                <a href="https://wa.me/593{{ ltrim($solicitud->telefono, '0') }}?text={{ urlencode('Hola ' . $solicitud->nombre . ', te escribo desde el taller sobre tu solicitud (RQ-' . str_pad($solicitud->id, 4, '0', STR_PAD_LEFT) . ').') }}" 
+                                target="_blank" 
+                                class="btn btn-sm flex-grow-1 d-flex align-items-center justify-content-center fw-bold text-success" 
+                                style="background-color: rgba(22, 163, 74, 0.1); border: 1px solid rgba(22, 163, 74, 0.3); border-radius: 8px;">
+                                    <i class="fab fa-whatsapp me-1"></i> Escribir
+                                </a>
+
+                                <!-- 2. Botón de PDF Reducido -->
+                                <a href="{{ route('cotizacion.pdf', $solicitud->id) }}" 
+                                target="_blank" 
+                                class="btn btn-sm btn-outline-secondary flex-grow-1 d-flex align-items-center justify-content-center" 
+                                style="border-radius: 8px;">
+                                    <i class="fas fa-file-pdf me-1"></i> PDF
                                 </a>
                             </div>
                         </div>
