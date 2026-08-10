@@ -1099,6 +1099,10 @@ $(document).ready(function () {
 
         const btnGuardar    = $(this);
         const textoOriginal = btnGuardar.html();
+        // NUEVO: Guardamos el texto original en la memoria del botón
+        if (!btnGuardar.data('texto-original')) {
+            btnGuardar.data('texto-original', textoOriginal);
+        }
         btnGuardar.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Guardando Pedido...');
 
         // Armamos el payload: todos los campos del form + datos del cliente
@@ -1188,10 +1192,18 @@ $(document).ready(function () {
     // Deja el formulario listo para cotizar un pedido nuevo desde cero.
     // =======================================================
     function resetearFormulario() {
-        // Reactivamos los botones de guardado que quedaron bloqueados
-        // tras la cotización anterior.
+        // Reactivamos el botón principal de la vista
         const btnPrincipal = $('#btnGuardarCotizacion');
         btnPrincipal.prop('disabled', false).html(btnPrincipal.data('texto-original') || btnPrincipal.html());
+
+        // NUEVO: Reactivamos el botón dentro del modal
+        const btnModal = $('#btnConfirmarPedidoModal');
+        if (btnModal.data('texto-original')) {
+            btnModal.prop('disabled', false).html(btnModal.data('texto-original'));
+        } else {
+            // Fallback por seguridad
+            btnModal.prop('disabled', false).html('<i class="fa-solid fa-floppy-disk me-2"></i> Confirmar y Guardar Pedido');
+        }
 
         $('#inputCantidad').val('');
         $('#selectTamano').val('').trigger('change');
