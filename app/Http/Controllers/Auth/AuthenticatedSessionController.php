@@ -28,12 +28,12 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Si es el administrador (tu mamá), va a su panel de taller
-        if ($request->user()->role === 'admin') {
+        // Si es Administrador del taller O Super Administrador técnico
+        if (in_array($request->user()->role, ['admin', 'super_admin'])) {
             return redirect()->intended(route('dashboard', absolute: false));
         }
 
-        // Si es un cliente, lo regresamos a la Landing Page elegante
+        // Si es un cliente, lo regresamos a la Landing Page
         return redirect()->intended(route('home', absolute: false));
     }
 

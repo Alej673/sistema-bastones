@@ -1,20 +1,25 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+
+// Controladores
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\InsumoController;
 use App\Http\Controllers\CotizadorController;
 use App\Http\Controllers\VentasController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\QuoteRequestController;
-use App\Models\CatalogItem;
 use App\Http\Controllers\PublicCatalogController;
-use App\Models\Review;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\CatalogController;
-use Illuminate\Http\Request;
-use App\Http\Controllers\clienteController;
+use App\Http\Controllers\ClienteController; // Corregí la mayúscula por convención
 use App\Http\Controllers\CotizacionController;
+use App\Http\Controllers\UserController; // <-- ¡AQUÍ ESTÁ LA NUEVA LÍNEA!
+
+// Modelos
+use App\Models\CatalogItem;
+use App\Models\Review;
 
 // ==========================================
 // 1. LA CARA DEL SISTEMA (Landing Page)
@@ -147,6 +152,17 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     Route::get('/admin/solicitudes-pendientes', [CotizadorController::class, 'buscarSolicitudesPendientes'])
     ->name('admin.solicitudes.pendientes');
+});
+
+// ==========================================
+// 4. RUTAS DE SUPER ADMINISTRADOR (Control Total)
+// ==========================================
+Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
+    
+    // Aquí irá tu CRUD del "Panel de Registrados"
+    Route::get('/super-admin/usuarios', [App\Http\Controllers\UserController::class, 'index'])->name('super.usuarios.index');
+    Route::patch('/super-admin/usuarios/{id}/rol', [App\Http\Controllers\UserController::class, 'updateRole'])->name('super.usuarios.rol');
+    
 });
 
 

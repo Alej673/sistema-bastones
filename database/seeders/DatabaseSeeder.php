@@ -12,20 +12,20 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. USUARIO ROOT / DEMO
+        // 1. USUARIO ROOT / DEMO (Con Super Rol)
         User::create([
             'name' => 'Administrador Demo',
             'email' => 'admin@demo.com',
             'password' => bcrypt('admin123'),
-            'role' => 'admin', // <-- Le asignas rol de administrador
+            'role' => 'super_admin', // <-- Cambiado a super_admin
         ]);
 
-        // 2. USUARIO REAL DE PRODUCCIÓN
+        // 2. USUARIO REAL DE PRODUCCIÓN (Administrador del Taller)
         User::create([
             'name' => 'Admin Taller',
             'email' => 'cristinatenelema2018@gmail.com',
             'password' => bcrypt('Daron-102'),
-            'role' => 'admin', // <-- Le asignas rol de administrador
+            'role' => 'admin', // <-- Mantiene rol de administración del taller
         ]);
     }
 }
