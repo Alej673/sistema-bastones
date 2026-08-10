@@ -1,26 +1,54 @@
 /* =========================================
    ESTILOS NEUMORFISMO - LOGIN & REGISTER
+   Arte Titi_Val
    ========================================= */
 
+/* -----------------------------------------
+   1. VARIABLES
+----------------------------------------- */
 :root {
-    /* 1. PALETA BASE (Lila Pastel de tus tarjetas de inventario) */
-    --bg-base: #eaddff;       
-    
-    /* 2. SOMBRAS NEUMÓRFICAS (Calculadas específicamente para este lila) */
-    --shadow-light: #e2e2e2;      /* Luz pura para resaltar el relieve */
-    --shadow-dark: #c7badb;       /* Sombra lila oscurecida para la profundidad */
+    /* Paleta base (lila pastel de tarjetas de inventario) */
+    --bg-base: #eaddff;
 
-    /* 3. ACENTOS (Morado vibrante de tus botones principales) */
+    /* Sombras neumórficas */
+    --shadow-light: #e2e2e2;
+    --shadow-dark: #c7badb;
+
+    /* Acentos (morado de botones principales) */
     --accent-purple: #9333ea;
     --accent-hover: #7e22ce;
     --accent-active: #6b21a8;
 
-    /* 4. TEXTOS (Morados oscuros para contraste perfecto y no cansar la vista) */
-    --text-main: #3b0764;         /* Morado casi negro para títulos y textos ingresados */
-    --text-muted: #7e57c2;        /* Morado medio para labels e íconos */
-    
-    /* 5. ALERTAS */
+    /* Textos */
+    --text-main: #3b0764;
+    --text-muted: #7e57c2;
+    --text-placeholder: #b0acbe;
+
+    /* Alertas */
     --color-error: #ef4444;
+    --color-error-bg: rgba(255, 118, 117, 0.2);
+
+    /* Escala de radios */
+    --radius-card: 30px;
+    --radius-control: 15px;
+    --radius-checkbox: 6px;
+
+    /* Escala de sombras (offset + blur) según profundidad */
+    --depth-sm: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
+    --depth-md: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+    --depth-lg: 12px 12px 24px var(--shadow-dark), -12px -12px 24px var(--shadow-light);
+    --depth-inset-md: inset 6px 6px 12px var(--shadow-dark), inset -6px -6px 12px var(--shadow-light);
+    --depth-inset-lg: inset 8px 8px 16px var(--shadow-dark), inset -8px -8px 16px var(--shadow-light);
+    --depth-inset-sm: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+
+    --transition-base: all 0.3s ease;
+}
+
+/* -----------------------------------------
+   2. BASE / RESET
+----------------------------------------- */
+* {
+    box-sizing: border-box;
 }
 
 body {
@@ -34,23 +62,20 @@ body {
 }
 
 /* -----------------------------------------
-   TARJETA (Relieve hacia afuera - Outset)
+   3. TARJETA (relieve hacia afuera)
 ----------------------------------------- */
 .login-card {
     background-color: var(--bg-base);
-    border-radius: 30px;
-    /* Sombra oscura abajo a la derecha, sombra blanca arriba a la izquierda */
-    box-shadow: 12px 12px 24px var(--shadow-dark),
-                -12px -12px 24px var(--shadow-light);
+    border-radius: var(--radius-card);
+    box-shadow: var(--depth-lg);
     width: 100%;
     max-width: 420px;
     padding: 50px 45px;
     text-align: center;
-    box-sizing: border-box;
 }
 
 /* -----------------------------------------
-   TIPOGRAFÍA
+   4. TIPOGRAFÍA
 ----------------------------------------- */
 .brand-title {
     font-family: 'Playfair Display', serif;
@@ -70,6 +95,50 @@ body {
     letter-spacing: 1.5px;
 }
 
+/* Texto de contexto (ej. "restableciendo el acceso para X") */
+.reset-context {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    line-height: 1.55;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-muted);
+    background-color: var(--bg-base);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin: -12px 0 28px 0;
+    text-align: left;
+    box-shadow: var(--depth-inset-sm);
+}
+
+.reset-context i {
+    color: var(--accent-purple);
+    font-size: 14px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.reset-context strong {
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+/* Ayuda debajo de un campo (ej. requisitos de contraseña) */
+.field-hint {
+    display: block;
+    font-size: 11px;
+    font-style: italic;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-muted);
+    opacity: 0.85;
+    margin-top: 6px;
+    padding-left: 8px;
+}
+
+/* -----------------------------------------
+   5. CAMPOS DE FORMULARIO
+----------------------------------------- */
 .form-group {
     margin-bottom: 24px;
     text-align: left;
@@ -84,9 +153,6 @@ body {
     padding-left: 8px;
 }
 
-/* -----------------------------------------
-   INPUTS (Hundidos - Inset Shadow)
------------------------------------------ */
 .input-group {
     position: relative;
     display: flex;
@@ -99,85 +165,103 @@ body {
     font-size: 14px;
     color: var(--text-muted);
     transition: color 0.3s ease;
+    pointer-events: none;
 }
 
+/* Inputs hundidos (inset shadow) */
 .form-control {
     width: 100%;
     padding: 15px 15px 15px 45px;
     font-size: 14px;
-    border: none; /* En neumorfismo no se usan bordes sólidos */
-    border-radius: 15px;
+    border: none;
+    border-radius: var(--radius-control);
     background-color: var(--bg-base);
     color: var(--text-main);
-    /* Sombra interna para dar el efecto de hueco */
-    box-shadow: inset 6px 6px 12px var(--shadow-dark), 
-                inset -6px -6px 12px var(--shadow-light);
-    transition: all 0.3s ease;
-    box-sizing: border-box;
+    box-shadow: var(--depth-inset-md);
+    transition: var(--transition-base);
 }
 
 .form-control::placeholder {
-    color: #b0acbe;
+    color: var(--text-placeholder);
 }
 
-/* Estado Focus del Input */
+/* Campo bloqueado (ej. email fijo en el reset de contraseña) */
+.form-control[readonly] {
+    color: var(--text-muted);
+    cursor: not-allowed;
+    box-shadow: var(--depth-inset-sm);
+    opacity: 0.85;
+}
+
+/* El "hueco" se profundiza al enfocar */
 .form-control:focus {
     outline: none;
-    /* Al hacer focus, el "hueco" se hace ligeramente más profundo */
-    box-shadow: inset 8px 8px 16px var(--shadow-dark), 
-                inset -8px -8px 16px var(--shadow-light);
+    box-shadow: var(--depth-inset-lg);
 }
 
-.form-control:focus + .input-icon,
+/* Fix: el ícono va ANTES del input en el HTML, por eso se usa
+   :focus-within en el contenedor y no ":focus + .input-icon" */
 .input-group:focus-within .input-icon {
     color: var(--accent-purple);
 }
 
-/* -----------------------------------------
-   BOTÓN (Relieve hacia afuera, se hunde al clickear)
------------------------------------------ */
-.btn-submit {
-    background-color: var(--accent-purple);
-    color: #ffffff;
+/* Fix de autofill de Chrome/Edge (fondo amarillo por defecto) */
+.form-control:-webkit-autofill,
+.form-control:-webkit-autofill:hover,
+.form-control:-webkit-autofill:focus {
+    -webkit-box-shadow: var(--depth-inset-md);
+    -webkit-text-fill-color: var(--text-main);
+    transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Botón de mostrar/ocultar contraseña */
+.toggle-password {
+    position: absolute;
+    right: 16px;
+    background: none;
     border: none;
-    padding: 16px;
-    font-size: 15px;
-    font-weight: 600;
-    border-radius: 15px;
-    width: 100%;
+    color: var(--text-muted);
     cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 20px;
-    /* Botón flotante */
-    box-shadow: 6px 6px 12px var(--shadow-dark), 
-                -6px -6px 12px var(--shadow-light);
+    font-size: 14px;
+    padding: 4px;
+    transition: color 0.3s ease;
 }
 
-.btn-submit:hover {
-    background-color: var(--accent-hover);
+.toggle-password:hover {
+    color: var(--accent-purple);
 }
 
-.btn-submit:active {
-    background-color: var(--accent-active);
-    /* Al presionar, la sombra cambia a interna (Inset) simulando un botón real */
-    box-shadow: inset 4px 4px 10px rgba(0, 0, 0, 0.15);
-    transform: scale(0.98);
+/* Estado de error */
+.form-control.is-invalid {
+    box-shadow: inset 4px 4px 10px var(--color-error-bg),
+                inset -4px -4px 10px var(--shadow-light);
+}
+
+.error-message {
+    color: var(--color-error);
+    font-size: 11px;
+    margin-top: 8px;
+    display: block;
+    font-weight: 600;
+    padding-left: 8px;
 }
 
 /* -----------------------------------------
-   CHECKBOX & ENLACES
+   6. CHECKBOX "RECORDARME"
 ----------------------------------------- */
 .remember-group {
     margin-bottom: 25px;
     text-align: left;
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: space-between;
     padding-left: 8px;
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .remember-label {
@@ -192,14 +276,14 @@ input[type="checkbox"] {
     width: 20px;
     height: 20px;
     background-color: var(--bg-base);
-    border-radius: 6px;
+    border-radius: var(--radius-checkbox);
     cursor: pointer;
-    box-shadow: inset 3px 3px 6px var(--shadow-dark), 
-                inset -3px -3px 6px var(--shadow-light);
+    box-shadow: var(--depth-inset-sm);
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 input[type="checkbox"]:checked {
@@ -214,13 +298,29 @@ input[type="checkbox"]:checked::after {
     font-weight: bold;
 }
 
-.register-prompt {
+/* -----------------------------------------
+   7. ENLACES Y TEXTOS DE PIE
+----------------------------------------- */
+.forgot-link {
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--accent-purple);
+    transition: color 0.3s ease;
+}
+
+.forgot-link:hover {
+    color: var(--accent-active);
+}
+
+/* Texto de pie unificado (usar esta clase en vez de register-prompt/login-prompt) */
+.auth-prompt {
     margin-top: 30px;
     font-size: 16px;
     color: var(--text-muted);
 }
 
-.register-prompt a {
+.auth-prompt a {
     color: var(--accent-purple);
     text-decoration: none;
     font-weight: 700;
@@ -229,39 +329,86 @@ input[type="checkbox"]:checked::after {
     transition: color 0.3s ease;
 }
 
-.register-prompt a:hover {
+.auth-prompt a:hover {
     color: var(--accent-active);
 }
 
-/* Mensajes de error */
-.error-message {
-    color: var(--color-error);
-    font-size: 11px;
-    margin-top: 8px;
-    display: block;
-    font-weight: 600;
-    padding-left: 8px;
-}
-.form-control.is-invalid {
-    box-shadow: inset 4px 4px 10px rgba(255, 118, 117, 0.2), 
-                inset -4px -4px 10px var(--shadow-light);
-}
-
+/* Alias retrocompatibles por si algún blade aún usa los nombres viejos */
+.register-prompt,
 .login-prompt {
-    margin-top: 15px;
+    margin-top: 30px;
     font-size: 16px;
     color: var(--text-muted);
 }
 
+.register-prompt a,
 .login-prompt a {
     color: var(--accent-purple);
     text-decoration: none;
     font-weight: 700;
     display: inline-block;
-    margin-top: 5px;
+    margin-top: 8px;
     transition: color 0.3s ease;
 }
 
+.register-prompt a:hover,
 .login-prompt a:hover {
     color: var(--accent-active);
+}
+
+/* -----------------------------------------
+   8. BOTÓN PRINCIPAL (relieve, se hunde al click)
+----------------------------------------- */
+.btn-submit {
+    background-color: var(--accent-purple);
+    color: #ffffff;
+    border: none;
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: var(--radius-control);
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    box-shadow: var(--depth-md);
+}
+
+.btn-submit:hover {
+    background-color: var(--accent-hover);
+}
+
+.btn-submit:active {
+    background-color: var(--accent-active);
+    box-shadow: inset 4px 4px 10px rgba(0, 0, 0, 0.15);
+    transform: scale(0.98);
+}
+
+.btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-submit--spaced {
+    margin-top: 8px;
+}
+
+/* -----------------------------------------
+   9. RESPONSIVE
+----------------------------------------- */
+@media (max-width: 480px) {
+    .login-card {
+        padding: 40px 28px;
+        max-width: 100%;
+        margin: 0 16px;
+    }
+
+    .brand-title {
+        font-size: 26px;
+    }
 }
