@@ -80,6 +80,15 @@
     margin-bottom: 1.75rem;
 }
 
+/* Contenedor de filtros: en desktop puede ir en fila (ajusta si tu Blade
+   usa flex/grid distinto; esto sólo gobierna el comportamiento responsive) */
+.gu-filters-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    align-items: center;
+}
+
 .gu-field {
     position: relative;
 }
@@ -609,13 +618,6 @@
     background: linear-gradient(135deg, #16a34a, #166534);
 }
 
-/* ---------- Responsive ---------- */
-@media (max-width: 768px) {
-    .gu-header { flex-direction: column; align-items: flex-start; gap: .75rem; }
-    .gu-actions { flex-wrap: wrap; justify-content: flex-start; }
-    .gu-table-card { overflow-x: auto; }
-}
-
 /* ---------- Accesibilidad ---------- */
 .gu-input:focus-visible,
 .gu-select:focus-visible,
@@ -627,4 +629,156 @@
 
 @media (prefers-reduced-motion: reduce) {
     .gu-alert-success, .gu-spinner, .gu-btn, .gu-table tbody tr { animation: none; transition: none; }
+}
+
+/* ==========================================
+   INSIGNIAS DE VERIFICACIÓN (Pills)
+   ========================================== */
+
+.gu-pill--verified {
+    background-color: rgba(25, 135, 84, 0.1);
+    color: #198754;
+    border: 1px solid rgba(25, 135, 84, 0.2);
+}
+
+.gu-pill--verified i {
+    font-size: 0.8rem;
+}
+
+.gu-pill--unverified {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #b38600;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.gu-pill--unverified i {
+    font-size: 0.8rem;
+}
+
+/* ==========================================================================
+   RESPONSIVE — versión mejorada
+   ==========================================================================
+   No requiere ningún cambio en el Blade. La tabla se mantiene como tabla
+   real con scroll horizontal en mobile (igual que antes), sólo que con
+   menos padding/márgenes para que entre más contenido visible antes de
+   tener que scrollear.
+   ========================================================================== */
+
+/* ---- Tablet / pantallas medianas (769px–1024px): sólo ajustes de aire ---- */
+@media (max-width: 1024px) {
+    .gu-page { padding: 1.5rem 1.25rem 2.5rem; }
+}
+
+/* ---- Móvil grande / tablet chica (≤768px) ---- */
+@media (max-width: 768px) {
+    .gu-page { padding: 1.25rem 1rem 2.5rem; }
+
+    .gu-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: .85rem;
+    }
+
+    .gu-header__title { font-size: 1.3rem; }
+
+    .gu-badge-technical {
+        align-self: flex-start;
+    }
+
+    /* Barra de filtros: buscador a todo el ancho, selects en grid de 2,
+       y el botón "Filtrar" a todo el ancho debajo — sin depender del
+       orden exacto en que estén en el Blade */
+    .gu-filters-card { padding: 1rem; }
+
+    .gu-filters-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: .65rem;
+    }
+
+    .gu-filters-row .gu-field:first-child,
+    .gu-filters-row > .gu-field:has(.gu-input) {
+        grid-column: 1 / -1;
+    }
+
+    .gu-filters-row .gu-dropdown,
+    .gu-filters-row .gu-select {
+        min-width: 0;
+    }
+
+    /* Si tienes 2 selects + 1 botón "Filtrar", este patrón los agrupa
+       en 2 columnas y dedica la última fila entera al botón */
+    .gu-filters-row .gu-btn--primary,
+    .gu-filters-row .gu-btn--clear {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    @media (min-width: 481px) {
+        .gu-filters-row {
+            grid-template-columns: 1fr 1fr;
+        }
+        .gu-filters-row .gu-field:has(.gu-input) {
+            grid-column: 1 / -1;
+        }
+    }
+
+    .gu-actions { flex-wrap: wrap; justify-content: flex-start; gap: .6rem; }
+}
+
+/* ---- Móvil (≤640px): sigue siendo tabla con scroll horizontal,
+   pero con paddings/márgenes reducidos para que entre más contenido
+   antes de tener que hacer scroll ---- */
+@media (max-width: 640px) {
+    .gu-table-card { border-radius: var(--radius-md); }
+
+    .gu-table thead th {
+        padding: .7rem .65rem;
+        font-size: .65rem;
+    }
+
+    .gu-table td {
+        padding: .6rem .65rem;
+        font-size: .82rem;
+    }
+
+    .gu-user-cell { gap: .5rem; }
+
+    .gu-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: .8rem;
+    }
+
+    .gu-id { font-size: .82rem; }
+
+    .gu-pill {
+        padding: .25rem .6rem;
+        font-size: .68rem;
+        white-space: nowrap;
+    }
+
+    .gu-role-select {
+        width: 110px;
+        font-size: .75rem;
+        padding: .35rem 1.5rem .35rem .5rem;
+    }
+
+    .gu-dropdown--role { width: 110px; }
+
+    .gu-actions { gap: .35rem; }
+
+    .gu-icon-btn { width: 32px; height: 32px; }
+}
+
+/* ---- Móvil chico (≤380px, iPhone SE y similares) ---- */
+@media (max-width: 380px) {
+    .gu-header__title { font-size: 1.15rem; }
+    .gu-page { padding: 1rem .75rem 2rem; }
+    .gu-filters-card { padding: .85rem; }
+}
+
+/* ---------- Responsive general previo (se mantiene) ---------- */
+@media (max-width: 768px) {
+    .gu-table-card { overflow-x: auto; }
 }

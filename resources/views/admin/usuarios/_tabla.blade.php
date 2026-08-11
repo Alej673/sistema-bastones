@@ -30,12 +30,29 @@
                             </div>
                         </td>
                         <td>
-                            {{ $usuario->email }}
-                            @if($usuario->trashed())
-                                <span class="gu-pill gu-pill--suspended">
-                                    <i class="fa-solid fa-ban"></i> Suspendido
-                                </span>
-                            @endif
+                            <div class="d-flex flex-column align-items-start">
+                                <span class="fw-medium text-dark mb-1">{{ $usuario->email }}</span>
+                                
+                                <div class="d-flex flex-wrap gap-2">
+                                    <!-- Insignia de Verificación -->
+                                    @if($usuario->email_verified_at)
+                                        <span class="gu-pill gu-pill--verified" title="Correo confirmado">
+                                            <i class="fa-solid fa-shield-check"></i> Verificado
+                                        </span>
+                                    @else
+                                        <span class="gu-pill gu-pill--unverified" title="Cuenta no verificada (Posible bot)">
+                                            <i class="fa-solid fa-triangle-exclamation"></i> Sin Verificar
+                                        </span>
+                                    @endif
+
+                                    <!-- Insignia de Suspensión (Mantiene tu clase original) -->
+                                    @if($usuario->trashed())
+                                        <span class="gu-pill gu-pill--suspended">
+                                            <i class="fa-solid fa-ban"></i> Suspendido
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
                         </td>
                         <td>{{ $usuario->created_at->format('d/m/Y') }}</td>
                         <td>
