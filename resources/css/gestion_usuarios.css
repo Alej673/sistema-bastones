@@ -1,0 +1,630 @@
+/* ==========================================================================
+   Gestión de Usuarios — Neumorfismo lila
+   Depende de variables.css (importado antes que este archivo en app.css o
+   directamente en el @vite del layout)
+   ========================================================================== */
+
+.gu-page {
+    background: var(--bg-base);
+    min-height: 100vh;
+    padding: 2rem 1.5rem 3rem;
+    color: var(--text-main);
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+/* ---------- Encabezado ---------- */
+.gu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.75rem;
+}
+
+.gu-header__title {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    font-weight: 800;
+    font-size: 1.5rem;
+    margin: 0;
+    color: var(--text-main);
+}
+
+.gu-header__icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-md);
+    background: var(--bg-elevated);
+    box-shadow: var(--neu-shadow-out-sm);
+    color: var(--accent-purple);
+    font-size: 1.05rem;
+}
+
+.gu-badge-technical {
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-hover));
+    color: #fff;
+    font-weight: 700;
+    padding: .55rem 1.1rem;
+    border-radius: var(--radius-pill);
+    box-shadow: var(--neu-shadow-out-sm);
+    font-size: .8rem;
+    letter-spacing: .02em;
+}
+
+/* ---------- Alerta de éxito ---------- */
+.gu-alert-success {
+    background: var(--bg-elevated);
+    border: none;
+    border-left: 4px solid var(--color-success);
+    color: var(--text-main);
+    border-radius: var(--radius-md);
+    box-shadow: var(--neu-shadow-out-sm);
+    padding: .9rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: 1.5rem;
+    animation: gu-fade-in var(--t-slow);
+}
+
+.gu-alert-success i { color: var(--color-success); }
+
+/* ---------- Barra de filtros ---------- */
+.gu-filters-card {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--neu-shadow-out-md);
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 1.75rem;
+}
+
+.gu-field {
+    position: relative;
+}
+
+.gu-input,
+.gu-select {
+    width: 100%;
+    border: none;
+    background: var(--bg-base);
+    box-shadow: var(--neu-shadow-in-sm);
+    border-radius: var(--radius-md);
+    padding: .65rem .9rem;
+    font-size: .875rem;
+    color: var(--text-main);
+    outline: none;
+    transition: box-shadow var(--t-base);
+    appearance: none;
+}
+
+.gu-input { padding-left: 2.4rem; }
+
+.gu-input::placeholder { color: var(--text-muted); opacity: .8; }
+
+.gu-input:focus,
+.gu-select:focus {
+    box-shadow: var(--neu-shadow-in-sm), var(--neu-glow-focus);
+}
+
+.gu-field__icon {
+    position: absolute;
+    left: .85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: .85rem;
+    pointer-events: none;
+}
+
+.gu-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%237e57c2'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.19l3.71-3.96a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .75rem center;
+    background-size: 1rem;
+    padding-right: 2.2rem;
+    cursor: pointer;
+}
+
+/* ---------- Dropdown personalizado (reemplaza al <select> nativo) ---------- */
+.gu-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+/* El <select> original sigue en el DOM (para que el form lo envíe normal),
+   pero se oculta visualmente; el botón de abajo es lo que el usuario ve y usa.
+   Aplica a CUALQUIER select dentro del wrapper (filtros .gu-select Y el
+   select de rol .gu-role-select de cada fila). */
+.gu-dropdown select {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.gu-dropdown__trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    border: none;
+    background: var(--bg-base);
+    box-shadow: var(--neu-shadow-in-sm);
+    border-radius: var(--radius-md);
+    padding: .65rem .9rem;
+    font-size: .875rem;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: box-shadow var(--t-base);
+}
+
+.gu-dropdown__trigger span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.gu-dropdown__trigger:focus-visible {
+    outline: 2px solid var(--accent-purple);
+    outline-offset: 2px;
+}
+
+.gu-dropdown__trigger .gu-dropdown__chevron {
+    color: var(--text-muted);
+    font-size: .75rem;
+    transition: transform var(--t-base);
+    flex-shrink: 0;
+}
+
+.gu-dropdown.is-open .gu-dropdown__trigger {
+    box-shadow: var(--neu-shadow-in-sm), var(--neu-glow-focus);
+}
+
+.gu-dropdown.is-open .gu-dropdown__chevron { transform: rotate(180deg); }
+
+.gu-dropdown__menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    box-shadow: var(--neu-shadow-out-lg);
+    padding: .4rem;
+    list-style: none;
+    margin: 0;
+    max-height: 260px;
+    overflow-y: auto;
+    display: none;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity var(--t-fast), transform var(--t-fast);
+}
+
+.gu-dropdown.is-open .gu-dropdown__menu {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.gu-dropdown__option {
+    padding: .55rem .75rem;
+    border-radius: var(--radius-sm);
+    font-size: .85rem;
+    color: var(--text-main);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    transition: background var(--t-fast), color var(--t-fast);
+}
+
+.gu-dropdown__option:not(:last-child) { margin-bottom: 2px; }
+
+.gu-dropdown__option:hover,
+.gu-dropdown__option.is-active {
+    background: rgba(var(--accent-purple-rgb), .12);
+    color: var(--accent-purple);
+}
+
+.gu-dropdown__option.is-selected {
+    background: var(--accent-purple);
+    color: #fff;
+    font-weight: 600;
+}
+
+.gu-dropdown__option.is-selected:hover { background: var(--accent-hover); }
+
+.gu-dropdown__option .fa-check { font-size: .7rem; opacity: .9; }
+
+.gu-dropdown.is-disabled .gu-dropdown__trigger {
+    opacity: .55;
+    cursor: not-allowed;
+    box-shadow: none;
+    background: var(--bg-elevated);
+}
+
+.gu-dropdown--role {
+    width: 140px;
+    flex-shrink: 0;
+}
+
+.gu-dropdown--role .gu-dropdown__trigger {
+    padding: .4rem .55rem;
+    font-size: .8rem;
+    border-radius: var(--radius-sm);
+}
+
+.gu-btn {
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-size: .85rem;
+    padding: .65rem 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    cursor: pointer;
+    transition: transform var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
+}
+
+.gu-btn:active { transform: translateY(1px) scale(.98); }
+
+.gu-btn--primary {
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-hover));
+    color: #fff;
+    box-shadow: var(--neu-shadow-out-sm);
+    width: 100%;
+}
+
+.gu-btn--primary:hover { background: linear-gradient(135deg, var(--accent-hover), var(--accent-active)); }
+
+.gu-btn--ghost-danger {
+    background: var(--bg-elevated);
+    color: var(--color-error);
+    box-shadow: var(--neu-shadow-out-sm);
+    padding: .65rem .8rem;
+}
+
+.gu-btn--ghost-danger:hover { box-shadow: var(--neu-shadow-in-sm); }
+
+/* ---------- Botón "borrador" (limpiar filtros) ---------- */
+.gu-btn--clear {
+    background: #ffffff;
+    color: var(--text-muted);
+    box-shadow: var(--neu-shadow-out-sm);
+    padding: .65rem .9rem;
+    flex-shrink: 0;
+}
+
+.gu-btn--clear i { font-size: .95rem; }
+
+.gu-btn--clear:hover {
+    color: var(--accent-purple);
+    box-shadow: var(--neu-shadow-out-sm), 0 0 0 1px rgba(var(--accent-purple-rgb), .15);
+}
+
+.gu-btn--clear:active { box-shadow: var(--neu-shadow-in-sm); }
+
+.gu-btn[hidden] { display: none !important; }
+
+/* ---------- Tabla ---------- */
+.gu-table-card {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--neu-shadow-out-md);
+    overflow: hidden;
+    position: relative;
+}
+
+.gu-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.gu-table thead th {
+    text-transform: uppercase;
+    font-size: .72rem;
+    letter-spacing: .04em;
+    font-weight: 700;
+    color: var(--text-muted);
+    padding: 1rem 1.1rem;
+    text-align: left;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid rgba(var(--accent-purple-rgb), .12);
+}
+
+.gu-table tbody tr {
+    transition: background var(--t-fast);
+}
+
+.gu-table tbody tr:not(:last-child) td {
+    border-bottom: 1px solid rgba(var(--accent-purple-rgb), .08);
+}
+
+.gu-table tbody tr:hover { background: rgba(var(--accent-purple-rgb), .05); }
+
+.gu-table td {
+    padding: .85rem 1.1rem;
+    font-size: .875rem;
+    vertical-align: middle;
+}
+
+.gu-row--suspended {
+    background: rgba(var(--color-error-rgb), .06) !important;
+    color: var(--text-muted);
+}
+
+.gu-id { font-weight: 700; color: var(--accent-purple); }
+
+.gu-user-cell { display: flex; align-items: center; gap: .75rem; }
+
+.gu-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    box-shadow: var(--neu-shadow-out-sm);
+    background: var(--bg-base);
+    color: var(--accent-purple);
+    flex-shrink: 0;
+}
+
+.gu-avatar--danger { color: var(--color-error); }
+
+.gu-user-name { font-weight: 600; color: var(--text-main); }
+.gu-user-name--suspended { color: var(--color-error); text-decoration: line-through; }
+
+.gu-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .35rem .85rem;
+    border-radius: var(--radius-pill);
+    font-size: .72rem;
+    font-weight: 700;
+    box-shadow: var(--neu-shadow-out-sm);
+}
+
+.gu-pill--suspended { background: rgba(var(--color-error-rgb), .12); color: var(--color-error); }
+.gu-pill--cliente { background: rgba(var(--color-success-rgb), .12); color: var(--color-success); }
+.gu-pill--admin { background: rgba(var(--color-warning-rgb), .14); color: var(--color-warning); }
+.gu-pill--super_admin { background: rgba(var(--accent-purple-rgb), .14); color: var(--accent-purple); }
+
+.gu-actions { display: inline-flex; gap: .5rem; justify-content: flex-end; }
+
+.gu-role-select {
+    width: 140px;
+    border: none;
+    background-color: var(--bg-base);
+    box-shadow: var(--neu-shadow-in-sm);
+    border-radius: var(--radius-sm);
+    color: var(--text-main);
+    font-size: .8rem;
+    cursor: pointer;
+
+    /* 1. Ocultar la apariencia y la flecha nativa del navegador */
+    appearance: none;
+    -webkit-appearance: none;
+
+    /* 2. Añadir la flecha SVG lila personalizada */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%237e57c2'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.19l3.71-3.96a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .6rem center;
+    background-size: 1rem;
+
+    /* 3. Ajustar el padding para que el texto no pise la flecha */
+    padding: .4rem 1.8rem .4rem .6rem;
+}
+
+.gu-role-select:focus-visible {
+    outline: none;
+    box-shadow: var(--neu-shadow-in-sm), var(--neu-glow-focus);
+}
+
+.gu-icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    border: none;
+    background: var(--bg-elevated);
+    box-shadow: var(--neu-shadow-out-sm);
+    cursor: pointer;
+    transition: box-shadow var(--t-fast), color var(--t-fast);
+    color: var(--text-muted);
+}
+
+.gu-icon-btn--danger:hover { color: var(--color-error); box-shadow: var(--neu-shadow-in-sm); }
+.gu-icon-btn--success:hover { color: var(--color-success); box-shadow: var(--neu-shadow-in-sm); }
+
+.gu-empty {
+    text-align: center;
+    padding: 3.5rem 1rem;
+    color: var(--text-muted);
+}
+
+.gu-empty i { font-size: 2rem; display: block; margin-bottom: .6rem; opacity: .6; }
+
+/* ---------- Overlay de carga (para el fetch asíncrono) ---------- */
+.gu-table-card { position: relative; }
+
+.gu-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(240, 231, 255, 0.65);
+    backdrop-filter: blur(1.5px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+}
+
+.gu-loading-overlay.is-active { display: flex; }
+
+.gu-spinner {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 3px solid rgba(var(--accent-purple-rgb), .18);
+    border-top-color: var(--accent-purple);
+    animation: gu-spin .7s linear infinite;
+}
+
+@keyframes gu-spin { to { transform: rotate(360deg); } }
+@keyframes gu-fade-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ---------- Paginación ---------- */
+.gu-pagination-wrap { margin-top: 1.5rem; display: flex; justify-content: center; }
+
+.gu-pagination-wrap .pagination { gap: .35rem; }
+
+.gu-pagination-wrap .page-link {
+    border: none;
+    background: var(--bg-elevated);
+    box-shadow: var(--neu-shadow-out-sm);
+    color: var(--text-main);
+    border-radius: var(--radius-sm);
+    margin: 0 .1rem;
+}
+
+.gu-pagination-wrap .page-item.active .page-link {
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-hover));
+    color: #fff;
+    box-shadow: none;
+}
+
+.gu-pagination-wrap .page-link:hover { box-shadow: var(--neu-shadow-in-sm); }
+
+/* ---------- Modales Neumórficos (Estilo Unificado) ---------- */
+.gu-modal .modal-content {
+    background: var(--bg-base); /* Fondo continuo para todo el modal */
+    border: none;
+    border-radius: 1.25rem; /* Bordes más redondeados como en la imagen 2 */
+    overflow: hidden;
+    color: var(--text-main);
+    padding: 0.5rem; /* Un poco de respiro interno general */
+}
+
+/* Encabezado sin sombras, integrado al fondo */
+.gu-modal .modal-header {
+    border: none;
+    padding: 1.25rem 1.5rem 0.5rem;
+    background: transparent;
+    box-shadow: none; 
+}
+
+.gu-modal .modal-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--accent-purple); /* Título principal en morado */
+}
+
+/* Colores para los íconos del título según la acción */
+.gu-modal .modal-title .icon-danger { color: #ef4444; }
+.gu-modal .modal-title .icon-success { color: #22c55e; }
+
+.gu-modal .modal-body {
+    padding: 1rem 1.5rem;
+    background: transparent;
+}
+
+/* Pie de página integrado */
+.gu-modal .modal-footer {
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    padding: 0.5rem 1.5rem 1.25rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center; /* Botones centrados como en la imagen 2 */
+}
+
+/* ---------- Tarjeta de Alerta Neumórfica ---------- */
+.gu-neu-alert {
+    background: var(--bg-elevated); /* Ligeramente diferente al fondo para que resalte */
+    border-radius: var(--radius-lg);
+    box-shadow: var(--neu-shadow-out-md); /* Sombra hacia afuera, no plana */
+    padding: 1.25rem;
+    text-align: left;
+    margin-top: 1.5rem;
+}
+
+/* ---------- Botones Estilo Píldora ---------- */
+.gu-btn--pill {
+    border-radius: 50rem; /* Borde completamente redondeado */
+    padding: 0.7rem 1.5rem;
+    font-size: 0.9rem;
+}
+
+/* Botón secundario (como el de "Entendido" o "Cancelar") */
+.gu-btn--cancel {
+    background: var(--bg-base);
+    color: var(--accent-purple);
+    box-shadow: var(--neu-shadow-out-sm);
+    font-weight: 700;
+}
+
+.gu-btn--cancel:hover {
+    box-shadow: var(--neu-shadow-in-sm);
+}
+
+/* Clases de botones para limpiar el Blade */
+.gu-btn--cancel {
+    background: var(--bg-elevated);
+    color: var(--text-muted);
+    box-shadow: var(--neu-shadow-out-sm);
+}
+
+.gu-btn--cancel:hover {
+    color: var(--text-main);
+    box-shadow: var(--neu-shadow-in-sm);
+}
+
+.gu-btn--danger {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: #fff;
+    box-shadow: var(--neu-shadow-out-sm);
+}
+
+.gu-btn--danger:hover {
+    background: linear-gradient(135deg, #dc2626, #991b1b);
+}
+
+.gu-btn--success {
+    background: linear-gradient(135deg, #22c55e, #15803d);
+    color: #fff;
+    box-shadow: var(--neu-shadow-out-sm);
+}
+
+.gu-btn--success:hover {
+    background: linear-gradient(135deg, #16a34a, #166534);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+    .gu-header { flex-direction: column; align-items: flex-start; gap: .75rem; }
+    .gu-actions { flex-wrap: wrap; justify-content: flex-start; }
+    .gu-table-card { overflow-x: auto; }
+}
+
+/* ---------- Accesibilidad ---------- */
+.gu-input:focus-visible,
+.gu-select:focus-visible,
+.gu-btn:focus-visible,
+.gu-icon-btn:focus-visible {
+    outline: 2px solid var(--accent-purple);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gu-alert-success, .gu-spinner, .gu-btn, .gu-table tbody tr { animation: none; transition: none; }
+}

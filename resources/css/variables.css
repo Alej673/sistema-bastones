@@ -1,27 +1,49 @@
 :root {
-    /* 1. PALETA BASE (Lila Pastel) */
-    --bg-base: #eaddff;       
-    
-    /* 2. SOMBRAS NEUMÓRFICAS */
-    /* Cambiamos el blanco puro por un blanco al 45% de opacidad para un efecto mate/hueso */
-    --shadow-light: rgba(255, 255, 255, 0.45);      
-    --shadow-dark: #c7badb;       
+    /* ===== 1. PALETA BASE (Lila Pastel) ===== */
+    --bg-base: #eaddff;
+    --bg-elevated: #f0e7ff;
 
-    /* 3. ACENTOS */
+    /* ===== 2. SOMBRAS NEUMÓRFICAS ===== */
+    --shadow-light: rgba(255, 255, 255, 0.45);
+    --shadow-dark: #c7badb;
+
+    /* ===== 3. ACENTOS ===== */
     --accent-purple: #9333ea;
     --accent-hover: #7e22ce;
     --accent-active: #6b21a8;
+    --accent-purple-rgb: 147, 51, 234;
 
-    /* 4. TEXTOS */
-    --text-main: #3b0764;         
-    --text-muted: #7e57c2;        
-    
-    /* 5. ALERTAS */
+    /* ===== 4. TEXTOS ===== */
+    --text-main: #3b0764;
+    --text-muted: #7e57c2;
+
+    /* ===== 5. ALERTAS Y ESTADOS ===== */
     --color-error: #ef4444;
+    --color-error-rgb: 239, 68, 68;
+    --color-success: #16a34a;
+    --color-success-rgb: 22, 163, 74;
+    --color-warning: #d97706;
+    --color-warning-rgb: 217, 119, 6;
     --neon-glow: rgba(167, 112, 219, 0.55);
-
-    --bg-elevated: #f0e7ff; 
-
     --color-dinero: #3efcff;
-     --accent-purple-rgb: 147, 51, 234;
+
+    /* ===== 6. RADIOS (nuevo, unifica todo el sistema) ===== */
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-pill: 999px;
+
+    /* ===== 7. SOMBRAS NEUMÓRFICAS COMPUESTAS (nuevo) ===== */
+    --neu-shadow-out-sm: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light);
+    --neu-shadow-out-md: 8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light);
+    --neu-shadow-out-lg: 12px 12px 28px var(--shadow-dark), -10px -10px 24px var(--shadow-light);
+    --neu-shadow-in-sm: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+    --neu-shadow-in-md: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light);
+    --neu-glow-focus: 0 0 0 3px rgba(var(--accent-purple-rgb), 0.22);
+
+    /* ===== 8. TRANSICIONES (nuevo) ===== */
+    --ease-base: cubic-bezier(0.4, 0, 0.2, 1);
+    --t-fast: 150ms var(--ease-base);
+    --t-base: 240ms var(--ease-base);
+    --t-slow: 400ms var(--ease-base);
 }

@@ -162,7 +162,7 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
     // Aquí irá tu CRUD del "Panel de Registrados"
     Route::get('/super-admin/usuarios', [App\Http\Controllers\UserController::class, 'index'])->name('super.usuarios.index');
     Route::patch('/super-admin/usuarios/{id}/rol', [App\Http\Controllers\UserController::class, 'updateRole'])->name('super.usuarios.rol');
-    
+    Route::patch('/super-admin/usuarios/{id}/ban', [App\Http\Controllers\UserController::class, 'toggleBan'])->name('super.usuarios.ban');
 });
 
 

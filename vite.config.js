@@ -28,6 +28,8 @@ export default defineConfig({
                 'resources/js/inventario.js',
                 'resources/js/cotizador_rapido.js',
                 'resources/js/formulario.js',
+                'resources/css/gestion_usuarios.css',
+                'resources/js/gestion_usuarios.js',
             ],
             refresh: true,
         }),
