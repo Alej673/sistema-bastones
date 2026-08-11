@@ -25,7 +25,7 @@
                     <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" placeholder="usuario@correo.com">
                 </div>
                 @error('email')
-                    <span class="error-message">{{ $message }}</span>
+                    <span class="error-message">{!! $message !!}</span>
                 @enderror
             </div>
 

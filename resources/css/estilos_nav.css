@@ -20,6 +20,30 @@ body.theme-synthwave {
     color: var(--text-main);
 }
 
+/* Scrollbar personalizado para el sidebar (Chrome, Edge, Safari) */
+.sidebar-glass::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-glass::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-glass::-webkit-scrollbar-thumb {
+    background-color: rgba(157, 92, 224, 0.35);
+    border-radius: 10px;
+}
+
+.sidebar-glass::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(157, 92, 224, 0.55);
+}
+
+/* Firefox */
+.sidebar-glass {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(157, 92, 224, 0.35) transparent;
+}
+
 @media (min-width: 992px) {
     .sidebar-glass {
         height: 100vh;
@@ -54,13 +78,6 @@ body.theme-synthwave {
     background-color: var(--bg-base);
 }
 
-.nav-link-glass:hover {
-    color: var(--accent-purple);
-    box-shadow: 4px 4px 10px var(--shadow-dark),
-               -4px -4px 10px var(--shadow-light);
-    transform: translateY(-2px);
-}
-
 .nav-link-glass.active {
     color: var(--accent-purple);
     font-weight: 600;
@@ -75,13 +92,6 @@ body.theme-synthwave {
 
 .btn-logout {
     color: var(--color-error) !important;
-}
-
-.btn-logout:hover {
-    background-color: var(--bg-base);
-    color: var(--color-error) !important;
-    box-shadow: 4px 4px 10px rgba(239, 68, 68, 0.2),
-               -4px -4px 10px var(--shadow-light);
 }
 
 /* ==========================================================================
@@ -134,9 +144,10 @@ hr.border-secondary {
     flex-direction: column;
 }
 
-.titi-glow-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 25px rgba(157, 92, 224, 0.15), 0 6px 12px rgba(0, 0, 0, 0.08);
+/* Feedback táctil: en vez de "hover pegado", un toque breve al tocar */
+.titi-glow-card:active {
+    transform: scale(0.99);
+    box-shadow: 0 4px 10px rgba(157, 92, 224, 0.12), 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* --------------------------------------------------------------------------
@@ -191,10 +202,6 @@ hr.border-secondary {
     border-radius: 10px;
     box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
     transition: transform 0.3s ease;
-}
-
-.titi-glow-card:hover .card-img-wrapper .img-main {
-    transform: scale(1.04);
 }
 
 .card-img-wrapper .no-img {
@@ -256,13 +263,13 @@ hr.border-secondary {
     text-decoration: none;
 }
 
-.pdf-btn {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
+.action-btn-float:active {
+    transform: scale(0.92);
+    color: white;
 }
 
-.action-btn-float:hover {
-    transform: scale(1.1);
-    color: white;
+.pdf-btn {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
 }
 
 /* --------------------------------------------------------------------------
@@ -299,7 +306,7 @@ hr.border-secondary {
     color: #25d366;
 }
 
-.whatsapp-btn:hover {
+.whatsapp-btn:active {
     background-color: #25d366;
     color: white;
 }
@@ -309,7 +316,7 @@ hr.border-secondary {
     color: var(--accent-purple);
 }
 
-.cotizar-btn:hover {
+.cotizar-btn:active {
     background-color: var(--accent-purple);
     color: white;
 }
@@ -327,12 +334,137 @@ hr.border-secondary {
     transition: all 0.3s ease;
 }
 
-.titi-nav-pills .nav-link:hover {
-    background-color: rgba(157, 92, 224, 0.05);
-}
-
 .titi-nav-pills .nav-link.active {
     background-color: var(--accent-purple);
     color: white;
     box-shadow: 0 4px 12px rgba(157, 92, 224, 0.3);
+}
+
+/* ==========================================================================
+   HOVER SOLO PARA DISPOSITIVOS CON MOUSE
+   ==========================================================================
+   Todo lo que antes era :hover suelto (y por eso se quedaba "pegado" al
+   tocar en el celular) vive acá adentro. En touch, estas reglas nunca se
+   aplican; en su lugar cada elemento tiene su propio :active más arriba
+   para dar feedback inmediato al tocar.
+   ========================================================================== */
+@media (hover: hover) and (pointer: fine) {
+    .nav-link-glass:hover {
+        color: var(--accent-purple);
+        box-shadow: 4px 4px 10px var(--shadow-dark),
+                   -4px -4px 10px var(--shadow-light);
+        transform: translateY(-2px);
+    }
+
+    .btn-logout:hover {
+        background-color: var(--bg-base);
+        color: var(--color-error) !important;
+        box-shadow: 4px 4px 10px rgba(239, 68, 68, 0.2),
+                   -4px -4px 10px var(--shadow-light);
+    }
+
+    .titi-glow-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px rgba(157, 92, 224, 0.15), 0 6px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .titi-glow-card:hover .card-img-wrapper .img-main {
+        transform: scale(1.04);
+    }
+
+    .action-btn-float:hover {
+        transform: scale(1.1);
+        color: white;
+    }
+
+    .whatsapp-btn:hover {
+        background-color: #25d366;
+        color: white;
+    }
+
+    .cotizar-btn:hover {
+        background-color: var(--accent-purple);
+        color: white;
+    }
+
+    .titi-nav-pills .nav-link:hover {
+        background-color: rgba(157, 92, 224, 0.05);
+    }
+}
+
+/* ==========================================================================
+   RESPONSIVE — Buzón de Solicitudes (tarjetas)
+   ========================================================================== */
+@media (max-width: 768px) {
+    .card-img-wrapper { height: 190px; }
+
+    .top-badge { font-size: 0.68rem; padding: 4px 7px; top: 8px; left: 8px; }
+
+    .action-btn-float {
+        width: 34px;
+        height: 34px;
+        font-size: .9rem;
+        bottom: 10px;
+        right: 10px;
+    }
+
+    .titi-glow-card .card-body { padding: .85rem !important; }
+
+    .titi-glow-card h5 { font-size: 1.05rem; }
+
+    .text-sm { font-size: .8rem; }
+
+    /* Pestañas: en vez de cortarse o irse a scroll horizontal, se apilan
+       a todo el ancho — cada una en su propia fila, bien legible */
+    .titi-nav-pills {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: .6rem;
+    }
+
+    .titi-nav-pills .nav-item { width: 100%; }
+
+    .titi-nav-pills .nav-link {
+        width: 100%;
+        margin-right: 0;
+        padding: 10px 18px;
+        font-size: .9rem;
+        white-space: normal;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .4rem;
+    }
+
+    /* La pestaña inactiva necesita su propio fondo: sin esto, el texto
+       lila claro se pierde sobre el fondo lila claro de la página */
+    .titi-nav-pills .nav-link:not(.active) {
+        background-color: var(--bg-elevated, #fff);
+        color: var(--accent-purple);
+        opacity: .75;
+        box-shadow: 0 2px 6px rgba(157, 92, 224, 0.1);
+    }
+
+    .titi-nav-pills .nav-link:not(.active) .badge {
+        background-color: rgba(157, 92, 224, 0.12) !important;
+        color: var(--accent-purple) !important;
+    }
+
+    /* Botones del footer: mismo tamaño, texto no se aprieta */
+    .titi-glow-card .card-footer {
+        gap: .5rem;
+        padding-left: .85rem !important;
+        padding-right: .85rem !important;
+    }
+
+    .titi-glow-card .action-btn,
+    .titi-glow-card .card-footer a {
+        font-size: .8rem;
+        padding-top: .45rem;
+        padding-bottom: .45rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .card-img-wrapper { height: 165px; }
 }

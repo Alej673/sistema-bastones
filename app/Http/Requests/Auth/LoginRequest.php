@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -41,6 +42,22 @@ class LoginRequest extends FormRequest
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
+
+        // 1. Buscamos al usuario (incluso en papelera)
+        $user = User::withTrashed()->where('email', $this->email)->first();
+
+        if ($user && $user->trashed()) {
+            // Número oficial del taller (en formato internacional sin el +)
+            $telefono = '593984922541'; // Reemplaza por el número de tu mamá/taller
+            
+            // Mensaje predeterminado para el chat
+            $textoWS = urlencode("Hola Arte Titi_Val, mi cuenta (" . $user->email . ") aparece suspendida en el portal y deseo consultar mi estado.");
+            $linkWhatsapp = "https://wa.me/{$telefono}?text={$textoWS}";
+
+            throw ValidationException::withMessages([
+                'email' => "Tu cuenta ha sido suspendida por el administrador. Si crees que es un error, <a href='{$linkWhatsapp}' target='_blank' style='color: #25d366; font-weight: bold; text-decoration: underline;'>contáctanos por WhatsApp aquí</a>.",
+            ]);
+        }
 
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
