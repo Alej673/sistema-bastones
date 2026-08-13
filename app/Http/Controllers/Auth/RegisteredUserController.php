@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use App\Rules\RecaptchaV3;
 
 class RegisteredUserController extends Controller
 {
@@ -33,7 +34,8 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
+            'recaptcha_token' => ['required', 'string', new RecaptchaV3()], // <-- ¡Mira qué limpio queda!
         ]);
 
         $user = User::create([
@@ -46,11 +48,6 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        // Si es administrador, va al panel del taller. Si es cliente, va a su portal.
-        if ($user->role === 'admin') {
-            return redirect(route('dashboard', absolute: false));
-        }
-
-        return redirect(route('cliente.dashboard', absolute: false));
+        return redirect(route('dashboard', absolute: false));
     }
 }
