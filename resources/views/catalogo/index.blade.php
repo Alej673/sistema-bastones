@@ -8,9 +8,9 @@
 
     @php
         $secciones = [
-            ['titulo' => 'Bastones para Bastoneras', 'items' => $bastones, 'slug' => 'baston'],
-            ['titulo' => 'Lazos', 'items' => $lazos, 'slug' => 'lazo'],
-            ['titulo' => 'Manualidades y Apliques', 'items' => $manualidades, 'slug' => 'manualidad'],
+            ['titulo' => 'Bastones', 'items' => $bastones, 'slug' => 'baston'],
+            ['titulo' => 'Lazos y Cintas', 'items' => $lazos, 'slug' => 'lazo'],
+            ['titulo' => 'Manualidades', 'items' => $manualidades, 'slug' => 'manualidad'],
             ['titulo' => 'Apliques y Flores', 'items' => $apliques, 'slug' => 'aplique'],
         ];
     @endphp

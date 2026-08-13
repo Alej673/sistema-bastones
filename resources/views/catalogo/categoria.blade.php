@@ -48,7 +48,7 @@
                     <option value="">Todos los accesorios</option>
                     <option value="estandar" {{ request('accesorios') == 'estandar' ? 'selected' : '' }}>Estándar</option>
                     <option value="detallado" {{ request('accesorios') == 'detallado' ? 'selected' : '' }}>Detallado</option>
-                    <option value="personalizado_pro" {{ request('accesorios') == 'personalizado_pro' ? 'selected' : '' }}>Personalizado Pro</option>
+                    <option value="Personalizado Pro" {{ request('accesorios') == 'personalizado_pro' ? 'selected' : '' }}>Personalizado Pro</option>
                 </select>
             </div>
             @endif

@@ -65,10 +65,10 @@ class PublicCatalogController extends Controller
         $items = $query->latest()->paginate(9)->withQueryString();
 
         $titulos = [
-            'baston' => 'Bastones para Bastoneras',
+            'baston' => 'Bastones',
             'lazo' => 'Lazos y Cintas',
             'aplique' => 'Apliques y Flores',
-            'manualidad' => 'Manualidades (Extras)'
+            'manualidad' => 'Manualidades'
         ];
         
         $tituloCategoria = $titulos[$categoria];

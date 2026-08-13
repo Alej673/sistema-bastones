@@ -773,7 +773,7 @@ $(document).ready(function () {
                     agregarAlCarrito({
                         insumo_id: insumoBD?.id ?? null,
                         nombre_material: 'Cortina de Fiesta: ' + nombreMaterial, // <-- AQUÍ ESTÁ EL CAMBIO
-                        cantidad_requerida: gramosPorCortinaLana,
+                        cantidad_requerida: cortinasPorColor,
                         subtotal_calculado: costoCalculado,
                     });
                 });

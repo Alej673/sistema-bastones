@@ -89,7 +89,6 @@
         </div>
     </nav>
 
-    <!-- EL HUECO MÁGICO: Aquí se inyectará el contenido de cada página -->
     <main>
         @yield('content')
     </main>

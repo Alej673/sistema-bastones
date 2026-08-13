@@ -468,3 +468,21 @@ hr.border-secondary {
 @media (max-width: 380px) {
     .card-img-wrapper { height: 165px; }
 }
+
+@media (max-width: 768px) {
+    .main-content {
+        padding: 0.85rem !important;
+    }
+
+    /* Bootstrap container-fluid trae su propio padding lateral por defecto */
+    .main-content .container-fluid {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+}
+
+@media (max-width: 380px) {
+    .main-content {
+        padding: 0.6rem !important;
+    }
+}
