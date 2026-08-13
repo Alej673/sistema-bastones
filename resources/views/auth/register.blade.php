@@ -13,17 +13,14 @@
 <body>
 
     <div class="login-card">
-        
+
         <h1 class="brand-title">Crear Cuenta</h1>
         <p class="brand-subtitle">Únete para cotizar tus diseños</p>
-        
+
         <form method="POST" action="{{ route('register') }}" id="register-form">
             @csrf
-            
-            <!-- Input oculto para el token de reCAPTCHA -->
             <input type="hidden" name="recaptcha_token" id="recaptcha_token">
 
-            <!-- ... Tus campos normales (Nombre, Correo, Contraseña, etc.) ... -->
             <!-- Campo Nombre -->
             <div class="form-group">
                 <label for="name" class="form-label">Nombre Completo</label>
@@ -54,6 +51,9 @@
                 <div class="input-group">
                     <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
                     <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" placeholder="••••••••">
+                    <button type="button" class="toggle-password" onclick="togglePassword('password', 'toggle-icon-password')">
+                        <i class="fa-solid fa-eye" id="toggle-icon-password"></i>
+                    </button>
                 </div>
                 @error('password')
                     <span class="error-message">{{ $message }}</span>
@@ -66,6 +66,9 @@
                 <div class="input-group">
                     <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
                     <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" placeholder="••••••••">
+                    <button type="button" class="toggle-password" onclick="togglePassword('password_confirmation', 'toggle-icon-password-confirm')">
+                        <i class="fa-solid fa-eye" id="toggle-icon-password-confirm"></i>
+                    </button>
                 </div>
             </div>
 
@@ -80,10 +83,13 @@
                 </div>
             @enderror
 
-            <button type="submit" class="btn-submit">
-                Registrarse <i class="fa-solid fa-arrow-right"></i>
-            </button>
-            
+            <!-- Grupo de acciones: misma estructura que en login para consistencia visual -->
+            <div class="auth-actions">
+                <button type="submit" class="btn-submit">
+                    Registrarse <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+
             <div class="login-prompt">
                 ¿Ya tienes una cuenta? <br>
                 <a href="{{ route('login') }}">Inicia sesión aquí</a>
@@ -93,36 +99,45 @@
     </div>
 
     <script>
-    document.getElementById('register-form').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const form = this;
-        const submitBtn = form.querySelector('.btn-submit');
-
-        // Desactivar el botón para prevenir el doble envío accidental
-        if (submitBtn) {
-            submitBtn.disabled = true;
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
         }
+    </script>
 
-        const siteKey = "{{ config('services.recaptcha.site_key') }}";
+    <script>
+        document.getElementById('register-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const form = this;
+            const submitBtn = form.querySelector('.btn-submit');
 
-        // Salvavidas: si la CDN de Google no ha cargado o falla, se envía al backend
-        if (typeof grecaptcha === 'undefined') {
-            console.warn('reCAPTCHA no cargó a tiempo. Procediendo al envío.');
-            form.submit();
-            return;
-        }
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Verificando... <i class="fa-solid fa-spinner fa-spin"></i>';
+            }
 
-        grecaptcha.ready(function() {
-            grecaptcha.execute(siteKey, {action: 'register'}).then(function(token) {
-                document.getElementById('recaptcha_token').value = token;
+            const siteKey = "{{ config('services.recaptcha.site_key') }}";
+
+            if (typeof grecaptcha === 'undefined') {
+                console.warn('reCAPTCHA no cargó a tiempo. Procediendo al envío.');
                 form.submit();
-            }).catch(function(error) {
-                console.error('Error al ejecutar reCAPTCHA:', error);
-                // Si la API falla, enviamos el formulario para evaluación del backend
-                form.submit();
+                return;
+            }
+
+            grecaptcha.ready(function() {
+                grecaptcha.execute(siteKey, {action: 'register'}).then(function(token) {
+                    document.getElementById('recaptcha_token').value = token;
+                    form.submit();
+                }).catch(function(error) {
+                    console.error('Error al ejecutar reCAPTCHA:', error);
+                    form.submit();
+                });
             });
         });
-    });
     </script>
 </body>
 </html>

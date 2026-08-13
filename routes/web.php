@@ -65,6 +65,10 @@ Route::prefix('catalogo')->name('catalogo.')->group(function () {
 
   Route::post('/productos/{id}/consultar', [App\Http\Controllers\CatalogController::class, 'registrarConsulta'])->name('productos.registrar_consulta');
 
+  // Rutas de autenticación con Google (Socialite)
+    Route::get('/auth/google', [App\Http\Controllers\Auth\GoogleController::class, 'redirectToGoogle'])->name('google.login');
+    Route::get('/auth/google/callback', [App\Http\Controllers\Auth\GoogleController::class, 'handleGoogleCallback']);
+
 // ==========================================
 // 2. RUTAS DEL CLIENTE EXTERNO
 // ==========================================
