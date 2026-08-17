@@ -56,15 +56,13 @@ El formulario de cotización fue refactorizado de un archivo monolítico a módu
 
 ## Capturas del Sistema
 
-*(Estructura lista para adjuntar imágenes)*
-
 | Vista del Kardex / Inventario | Cotizador y Calculadora Reactiva |
 | :---: | :---: |
-| ![Kardex](docs/screenshots/kardex.png) | ![Cotizador](docs/screenshots/cotizador.png) |
+| ![Kardex](InventarioKardex.jpg) | ![Cotizador](Calculadora.jpg) |
 
 | Panel de Control & Centro de Alertas | Catálogo Público BTO |
 | :---: | :---: |
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Catalogo](docs/screenshots/catalogo.png) |
+| ![Dashboard](GestionVentas.jpg) | ![Catalogo](Catalogo.jpg) |
 
 ---
 
