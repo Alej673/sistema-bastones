@@ -1,106 +1,91 @@
-# 🧵 Sistema Integrado ERP y Cotizador BTO — Taller de Bastones
+# Sistema ERP & Cotizador BTO — Taller Arte Titi_Val
 
-**Built-to-Order (BTO) · Manufactura a medida · 6 módulos integrados**
-
----
-
-## ¿Qué es esto?
-
-Un sistema web completo que transformó un taller artesanal de bastones para 
-cachiporreras en una operación digitalizada. **De "cuentas en una libreta" 
-a cotizaciones en tiempo real, control de inventario, y un catálogo público 
-que capta clientes sin exponer los márgenes del taller.**
-
-**El problema:** La administradora calculaba mentalmente la cantidad de lana, 
-elásticos y bases que necesitaba por pedido. Sin registro, sin trazabilidad, 
-con paros de producción por falta de materiales.
-
-**La solución:** Un ERP a medida con cotizador automático, kardex de inventarios, 
-y un portal web que permite a los clientes diseñar su bastón y recibir una 
-proforma sin que el taller pierda el control de sus costos.
+Plataforma web integral bajo modelo **Built-to-Order (BTO)** para la gestión operativa y manufactura a medida de bastones institucionales. El sistema centraliza desde el catálogo público de captación y el cotizador reactivo hasta el control estricto de inventario (Kardex) y el módulo de despacho.
 
 ---
 
-## 🚀 Tecnologías
+## 📌 Contexto y Reto de Negocio
 
-| **Capa** | **Tecnología** |
-|----------|----------------|
-| Backend | Laravel + Eloquent ORM |
-| Base de datos | MySQL (InnoDB, transacciones atómicas) |
-| Frontend | Blade + JavaScript ES6 modular (Vite) |
-| UI | Bootstrap 5, Select2, SweetAlert2 |
-| PDF | barryvdh/laravel-dompdf |
-| Seguridad | Laravel Breeze + middleware de doble perímetro |
+El taller operaba mediante estimaciones empíricas de insumos (lana, elásticos, bases pre-cortadas), sin trazabilidad de mermas ni control digital de inventario, lo que derivaba en paros imprevistos de producción y presupuestos inexactos.
+
+**Solución desarrollada:**
+Un sistema web desacoplado en dos capas:
+1. **Capa Pública / BTO:** Catálogo dinámico para clientes que genera prospectos y solicitudes personalizadas sin exponer la lógica de costos ni los márgenes del taller.
+2. **Capa ERP Interna:** Panel administrativo con motor de cálculo reactivo, control de inventario en unidades mínimas de consumo (gramos/unidades) y módulo de despacho con tolerancia a fallos.
 
 ---
 
-## 🧠 Arquitectura que no es "otro CRUD"
+## 🛠️ Stack Tecnológico
 
-### MRP (Material Requirements Planning)
-Los pedidos en estado "pendiente" **reservan matemáticamente** el material. 
-El stock físico solo se descuenta al despachar. **Una cotización nunca corrompe 
-el inventario real.**
-
-### Doble perímetro de seguridad
-- **Perímetro público:** Catálogo, reseñas, solicitudes web (sin costos)
-- **Perímetro administrativo:** Kardex, cotizador interno, despacho
-- **El motor de costos reales jamás se ejecuta en el navegador del cliente.**
-
-### Deuda de inventario (tolerancia a fallos)
-Si falta material al despachar, el sistema permite saldos negativos controlados 
-y emite alertas en lugar de bloquear la operación. **Continuidad operativa 
-por diseño.**
+- **Backend:** PHP 8.x / Laravel (Arquitectura MVC, Eloquent ORM)
+- **Base de Datos:** MySQL (InnoDB con transacciones ACID y Soft Deletes)
+- **Frontend:** Blade, JavaScript ES6 modular (compilado con Vite), Bootstrap 5
+- **Componentes UI & Asíncronos:** Select2 (búsquedas AJAX), SweetAlert2, Fetch API
+- **Documentación & Archivos:** `barryvdh/laravel-dompdf` (PDFs renderizados en RAM), Compressor.js
 
 ---
 
-## 📦 Módulos principales
+## ⚙️ Decisiones Arquitectónicas Clave
 
-| **Módulo** | **Qué hace** |
-|------------|--------------|
-| **Kardex** | Trazabilidad de insumos en unidad mínima de consumo (gramos, no madejas). Borrados lógicos para auditoría. |
-| **Cotizador automático** | Motor reactivo en JS que aplica costeo fraccional y reglas de mayoreo en milisegundos. |
-| **Puente BTO** | Sincroniza solicitudes web con pedidos internos de forma transaccional (estados + precios). |
-| **Panel de control** | KPIs en tiempo real + centro de alertas interactivo para resolver incidencias sin salir del dashboard. |
-| **Catálogo público** | Vitrinas por categoría con filtros, sistema de reseñas AJAX, y modal de consulta rápida. |
-| **Portal del cliente** | "Mis Pedidos": seguimiento y descarga de proformas sin intervención del taller. |
+### 1. Desacoplamiento MRP (Planificación de Materiales)
+Para evitar la corrupción prematura del inventario, el cotizador y el guardado de pedidos operan como una **reserva matemática**. El descuento físico en bodega solo se ejecuta de forma transaccional (`DB::beginTransaction`) cuando el pedido pasa a estado **"Realizado/Despachado"**.
 
----
+### 2. Seguridad de Doble Perímetro
+Aislamiento total mediante middlewares de Laravel por rol (`admin` / `cliente`). Los clientes registrados acceden a su historial de proformas (*Mis Pedidos*) sin tener acceso a los endpoints internos de costos, inventario ni fórmulas de producción.
 
-## 🎯 Logros técnicos que importan
+### 3. Despacho Resiliente y Deuda de Inventario
+El módulo de entrega implementa un algoritmo de búsqueda inteligente (`LIKE` y mapeo por categoría) que tolera variaciones de nomenclatura en insumos. Si el stock físico es insuficiente al despachar, el sistema permite saldos negativos controlados y emite alertas visuales para no frenar la logística de entrega.
 
-- **Refactorización de un monolito de +800 líneas** a módulos ES6 independientes (SoC) integrados con Vite.
-- **Motor de búsqueda inteligente** en el despacho: tolera variaciones tipográficas y mapea textos a categorías reales.
-- **Blindaje contra race conditions:** el botón de cotización se bloquea al recibir respuesta del servidor hasta cerrar el flujo.
-- **Transacciones atómicas** entre cotización web y ERP: si falla algo, todo se revierte. Sin pedidos huérfanos.
-- **Gestión de deuda de inventario:** saldos negativos controlados que no bloquean la operación.
+### 4. Modularización Frontend (SoC)
+El formulario de cotización fue refactorizado de un archivo monolítico a módulos ES6 independientes (`modulo_lana.js`, `modulo_cortinas.js`, `modulo_decoracion.js`, `modulo_diseno.js`) orquestados por un script principal y optimizados con Hot Module Replacement en Vite.
 
 ---
 
-## 📸 Capturas
+## 📐 Módulos del Sistema
 
-*(Pendiente: insertar imágenes del Kardex, Cotizador, Panel de Control y Catálogo Público)*
-
----
-
-## 🔗 Enlaces
-
-- [Repositorio en GitHub](URL_DEL_REPO)
-- [Video demo (2 min)](URL_DEL_VIDEO)
-- [Landing page del taller](URL_DE_LA_LANDING) *(si está desplegada)*
-
----
-
-## 📌 Estado actual
-
-**Versión:** 6.0  
-**Estado:** Funcional (en producción para el taller)  
-**Próximo hito:** Exportación de reportes en Excel y ampliación del panel de inicio.
+| Módulo | Responsabilidad Técnica |
+| :--- | :--- |
+| **Kardex** | Registro continuo de entradas/salidas en unidad mínima. Motor traductor visual (muestra madejas/rollos en UI pero almacena gramos/metros). |
+| **Cotizador** | Motor de cálculo reactivo con costeo fraccional, reglas automáticas de mayoreo y blindaje contra *race conditions* (doble clic). |
+| **Puente BTO** | Sincronización bidireccional entre solicitudes del catálogo web (`quote_requests`) y órdenes de producción (`pedidos`). |
+| **Historial & Despacho** | Vista rápida asíncrona, trazabilidad de estados y generación de Recetas de Compra basadas en déficit real de stock. |
+| **Catálogo & Reseñas** | Landing optimizada con carga perezosa de imágenes, sistema de calificación AJAX e integración directa a WhatsApp. |
+| **Alertas & KPIs** | Detección de materiales huérfanos y resolución de inventario en 1-clic desde el panel principal. |
 
 ---
 
-## 👤 Autor
+## 🖼️ Capturas del Sistema
 
-**Alejandro Larco**  
-[LinkedIn](URL) · [GitHub](URL) · [Portafolio](URL)
+*(Estructura lista para adjuntar imágenes)*
 
-> *Este proyecto fue desarrollado como parte del Plan de Trabajo de Integración Curricular (PTIC) y está documentado con +30 páginas de bitácora técnica.*
+| Vista del Kardex / Inventario | Cotizador y Calculadora Reactiva |
+| :---: | :---: |
+| ![Kardex](docs/screenshots/kardex.png) | ![Cotizador](docs/screenshots/cotizador.png) |
+
+| Panel de Control & Centro de Alertas | Catálogo Público BTO |
+| :---: | :---: |
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Catalogo](docs/screenshots/catalogo.png) |
+
+---
+
+## 🚀 Instalación y Despliegue Local
+
+```bash
+# 1. Clonar el repositorio
+git clone [https://github.com/Alej673/sistema-bastones.git](https://github.com/Alej673/sistema-bastones.git)
+cd sistema-bastones
+
+# 2. Instalar dependencias de PHP y Node
+composer install
+npm install
+
+# 3. Configurar entorno
+cp .env.example .env
+php artisan key:generate
+
+# 4. Configurar base de datos en .env y correr migraciones
+php artisan migrate --seed
+
+# 5. Compilar assets y levantar servidor
+npm run dev
+php artisan serve
