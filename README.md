@@ -1,58 +1,29 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Sistema Integrado ERP y Cotizador BTO — Taller de Bastones[cite: 1]
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Descripción del Proyecto
+Aplicativo web integral diseñado bajo el modelo Built-to-Order (BTO) para la manufactura a medida[cite: 1]. El sistema evolucionó desde una herramienta interna de control de inventarios hacia una plataforma web bidireccional[cite: 1]. Conecta un catálogo público interactivo y un portal de clientes con un motor de cotización avanzado, permitiendo captar prospectos sin exponer los márgenes internos del taller[cite: 1].
 
-## About Laravel
+## Tecnologías Utilizadas
+* **Backend:** Laravel (PHP) implementando el patrón MVC y Eloquent ORM[cite: 1].
+* **Base de Datos:** MySQL (InnoDB) con aplicación estricta de transacciones atómicas[cite: 1].
+* **Frontend:** Interfaces Blade con lógica en JavaScript ES6 modular orquestado por Vite[cite: 1].
+* **Librerías UI/UX:** Bootstrap 5, jQuery, Select2 para búsquedas asíncronas y SweetAlert2[cite: 1].
+* **Seguridad:** Autenticación vía Laravel Breeze con un middleware de doble perímetro basado en roles[cite: 1].
+* **Utilidades:** `barryvdh/laravel-dompdf` para renderizado de documentos en memoria y Compressor.js para optimización de imágenes en el cliente[cite: 1].
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Arquitectura y Lógica de Negocio
+* **Arquitectura MRP (Material Requirements Planning):** Mantiene una separación estricta entre la cotización y la afectación del inventario[cite: 1]. Los pedidos en estado "pendiente" realizan reservas matemáticas, y el stock físico solo se descuenta al momento del despacho[cite: 1].
+* **Doble Perímetro de Seguridad:** El sistema aísla por completo la capa pública de la administrativa[cite: 1]. El motor de costos reales jamás se ejecuta en el navegador del usuario final[cite: 1].
+* **Tolerancia a Fallos Operativos:** Implementación de "Deuda de Inventario", permitiendo saldos negativos controlados durante el despacho para garantizar la continuidad operativa sin bloqueos del sistema[cite: 1].
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Módulos Principales
+* **Kardex de Inventarios:** Trazabilidad en tiempo real utilizando la unidad mínima de consumo y resguardado por borrados lógicos (Soft Deletes)[cite: 1].
+* **Cotizador Automático:** Motor reactivo en JavaScript que aplica algoritmos de costeo fraccional y reglas de mayoreo en milisegundos[cite: 1].
+* **Puente de Sincronización BTO:** Conecta las solicitudes web de los prospectos con los pedidos del ERP interno de forma transaccional, unificando estados y precios[cite: 1].
+* **Panel de Control:** Dashboard asíncrono con KPIs de rendimiento financiero y un centro interactivo para la resolución de alertas de stock[cite: 1].
+* **Plataforma Pública:** Catálogo dinámico con sistema AJAX de reseñas y portal de autoservicio para el seguimiento de pedidos y descarga de proformas[cite: 1].
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
-```
-
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Logros Técnicos Destacados
+* Refactorización de interfaces monolíticas hacia módulos ES6 independientes con separación de responsabilidades (SoC)[cite: 1].
+* Desarrollo de motores de búsqueda inteligente con tolerancia a variaciones tipográficas en el módulo de despacho[cite: 1].
+* Blindaje contra condiciones de carrera (race conditions) en el frontend para evitar solicitudes duplicadas[cite: 1].
