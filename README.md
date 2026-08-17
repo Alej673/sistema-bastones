@@ -4,7 +4,7 @@ Plataforma web integral bajo modelo **Built-to-Order (BTO)** para la gestión op
 
 ---
 
-## 📌 Contexto y Reto de Negocio
+## Contexto y Reto de Negocio
 
 El taller operaba mediante estimaciones empíricas de insumos (lana, elásticos, bases pre-cortadas), sin trazabilidad de mermas ni control digital de inventario, lo que derivaba en paros imprevistos de producción y presupuestos inexactos.
 
@@ -15,7 +15,7 @@ Un sistema web desacoplado en dos capas:
 
 ---
 
-## 🛠️ Stack Tecnológico
+## Stack Tecnológico
 
 - **Backend:** PHP 8.x / Laravel (Arquitectura MVC, Eloquent ORM)
 - **Base de Datos:** MySQL (InnoDB con transacciones ACID y Soft Deletes)
@@ -25,7 +25,7 @@ Un sistema web desacoplado en dos capas:
 
 ---
 
-## ⚙️ Decisiones Arquitectónicas Clave
+## Decisiones Arquitectónicas Clave
 
 ### 1. Desacoplamiento MRP (Planificación de Materiales)
 Para evitar la corrupción prematura del inventario, el cotizador y el guardado de pedidos operan como una **reserva matemática**. El descuento físico en bodega solo se ejecuta de forma transaccional (`DB::beginTransaction`) cuando el pedido pasa a estado **"Realizado/Despachado"**.
@@ -41,7 +41,7 @@ El formulario de cotización fue refactorizado de un archivo monolítico a módu
 
 ---
 
-## 📐 Módulos del Sistema
+## Módulos del Sistema
 
 | Módulo | Responsabilidad Técnica |
 | :--- | :--- |
@@ -54,7 +54,7 @@ El formulario de cotización fue refactorizado de un archivo monolítico a módu
 
 ---
 
-## 🖼️ Capturas del Sistema
+## Capturas del Sistema
 
 *(Estructura lista para adjuntar imágenes)*
 
@@ -68,7 +68,7 @@ El formulario de cotización fue refactorizado de un archivo monolítico a módu
 
 ---
 
-## 🚀 Instalación y Despliegue Local
+## Instalación y Despliegue Local
 
 ```bash
 # 1. Clonar el repositorio
@@ -89,3 +89,13 @@ php artisan migrate --seed
 # 5. Compilar assets y levantar servidor
 npm run dev
 php artisan serve
+
+```
+Autor
+Alejandro Larco
+
+GitHub
+
+LinkedIn
+
+Proyecto de Integración Curricular (PTIC) — Titulación en Desarrollo de Software.
