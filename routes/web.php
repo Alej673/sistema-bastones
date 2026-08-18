@@ -83,6 +83,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/mis-pedidos', [App\Http\Controllers\ClienteController::class, 'dashboard'])->name('cliente.dashboard');
     Route::post('/comentarios', [App\Http\Controllers\ReviewController::class, 'store'])->name('comentarios.store');
     Route::post('/comentarios/{id}/like', [App\Http\Controllers\ReviewController::class, 'toggleLike'])->name('comentarios.like');
+    Route::post('/favoritos/toggle', [App\Http\Controllers\ClienteController::class, 'toggleFavorito'])->name('favoritos.toggle');
+    Route::get('/mis-favoritos', [App\Http\Controllers\ClienteController::class, 'misFavoritos'])->name('cliente.favoritos');
 });
 
 
@@ -98,7 +100,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // ==========================================
 // 3. RUTAS PRIVADAS (Taller y Administración)
 // ==========================================
-Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin', 'super_admin'])->group(function () {
 
     // ------------------------------------------
     // Dashboard (página de aterrizaje post-login del admin)

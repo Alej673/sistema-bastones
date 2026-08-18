@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         navCollapse.querySelectorAll('a, button[type="submit"]').forEach(function (el) {
-            // No cerrar el menú móvil si es el toggle de un dropdown (ej. "Catálogo")
+            // No cerrar el menú móvil si es el toggle de un dropdown
             if (el.matches('[data-bs-toggle="dropdown"]')) return;
 
             el.addEventListener('click', function () {
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
 
-        // Si la pantalla vuelve a ser grande, asegura que el menú quede visible/normal
+        // Asegura que el menú quede visible al agrandar la pantalla
         window.addEventListener('resize', function () {
             if (window.innerWidth > 860) {
                 navCollapse.classList.remove('is-open');
@@ -71,70 +71,37 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-
 // ============================================================
-// 2. ANIMACIÓN DE APARICIÓN AL HACER SCROLL (IntersectionObserver)
+// 2. ANIMACIÓN DE APARICIÓN AL HACER SCROLL
 // ============================================================
 document.addEventListener("DOMContentLoaded", function () {
     const observer = new IntersectionObserver((entries) => {
-        let delayCounter = 0; // Para el efecto cascada
+        let delayCounter = 0;
 
         entries.forEach((entry) => {
             if (entry.isIntersecting) {
-                // Si entra en pantalla, le damos un ligero delay matemático
                 setTimeout(() => {
                     entry.target.classList.add('scroll-visible');
-                }, delayCounter * 120); // 120ms entre cada tarjeta
+                }, delayCounter * 120);
 
                 delayCounter++;
-                observer.unobserve(entry.target); // Dejamos de observarlo para que no se repita al subir
+                observer.unobserve(entry.target);
             }
         });
     }, {
-        threshold: 0.15, // Se activa cuando el 15% de la tarjeta asoma
-        rootMargin: "0px 0px -50px 0px" // Un pequeño margen para que se note al hacer scroll
+        threshold: 0.15,
+        rootMargin: "0px 0px -50px 0px"
     });
 
-    // Buscamos todo lo que tenga la clase scroll-hidden y lo observamos
     document.querySelectorAll('.scroll-hidden').forEach((el) => observer.observe(el));
 });
 
-
 // ============================================================
-// 3. ESTRELLAS DE CALIFICACIÓN (versión simple / básica)
-// ------------------------------------------------------------
+// 3. COMENTARIOS Y CALIFICACIONES (Estrellas, Formulario y Likes)
 // ============================================================
 document.addEventListener('DOMContentLoaded', function () {
-    const stars = document.querySelectorAll('.star-btn');
-    const inputCalificacion = document.getElementById('calificacion_input');
-
-    stars.forEach(star => {
-        star.addEventListener('click', function () {
-            let rating = this.getAttribute('data-value');
-            inputCalificacion.value = rating; // Guardamos el valor en el input oculto
-
-            // Repintamos las estrellas según el clic
-            stars.forEach(s => {
-                if (s.getAttribute('data-value') <= rating) {
-                    s.classList.remove('fa-regular');
-                    s.classList.add('fa-solid'); // Pintada
-                } else {
-                    s.classList.remove('fa-solid');
-                    s.classList.add('fa-regular'); // Vacía
-                }
-            });
-        });
-    });
-});
-
-
-// ============================================================
-// 4. COMENTARIOS: estrellas (hover+click), envío del formulario,
-//    botón "útil" (like) y botón "responder" (solo admin)
-// ============================================================
-document.addEventListener('DOMContentLoaded', function () {
-
-    // --- 4.1. ESTRELLAS INTERACTIVAS (hover + click) ---
+    
+    // --- 3.1. Estrellas Interactivas ---
     let currentRating = 0;
     const stars = document.querySelectorAll('.star-btn');
     const inputCalificacion = document.getElementById('calificacion_input');
@@ -152,14 +119,13 @@ document.addEventListener('DOMContentLoaded', function () {
         star.addEventListener('mouseout', () => pintarEstrellas(currentRating));
         star.addEventListener('click', function () {
             currentRating = this.getAttribute('data-value');
-            inputCalificacion.value = currentRating;
+            if (inputCalificacion) inputCalificacion.value = currentRating;
             pintarEstrellas(currentRating);
         });
     });
 
-    // --- 4.2. ENVÍO DEL FORMULARIO DE COMENTARIO ---
+    // --- 3.2. Envío del Formulario ---
     const formComentario = document.getElementById('form-comentario');
-
     if (formComentario) {
         formComentario.addEventListener('submit', function (e) {
             e.preventDefault();
@@ -196,7 +162,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     pintarEstrellas(0);
 
                     setTimeout(() => {
-                        // Antes: {{ url('/') }} — ahora tomado del data-home-url del <body>
                         window.location.href = `${HOME_URL}#comentarios`;
                     }, 1500);
                 }
@@ -213,13 +178,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- 4.3. BOTÓN "ÚTIL" (LIKE) ---
+    // --- 3.3. Botón Útil (Like) ---
     document.querySelectorAll('.btn-util').forEach(btn => {
         btn.addEventListener('click', function () {
-            if (!document.getElementById('form-comentario') && !document.body.classList.contains('user-logged')) {
-                // Si no hay forma de comentar visible, asumimos visitante sin sesión
-            }
-
             const reviewId = this.getAttribute('data-id');
             const icon = this.querySelector('.icon-heart');
             const counter = this.querySelector('.like-counter');
@@ -228,8 +189,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
-                    // Antes: {{ csrf_token() }} — ahora tomado del data-csrf del <body>
-                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'X-CSRF-TOKEN': typeof CSRF_TOKEN !== 'undefined' ? CSRF_TOKEN : document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                     'Accept': 'application/json'
                 }
             })
@@ -248,9 +208,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 icon.classList.toggle('fa-solid', data.isLiked);
                 icon.classList.toggle('fa-regular', !data.isLiked);
 
-                // Animación de "pop"
                 icon.classList.remove('heart-pop');
-                void icon.offsetWidth; // fuerza reflow para reiniciar la animación
+                void icon.offsetWidth; 
                 icon.classList.add('heart-pop');
 
                 counter.innerText = data.likesCount;
@@ -259,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // --- 4.4. BOTÓN RESPONDER (EXCLUSIVO ADMIN, CON MODAL) ---
+    // --- 3.4. Botón Responder (Admin) ---
     document.addEventListener('click', function (e) {
         const btnResponder = e.target.closest('.btn-responder');
         if (!btnResponder) return;
@@ -270,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function () {
         Swal.fire({
             title: `Responder a ${nombreUsuario}`,
             input: 'textarea',
-            inputPlaceholder: 'Escribe tu respuesta oficial del Taller Arte Titi_Val...',
+            inputPlaceholder: 'Escribe tu respuesta oficial...',
             background: 'var(--color-fondo-claro)',
             color: 'var(--color-texto-principal)',
             confirmButtonColor: 'var(--color-lila-fuerte)',
@@ -285,19 +244,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }).then((result) => {
             if (!result.isConfirmed) return;
 
-            const respuestaText = `@${nombreUsuario} - ${result.value}`;
             const formComentario = document.getElementById('form-comentario');
-
             if (!formComentario) {
                 mostrarToast('error', 'No disponible', 'Solo el admin logueado puede responder.');
                 return;
             }
 
-            formComentario.querySelector('textarea[name="contenido"]').value = respuestaText;
-
+            formComentario.querySelector('textarea[name="contenido"]').value = `@${nombreUsuario} - ${result.value}`;
+            
             currentRating = 5;
-            const inputCalif = document.getElementById('calificacion_input');
-            if (inputCalif) inputCalif.value = 5;
+            if (inputCalificacion) inputCalificacion.value = 5;
             pintarEstrellas(5);
 
             formComentario.querySelector('button[type="submit"]').requestSubmit
@@ -305,7 +261,38 @@ document.addEventListener('DOMContentLoaded', function () {
                 : formComentario.dispatchEvent(new Event('submit', { cancelable: true }));
         });
     });
+});
 
+// ============================================================
+// 4. FAVORITOS (Botón Corazón del Catálogo)
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    const botonesFavoritos = document.querySelectorAll('.btn-favorito');
+
+    botonesFavoritos.forEach(boton => {
+        boton.addEventListener('click', function() {
+            const modeloId = this.getAttribute('data-id');
+            const iconoCorazon = this.querySelector('i');
+            
+            fetch('/favoritos/toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ modelo_id: modeloId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    // Alternamos las clases mágicamente
+                    iconoCorazon.classList.toggle('fa-regular');
+                    iconoCorazon.classList.toggle('fa-solid');
+                }
+            })
+            .catch(error => console.error('Error al actualizar favorito:', error));
+        });
+    });
 });
 
 

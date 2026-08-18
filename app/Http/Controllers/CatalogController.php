@@ -235,4 +235,5 @@ class CatalogController extends Controller
             return response()->json(['success' => false], 500);
         }
     }
+    
 }

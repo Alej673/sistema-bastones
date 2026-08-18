@@ -8,9 +8,13 @@
                     <a href="{{ route('login') }}" class="btn btn-light btn-sm rounded-circle shadow-sm border-0 d-flex align-items-center justify-content-center titi-fav-btn" title="Inicia sesión para guardar" data-bs-toggle="tooltip">
                         <i class="fa-regular fa-heart text-secondary fs-5"></i>
                     </a>
-                @else
-                    <button class="btn btn-light btn-sm rounded-circle shadow-sm border-0 d-flex align-items-center justify-content-center titi-fav-btn btn-favorito" data-id="{{ $item->id }}" title="Guardar en favoritos" data-bs-toggle="tooltip">
-                        <i class="fa-regular fa-heart text-danger fs-5"></i>
+                @else   
+                    @php
+                        // Verificamos si este modelo ya está en la lista de favoritos del usuario
+                        $esFavorito = auth()->user()->favoritos->contains($item->id);
+                    @endphp
+                    <button class="btn btn-light btn-sm rounded-circle shadow-sm border-0 d-flex align-items-center justify-content-center titi-fav-btn btn-favorito" data-id="{{ $item->id }}" title="{{ $esFavorito ? 'Quitar de favoritos' : 'Guardar en favoritos' }}" data-bs-toggle="tooltip">
+                        <i class="{{ $esFavorito ? 'fa-solid' : 'fa-regular' }} fa-heart text-danger fs-5"></i>
                     </button>
                 @endguest
             </div>

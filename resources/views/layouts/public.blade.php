@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Arte Titi_Val - Catálogo Oficial')</title>
     
     <!-- Fuentes e Iconos -->
@@ -72,7 +73,12 @@
                 @endguest
 
                 @auth
-                    @if(auth()->user()->role === 'admin')
+                    <!-- NUEVO BOTÓN: Mis Favoritos (Solo visible si hay sesión) -->
+                    <a href="{{ route('cliente.favoritos') }}" class="btn btn-outline" style="padding: 10px 15px; border-color: rgba(157, 92, 224, 0.2);" title="Mis Favoritos">
+                        <i class="fa-solid fa-heart text-danger fs-5"></i>
+                    </a>
+
+                    @if(auth()->user()->role === 'admin' || auth()->user()->role === 'super_admin')
                         <a href="{{ route('dashboard') }}" class="btn btn-solid">Panel Taller</a>
                     @else
                         <a href="{{ route('cliente.dashboard') }}" class="btn btn-outline">Mis Pedidos</a>
@@ -80,7 +86,7 @@
 
                     <form method="POST" action="{{ route('logout') }}" style="display: inline;">
                         @csrf
-                        <button type="submit" class="btn btn-outline nav-logout-btn" style="padding: 10px 15px;">
+                        <button type="submit" class="btn btn-outline nav-logout-btn" style="padding: 10px 15px;" title="Cerrar Sesión">
                             <i class="fa-solid fa-arrow-right-from-bracket"></i>
                         </button>
                     </form>
