@@ -16,6 +16,7 @@ use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\ClienteController; // Corregí la mayúscula por convención
 use App\Http\Controllers\CotizacionController;
 use App\Http\Controllers\UserController; // <-- ¡AQUÍ ESTÁ LA NUEVA LÍNEA!
+use App\Mail\MensajeContactoMail;
 
 // Modelos
 use App\Models\CatalogItem;
@@ -61,7 +62,58 @@ Route::prefix('catalogo')->name('catalogo.')->group(function () {
 
     // Vista dedicada por categoría -> URL: /catalogo/baston, /catalogo/lazo, etc.
     Route::get('/{categoria}', [PublicCatalogController::class, 'showCategory'])->name('categoria');
+
 });
+
+    // Páginas de contenido
+    Route::view('/nosotros', 'nosotros')->name('nosotros');
+    Route::view('/contacto', 'contacto')->name('contacto');
+
+
+    // Nueva ruta para procesar el envío
+    Route::post('/contacto/enviar', function (Request $request) {
+        
+        // 1. Validamos TODOS los datos, incluyendo el reCAPTCHA v3
+        $request->validate([
+            'nombre_queja' => 'required|string|max:255',
+            'correo_queja' => 'required|email|max:255',       // Nuevo
+            'telefono_queja' => 'nullable|string|max:20',     // Nuevo (Opcional)
+            'asunto_queja' => 'required|string|max:255',
+            'mensaje_queja' => 'required|string',
+            'g-recaptcha-response' => 'required'              // Exigimos el token oculto
+        ], [
+            'g-recaptcha-response.required' => 'No se pudo verificar la seguridad del formulario.'
+        ]);
+
+        // 2. Verificamos el token reCAPTCHA v3 con Google de forma silenciosa
+        $recaptchaResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret' => config('services.recaptcha.secret_key'), // Asegúrate de que esto exista en tu config
+            'response' => $request->input('g-recaptcha-response'),
+            'remoteip' => $request->ip()
+        ]);
+
+        // reCAPTCHA v3 devuelve un "score" (0.0 a 1.0). Menos de 0.5 suele ser un bot.
+        $score = $recaptchaResponse->json('score');
+        if (!$recaptchaResponse->json('success') || $score < 0.5) {
+            return back()->with('error', 'El sistema bloqueó el envío por seguridad (Posible Bot). Intenta de nuevo.')->withInput();
+        }
+
+        // 3. Preparamos la información (incluyendo correo y teléfono)
+        $datos = [
+            'nombre'   => $request->nombre_queja,
+            'correo'   => $request->correo_queja,
+            'telefono' => $request->telefono_queja,
+            'asunto'   => $request->asunto_queja,
+            'mensaje'  => $request->mensaje_queja,
+        ];
+
+        // 4. Enviamos el correo (Mailtrap lo atrapará)
+        Mail::to('administracion@artetitival.com')->send(new MensajeContactoMail($datos));
+
+        // 5. Retornamos con el mensaje de éxito
+        return back()->with('success', 'Tu mensaje ha sido enviado correctamente a la administración.');
+
+    })->name('contacto.enviar');
 
   Route::post('/productos/{id}/consultar', [App\Http\Controllers\CatalogController::class, 'registrarConsulta'])->name('productos.registrar_consulta');
 
