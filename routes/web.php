@@ -68,7 +68,9 @@ Route::prefix('catalogo')->name('catalogo.')->group(function () {
     // Páginas de contenido
     Route::view('/nosotros', 'nosotros')->name('nosotros');
     Route::view('/contacto', 'contacto')->name('contacto');
-
+    // Páginas Legales
+    Route::view('/politica-privacidad', 'legal.privacidad')->name('legal.privacidad');
+    Route::view('/terminos-y-condiciones', 'legal.terminos')->name('legal.terminos');
 
     // Nueva ruta para procesar el envío
     Route::post('/contacto/enviar', function (Request $request) {

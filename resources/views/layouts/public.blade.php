@@ -117,11 +117,49 @@
                 <!-- Columna 2: Enlaces Rápidos -->
                 <div class="col-lg-4 col-md-6">
                     <h5 class="text-white mb-4">Enlaces Rápidos</h5>
-                    <ul class="list-unstyled" style="line-height: 2.2;">
-                        <li><a href="#" class="text-decoration-none" style="color: #adb5bd; transition: 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#adb5bd'">Inicio</a></li>
-                        <li><a href="#destacados" class="text-decoration-none" style="color: #adb5bd; transition: 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#adb5bd'">Opciones Destacadas</a></li>
-                        <li><a href="{{ url('/catalogo') }}" class="text-decoration-none" style="color: #adb5bd; transition: 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#adb5bd'">Catálogo Completo</a></li>
-                        <li><a href="{{ route('login') }}" class="text-decoration-none" style="color: #adb5bd; transition: 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#adb5bd'">Acceso Clientes</a></li>
+                    <ul class="list-unstyled footer-links" style="line-height: 2.2;">
+                        <li>
+                            <a href="{{ route('home') }}" class="footer-link">
+                                <i class="fa-solid fa-chevron-right footer-link-icon"></i> Inicio
+                            </a>
+                        </li>
+                        <li>
+                            {{-- Corregido: antes era solo #destacados, ahora siempre apunta al home + ancla --}}
+                            <a href="{{ route('home') }}#destacados" class="footer-link">
+                                <i class="fa-solid fa-chevron-right footer-link-icon"></i> Opciones Destacadas
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('catalogo.index') }}" class="footer-link">
+                                <i class="fa-solid fa-chevron-right footer-link-icon"></i> Catálogo Completo
+                            </a>
+                        </li>
+                        <li>
+                            {{-- Link preparado para el módulo de Política de Privacidad.
+                                 En cuanto crees la ruta 'legal.privacidad', este link se activa solo.
+                                 Mientras no exista, cae a '#' sin romper el footer. --}}
+                            @if(Route::has('legal.privacidad'))
+                                <a href="{{ route('legal.privacidad') }}" class="footer-link">
+                                    <i class="fa-solid fa-chevron-right footer-link-icon"></i> Política de Privacidad
+                                </a>
+                            @else
+                                <a href="#" class="footer-link">
+                                    <i class="fa-solid fa-chevron-right footer-link-icon"></i> Política de Privacidad
+                                </a>
+                            @endif
+                        </li>
+                        <li>
+                            {{-- Link para Términos y Condiciones --}}
+                            @if(Route::has('legal.terminos'))
+                                <a href="{{ route('legal.terminos') }}" class="footer-link">
+                                    <i class="fa-solid fa-chevron-right footer-link-icon"></i> Términos y Condiciones
+                                </a>
+                            @else
+                                <a href="#" class="footer-link">
+                                    <i class="fa-solid fa-chevron-right footer-link-icon"></i> Términos y Condiciones
+                                </a>
+                            @endif
+                        </li>
                     </ul>
                 </div>
 
@@ -154,6 +192,17 @@
                             onmouseover="this.style.color='#25D366'" 
                             onmouseout="this.style.color='#adb5bd'">
                                 {{ $ajustesTaller['telefono_whatsapp'] ?? '099 985 6725' }}
+                            </a>
+                        </li>
+                        <li>
+                            {{-- Nuevo: link directo al formulario de contacto/quejas --}}
+                            <i class="fa-solid fa-envelope me-2" style="color: var(--color-lila-fuerte);"></i>
+                            <a href="{{ route('contacto') }}" 
+                            class="text-decoration-none" 
+                            style="color: #adb5bd; transition: 0.3s;" 
+                            onmouseover="this.style.color='#fff'" 
+                            onmouseout="this.style.color='#adb5bd'">
+                                Formulario de Contacto
                             </a>
                         </li>
                     </ul>
@@ -190,6 +239,30 @@
             </div>
         </div>
     </footer>
+
+    <!-- Estilos puntuales del footer (hover consistente en Enlaces Rápidos) -->
+    <style>
+        .footer-links .footer-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #adb5bd;
+            text-decoration: none;
+            transition: color 0.25s ease, transform 0.25s ease;
+        }
+        .footer-links .footer-link-icon {
+            font-size: 0.7rem;
+            color: var(--color-oro);
+            transition: transform 0.25s ease;
+        }
+        .footer-links .footer-link:hover {
+            color: #ffffff;
+            transform: translateX(4px);
+        }
+        .footer-links .footer-link:hover .footer-link-icon {
+            transform: translateX(2px);
+        }
+    </style>
 
     <!-- Scripts de Bootstrap y tuyos -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
