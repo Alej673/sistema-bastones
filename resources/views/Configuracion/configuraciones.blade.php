@@ -40,23 +40,49 @@
 
                 <!-- Contenido de las Pestañas -->
                 <div class="tab-content" id="configTabsContent">
+                    @php
+                        // 1. Extraemos un mapa plano de todos los ajustes actuales para poder cruzarlos
+                        $mapaAjustes = \App\Models\Ajuste::pluck('valor', 'llave')->toArray();
+
+                        // 2. Diccionario de Traducción 100% Dinámico
+                        $traductores = [
+                            'pf_lana' => [
+                                'divisor' => (float)($mapaAjustes['lana_gramos_madeja'] ?? 90), 
+                                'unidad' => 'g'
+                            ],
+                            'pf_cinta_garza' => ['divisor' => 45.72, 'unidad' => 'm'],
+                            'pf_cinta_satin' => ['divisor' => 18.28, 'unidad' => 'm'],
+                            'pf_cinta_gross' => ['divisor' => 22.86, 'unidad' => 'm'],
+                            'pf_elastico'    => ['divisor' => 10,    'unidad' => 'm'],
+                            'pf_cinchos'     => ['divisor' => 100,   'unidad' => 'u'],
+                        ];
+                    @endphp
+        
                     @foreach($grupos as $nombreGrupo => $ajustes)
                         <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" 
                              id="content-{{ $nombreGrupo }}" role="tabpanel">
                             
                             <div class="row pt-3">
                                 @foreach($ajustes as $ajuste)
+                                    @php
+                                        // Verificamos si este input necesita traducción comercial
+                                        $esTraducido = array_key_exists($ajuste->llave, $traductores);
+                                    @endphp
+
                                     <div class="col-md-6 col-lg-4 mb-4">
                                         <div class="form-group">
                                             <label for="{{ $ajuste->llave }}" class="form-label fw-semibold" style="color: var(--text-main); font-size: 0.95rem;">
-                                                {{ $ajuste->descripcion ?? ucfirst(str_replace('_', ' ', $ajuste->llave)) }}
+                                                @if($esTraducido)
+                                                    {{ trim(explode('(', $ajuste->descripcion)[0]) }} (Total x {{ $traductores[$ajuste->llave]['divisor'] }}{{ $traductores[$ajuste->llave]['unidad'] }})
+                                                @else
+                                                    {{ $ajuste->descripcion ?? ucfirst(str_replace('_', ' ', $ajuste->llave)) }}
+                                                @endif
                                             </label>
                                             
                                             <div class="input-group neumorphic-input">
                                                 <span class="input-group-text">
-                                                    @if(str_contains($ajuste->grupo, 'finanzas') || str_contains($ajuste->grupo, 'precios') || str_contains($ajuste->grupo, 'bases') || str_contains($ajuste->grupo, 'decoracion'))
-                                                        <i class="fa-solid fa-dollar-sign"></i>
-                                                    @elseif(str_contains($ajuste->grupo, 'contacto'))
+                                                    {{-- LÓGICA DE ÍCONOS MEJORADA --}}
+                                                    @if(str_contains($ajuste->grupo, 'contacto'))
                                                         @if(str_contains($ajuste->llave, 'whatsapp'))
                                                             <i class="fa-brands fa-whatsapp text-success"></i>
                                                         @elseif(str_contains($ajuste->llave, 'facebook'))
@@ -70,17 +96,55 @@
                                                         @endif
                                                     @elseif(str_contains($ajuste->grupo, 'sistema'))
                                                         <i class="fa-solid fa-globe"></i>
+                                                    
+                                                    {{-- Identificamos métricas de longitud, peso o cantidad (NO dinero) --}}
+                                                    @elseif(str_ends_with($ajuste->llave, '_m') || str_contains($ajuste->llave, 'elastico') || $ajuste->grupo == 'recetas' || $ajuste->grupo == 'mayoreo')
+                                                        @if(str_ends_with($ajuste->llave, '_m') || str_contains($ajuste->llave, 'elastico'))
+                                                            <i class="fa-solid fa-ruler text-secondary"></i> {{-- Regla para metros --}}
+                                                        @elseif(str_contains($ajuste->llave, 'gramos') || str_contains($ajuste->llave, 'consumo'))
+                                                            <i class="fa-solid fa-weight-scale text-secondary"></i> {{-- Báscula para gramos --}}
+                                                        @else
+                                                            <i class="fa-solid fa-hashtag text-secondary"></i> {{-- Numeral para cantidades/umbrales --}}
+                                                        @endif
+                                                    
+                                                    {{-- Si no es nada de lo anterior, pero pertenece a finanzas o precios, es dinero --}}
+                                                    @elseif(str_contains($ajuste->grupo, 'finanzas') || str_contains($ajuste->grupo, 'precios') || str_contains($ajuste->grupo, 'bases') || str_contains($ajuste->grupo, 'decoracion'))
+                                                        <i class="fa-solid fa-dollar-sign"></i>
                                                     @else
                                                         <i class="fa-solid fa-tag"></i>
                                                     @endif
                                                 </span>
                                                 
-                                                <input type="text" 
-                                                       class="form-control" 
-                                                       id="{{ $ajuste->llave }}" 
-                                                       name="{{ $ajuste->llave }}" 
-                                                       value="{{ $ajuste->valor }}">
+                                                @if($esTraducido)
+                                                    @php
+                                                        $datosTrad = $traductores[$ajuste->llave];
+                                                        $precioComercial = round((float)$ajuste->valor * $datosTrad['divisor'], 2);
+                                                    @endphp
+                                                    
+                                                    <!-- Envía el precio comercial directo (Backend hace la división) -->
+                                                    <input type="number" step="0.01" 
+                                                           class="form-control" 
+                                                           id="{{ $ajuste->llave }}" 
+                                                           name="{{ $ajuste->llave }}" 
+                                                           value="{{ $precioComercial }}">
+                                                @else
+                                                    <!-- Input estándar -->
+                                                    <input type="text" 
+                                                           class="form-control" 
+                                                           id="{{ $ajuste->llave }}" 
+                                                           name="{{ $ajuste->llave }}" 
+                                                           value="{{ $ajuste->valor }}">
+                                                @endif
                                             </div>
+
+                                            {{-- Texto de ayuda (Costo interno actual) solo para los traducidos --}}
+                                            @if($esTraducido)
+                                                <div class="mt-1 ms-2" style="font-size: 0.8rem; color: var(--text-muted);">
+                                                    <i class="fa-solid fa-calculator me-1"></i> Costo interno actual: 
+                                                    <strong>${{ number_format((float)$ajuste->valor, 4) }}</strong> / {{ $traductores[$ajuste->llave]['unidad'] }}
+                                                </div>
+                                            @endif
+
                                         </div>
                                     </div>
                                 @endforeach
@@ -101,7 +165,7 @@
 </div>
 
 @push('js')
-<!-- SweetAlert2 (Por si no está global en tu panel) -->
+<!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
@@ -110,9 +174,8 @@
         const btnGuardar = document.getElementById('btnGuardar');
 
         form.addEventListener('submit', function (e) {
-            e.preventDefault(); // Evitamos que la página se recargue
+            e.preventDefault(); 
 
-            // 1. Modal de Confirmación
             Swal.fire({
                 title: '¿Confirmar actualización?',
                 text: "Los nuevos valores afectarán inmediatamente las cotizaciones en curso.",
@@ -127,27 +190,24 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     
-                    // Cambiamos el estado del botón mientras carga
                     let originalText = btnGuardar.innerHTML;
                     btnGuardar.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Guardando...';
                     btnGuardar.disabled = true;
 
-                    // 2. Petición Asíncrona (AJAX / Fetch)
                     fetch(form.action, {
                         method: 'POST',
                         body: new FormData(form),
                         headers: {
-                            'X-Requested-With': 'XMLHttpRequest' // Le dice a Laravel que es AJAX
+                            'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
                     .then(response => response.json())
                     .then(data => {
-                        // Restauramos el botón
                         btnGuardar.innerHTML = originalText;
                         btnGuardar.disabled = false;
 
                         if (data.success) {
-                            // 3. Alerta de Éxito
+                            // Actualizar la página sutilmente tras guardar para que se recalcule el "$mapaAjustes" visual
                             Swal.fire({
                                 icon: 'success',
                                 title: '¡Actualizado!',
@@ -155,6 +215,8 @@
                                 background: 'var(--bg-base)',
                                 color: 'var(--text-main)',
                                 confirmButtonColor: 'var(--accent-purple)'
+                            }).then(() => {
+                                window.location.reload(); 
                             });
                         } else {
                             throw new Error(data.message || 'Error desconocido');

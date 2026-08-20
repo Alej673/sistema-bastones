@@ -434,8 +434,8 @@ class CotizadorController extends Controller
     {
         $pedido = \App\Models\Pedido::with('materiales')->findOrFail($id);
         
-        // NUEVO: Traemos los ajustes de la BD
-        $config = Ajuste::pluck('valor', 'llave');
+        // Traemos los ajustes de la BD
+        $config = \App\Models\Ajuste::pluck('valor', 'llave');
 
         $costoTotalMateriales     = 0;
         $costoDisenoPersonalizado = 0;
@@ -464,15 +464,18 @@ class CotizadorController extends Controller
                 }
             }
 
-            $diferencia = $mat->cantidad_requerida - $stockActual;
+            // CORRECCIÓN 1: Aplicamos abs() para eliminar signos negativos del frontend
+            $cantReqAbs = abs((float) $mat->cantidad_requerida);
+            
+            $diferencia = $cantReqAbs - $stockActual;
             $faltaComprarNumerico = $diferencia > 0 ? $diferencia : 0;
 
             $nombreLower = strtolower($mat->nombre_material);
-            $cantReq = (float) $mat->cantidad_requerida;
+            $cantReq = $cantReqAbs; 
             $stock = (float) $stockActual;
             $falta = (float) $faltaComprarNumerico;
 
-            // 1. OBTENCIÓN DEL PRECIO (Real del Kardex vs Fantasma de la BD)
+            // 1. OBTENCIÓN DEL PRECIO 
             if (!$esDiseno) {
                 if ($insumo && $insumo->costo_unitario > 0) {
                     $precioUnitario = $insumo->costo_unitario;
@@ -520,7 +523,6 @@ class CotizadorController extends Controller
                 $mat->stock_visual = round($stock) . "g";
                 $mat->falta_visual = $falta > 0 ? "~{$madejasFalta} madejas (" . round($falta) . "g)" : "0";
             } elseif (str_contains($nombreLower, 'cortina')) {
-                // Cada paquete de cortina rinde 4 unidades, igual criterio que las madejas de lana
                 $paquetesReq   = ceil($cantReq / 4);
                 $paquetesFalta = ceil($falta / 4);
                 $mat->requerido_visual = "~{$paquetesReq} paquetes (" . round($cantReq) . " unid.)";
@@ -541,13 +543,9 @@ class CotizadorController extends Controller
             }
 
             // 2. CÁLCULO FINANCIERO
-            // Cada rama acumula en SU acumulador propio. Solo la rama "material
-            // normal" (el else final) toca $costoTotalMateriales, que es la
-            // única variable que después recibe el 60% de margen.
             $subtotal = 0;
 
             if ($esDiseno) {
-                // ---- Diseño Personalizado: mano de obra pura, sin margen ----
                 $precioDiseno = 1.50;
                 if (str_contains($nombreLower, 'intermedio')) $precioDiseno = 2.00;
                 if (str_contains($nombreLower, 'premium')) $precioDiseno = 3.00;
@@ -563,7 +561,6 @@ class CotizadorController extends Controller
                 $costoDisenoPersonalizado += $subtotal;
 
             } elseif (str_contains($nombreLower, 'aplique')) {
-                // ---- Apliques: extra fijo por unidad, sin margen ----
                 $precioUnitario = 0.50;
                 $subtotal = $cantReq * $precioUnitario;
                 $mat->precio_unitario_visual = "$" . number_format($precioUnitario, 2);
@@ -572,11 +569,6 @@ class CotizadorController extends Controller
                 $costoApliques += $subtotal;
 
             } elseif (str_contains($nombreLower, 'lazo') && str_contains($nombreLower, 'nombre')) {
-                // ---- Lazo con Nombre: cinta (SÍ lleva margen) + recargo de
-                // bordado (mano de obra fija, NO lleva margen). Se separan
-                // los dos dentro de esta misma fila para no perder el
-                // recargo, que antes se calculaba en cotizador.js pero
-                // nunca llegaba a este PDF.
                 $recargoBordado = $recargoBordadoUnitario * $pedido->cantidad_total_bastones;
                 $subtotalMaterial = $cantReq * $precioUnitario;
                 $subtotal = $subtotalMaterial + $recargoBordado;
@@ -585,11 +577,10 @@ class CotizadorController extends Controller
                 $mat->falta_comprar_num = $faltaComprarNumerico;
                 $mat->requerido_visual .= " <small>(+ $" . number_format($recargoBordado, 2) . " bordado)</small>";
 
-                $costoTotalMateriales += $subtotalMaterial; // solo el material lleva margen
-                $costoRecargoBordado  += $recargoBordado;   // el recargo, aparte y sin margen
+                $costoTotalMateriales += $subtotalMaterial; 
+                $costoRecargoBordado  += $recargoBordado;   
 
             } else {
-                // ---- Material normal: base, lana, cortinas, cinchos, elástico, cintas sin recargo ----
                 $subtotal = $cantReq * $precioUnitario;
                 $mat->precio_unitario_visual = "$" . number_format($precioUnitario, 4);
                 $mat->falta_comprar_num = $faltaComprarNumerico;
@@ -600,19 +591,19 @@ class CotizadorController extends Controller
             $mat->subtotal_visual = "$" . number_format($subtotal, 2);
         }
 
-        // 3. CÁLCULO DE MANO DE OBRA Y GRAN TOTAL (Alineado con el Frontend)
+        // 3. CÁLCULO DE MANO DE OBRA Y GRAN TOTAL 
 
-        // A. $costoTotalMateriales ya es puro (cada rama de extras acumuló
-        // aparte), así que aquí NO hace falta restar nada.
+        // CORRECCIÓN 2: Leemos el margen de ganancia dinámico desde la Base de Datos (Si no existe, asume 70%)
+        $porcentajeGanancia = $esPedidoGrande 
+            ? (float)($config['margen_ganancia_mayoreo'] ?? 0.60) 
+            : (float)($config['margen_ganancia_normal'] ?? 0.70);
 
-        // B. La Mano de Obra es exclusivamente la Ganancia Base: 60% sobre
-        // materiales físicos puros. Igual que en cotizador.js / CONFIG_NEGOCIO.finanzas.porcentajeGanancia.
-        $costoManoObra = $costoTotalMateriales * 0.60;
+        $costoManoObra = $costoTotalMateriales * $porcentajeGanancia;
 
-        // C. Extras que NUNCA llevan margen (diseño + apliques + bordado).
+        // C. Extras que NUNCA llevan margen
         $costoExtrasSinMargen = $costoDisenoPersonalizado + $costoApliques + $costoRecargoBordado;
 
-        // D. Gran Total de Producción: Materiales + Extras sin margen + Mano de Obra (60%)
+        // D. Gran Total de Producción
         $costoTotalProduccion = $costoTotalMateriales + $costoExtrasSinMargen + $costoManoObra;
 
         // Mandamos a generar el PDF

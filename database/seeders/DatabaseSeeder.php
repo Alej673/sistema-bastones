@@ -27,5 +27,10 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('Daron-102'),
             'role' => 'admin', // <-- Mantiene rol de administración del taller
         ]);
+
+        // 3. LLAMAR A LOS DEMÁS SEEDERS
+        $this->call([
+            AjustesTableSeeder::class,
+        ]);
     }
 }

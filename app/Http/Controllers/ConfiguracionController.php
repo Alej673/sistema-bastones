@@ -27,36 +27,57 @@ class ConfiguracionController extends Controller
      */
     public function update(Request $request)
     {
+        // 1. Recibimos todos los datos del formulario
         $datos = $request->except(['_token', '_method']);
+
+        // =========================================================
+        // 2. EL TRADUCTOR INVERSO (Comercial -> Costo Interno)
+        // =========================================================
+        // Leemos los divisores directamente de lo que el usuario acaba de enviar
+        $divisores = [
+            'pf_lana'        => (float)($datos['lana_gramos_madeja'] ?? 90),
+            'pf_cinta_garza' => 45.72,
+            'pf_cinta_satin' => 18.28,
+            'pf_cinta_gross' => 22.86,
+            'pf_elastico'    => 10,
+            'pf_cinchos'     => 100,
+        ];
+
+        foreach ($divisores as $llave => $divisor) {
+            // Si el campo existe en la petición y el divisor no es cero (para evitar errores matemáticos)
+            if (isset($datos[$llave]) && $divisor > 0) {
+                // $datos[$llave] trae el precio comercial (Ej: 1.15). 
+                // Lo dividimos y lo reemplazamos por el milimétrico (Ej: 0.0127) ANTES de guardar
+                $datos[$llave] = round((float)$datos[$llave] / $divisor, 4);
+            }
+        }
+        // =========================================================
 
         try {
             DB::beginTransaction();
 
+            // 3. Guardamos los datos (ahora sí, con la matemática interna correcta)
             foreach ($datos as $llave => $valor) {
                 Ajuste::where('llave', $llave)->update(['valor' => $valor]);
             }
 
             DB::commit();
 
-            // RESPUESTA ASÍNCRONA (AJAX)
+            // Respuesta para el Fetch API (AJAX)
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true, 
-                    'message' => 'Configuraciones actualizadas correctamente.'
+                    'message' => 'Reglas de negocio actualizadas y recalculadas.'
                 ]);
             }
 
-            // Fallback por si entran sin JS
-            return redirect()->back()->with('success', 'Configuraciones actualizadas correctamente.');
+            return redirect()->back()->with('success', 'Configuraciones actualizadas.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => false, 
-                    'message' => $e->getMessage()
-                ], 500);
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
             }
 
             return redirect()->back()->with('error', 'Ocurrió un error al guardar: ' . $e->getMessage());
