@@ -429,5 +429,98 @@ class VentasController extends Controller
         
         return response()->json($pedido);
     }
+
+    public function generarReporteMensual(Request $request)
+    {
+        // 1. Obtenemos fechas
+        $mes = (int) $request->input('mes', \Carbon\Carbon::now()->month);
+        $anio = (int) $request->input('anio', \Carbon\Carbon::now()->year);
+        $nombreMes = ucfirst(\Carbon\Carbon::create()->month($mes)->locale('es')->translatedFormat('F'));
+
+        // 2. Traemos TODOS los pedidos del mes (para estadísticas globales)
+        $todosPedidosMes = Pedido::with('materiales')
+            ->whereMonth('created_at', $mes)
+            ->whereYear('created_at', $anio)
+            ->get();
+
+        // 3. Conteo Operativo (El Embudo)
+        $estadosCount = [
+            'realizado' => $todosPedidosMes->where('estado', 'realizado')->count(),
+            'en_produccion' => $todosPedidosMes->where('estado', 'en_produccion')->count(),
+            'pendiente' => $todosPedidosMes->where('estado', 'pendiente')->count(),
+            'cancelado' => $todosPedidosMes->where('estado', 'cancelado')->count(),
+        ];
+
+        // 4. Aislamos solo los realizados para el cálculo financiero
+        $pedidosCompletados = $todosPedidosMes->where('estado', 'realizado');
+
+        $ingresosTotales = 0; $manoObraTotal = 0; $costoInsumosTotal = 0;
+        $consumoInsumos = []; // Para el Top 5
+        $materialesFantasmas = []; // Los que no se encontraron
+
+        foreach ($pedidosCompletados as $pedido) {
+            // --- Cálculo Financiero ---
+            $precioFinal = $pedido->costo_total ?? 0;
+            $ingresosTotales += $precioFinal;
+
+            $esManualidad = in_array(strtolower($pedido->categoria ?? ''), ['manualidad', 'manualidades']);
+
+            if ($esManualidad) {
+                $ganancia = $precioFinal * 0.60;
+                $insumos = $precioFinal * 0.40;
+            } else {
+                $insumos = (!empty($pedido->costo_materiales) && $pedido->costo_materiales > 0) 
+                            ? $pedido->costo_materiales : ($precioFinal * 0.40);
+                $ganancia = $precioFinal - $insumos;
+            }
+
+            $costoInsumosTotal += $insumos;
+            $manoObraTotal += $ganancia;
+
+            // --- Auditoría de Materiales de este pedido ---
+            foreach ($pedido->materiales as $mat) {
+                // Ignoramos mano de obra o diseños extra
+                if ($mat->es_diseno || str_contains(strtolower($mat->nombre_material), 'aplique')) continue;
+
+                if ($mat->insumo_id) {
+                    // Si se descontó bien, lo sumamos al ranking
+                    $nombre = $mat->nombre_material;
+                    if (!isset($consumoInsumos[$nombre])) {
+                        $consumoInsumos[$nombre] = 0;
+                    }
+                    $consumoInsumos[$nombre] += $mat->cantidad_requerida;
+                } else {
+                    // Si el insumo_id es nulo, es un fantasma
+                    $materialesFantasmas[] = [
+                        'nombre' => $mat->nombre_material,
+                        'pedido' => $pedido->id,
+                        'cantidad' => $mat->cantidad_requerida
+                    ];
+                }
+            }
+        }
+
+        // 5. Procesar Ranking de Insumos (Ordenamos de mayor a menor y sacamos los 5 primeros)
+        arsort($consumoInsumos);
+        $topInsumos = array_slice($consumoInsumos, 0, 5, true);
+
+        // 6. Alerta Roja: Inventario en Negativo (Directo de la tabla insumos)
+        $stockNegativo = \App\Models\Insumo::where('stock_actual', '<', 0)->get();
+
+        // 7. Marketing: Los más consultados (Top 5 del Catálogo)
+        $topProductos = \App\Models\CatalogItem::where('activo', true)
+                            ->orderBy('contador_consultas', 'desc')
+                            ->take(5)
+                            ->get();
+
+        // 8. Enviar todo al PDF
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reportes.reporte_mensual_pdf', compact(
+            'pedidosCompletados', 'ingresosTotales', 'costoInsumosTotal', 'manoObraTotal', 
+            'nombreMes', 'anio', 'estadosCount', 'topInsumos', 'materialesFantasmas', 
+            'stockNegativo', 'topProductos'
+        ));
+        
+        return $pdf->stream('Reporte_Gerencial_'.$nombreMes.'_'.$anio.'.pdf');
+    }
 }
 

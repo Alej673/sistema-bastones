@@ -8,9 +8,23 @@
 @section('contenido')
 <div class="container-fluid py-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold mb-0" style="color: var(--text-main);">Historial de Ventas y Cotizaciones</h2>
-        <span class="badge" style="background-color: var(--accent-purple); color: #fff;">Módulo Operativo</span>
+    <div class="ventas-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h2 class="fw-bold mb-0 ventas-title" style="color: var(--text-main);">
+            Historial de Ventas y Cotizaciones
+        </h2>
+
+        <div class="d-flex align-items-center gap-2 ventas-actions">
+            <a href="{{ route('ventas.reporte_mensual', ['mes' => request('mes', date('m')), 'anio' => request('anio', date('Y'))]) }}"
+               target="_blank"
+               class="btn-pdf-export">
+                <i class="fa-solid fa-file-pdf"></i>
+                <span class="btn-pdf-export-text">Exportar Reporte Mensual</span>
+            </a>
+
+            <span class="badge ventas-badge" style="background-color: var(--accent-purple); color: #fff;">
+                Módulo Operativo
+            </span>
+        </div>
     </div>
 
     @include('Ventas.partials._kpis')
