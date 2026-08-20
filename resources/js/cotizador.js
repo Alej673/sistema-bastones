@@ -3,12 +3,12 @@
 // =======================================================
 //
 // MAPA DEL ARCHIVO:
-//   1. Importaciones de sub-módulos (lana, cortinas, cintas, diseño)
+//   1. Importaciones de sub-módulos (lana, cortinas, cintas, diseño, config)
 //   2. Puente de datos Laravel → JS (inventario + rutas AJAX)
 //   3. Helpers de inventario y carrito (buscarInsumoPorId, agregarAlCarrito)
 //   4. mostrarAlerta()        → pinta el modal de validación reutilizable
 //   5. $(document).ready()
-//      5.1 Constantes de precios/receta
+//      5.1 Constantes de configuración/inicialización de componentes
 //      5.2 calcularCotizacion()  → motor principal, recalcula tabla + totales
 //      5.3 Triggers de recálculo (inputs, selects, switches)
 //      5.4 Guardado de cotización (validación → modal cliente → AJAX)
@@ -16,13 +16,17 @@
 //      5.6 Envío de nota de venta por correo
 //
 // REGLA DE ORO: este archivo NO decide precios "a ojo": todo sale de
-// PRECIOS_FANTASMA / RECETA o del inventario real (INVENTARIO_POR_ID).
+// CONFIG_NEGOCIO (configNegocio.js) o del inventario real (INVENTARIO_POR_ID).
+// Ningún precio, receta, umbral de mayoreo o margen debe escribirse aquí
+// directamente — si hace falta un número de negocio nuevo, se agrega en
+// configNegocio.js y se importa.
 // =======================================================
 
 import { inicializarModuloLana }       from './cotizador/moduloLana.js';
 import { inicializarModuloCortinas }   from './cotizador/moduloCortinas.js';
 import { inicializarModuloDecoracion } from './cotizador/moduloCintas.js';
 import { inicializarModuloDiseno }     from './cotizador/moduloDiseno.js';
+import { CONFIG_NEGOCIO }              from './cotizador/configNegocio.js';
 
 // =======================================================
 // 2. PUENTE DE DATOS (Laravel → JS)
@@ -374,32 +378,10 @@ $(document).ready(function () {
 
 
     // =======================================================
-    // 5.2 CONSTANTES Y CONFIGURACIÓN BASE
+    // 5.2 FUNCIÓN MAESTRA — Recalcula la tabla y los totales
     // =======================================================
-    // "Precio fantasma" = precio de referencia que se usa SOLO cuando el
-    // cliente pide un material nuevo que todavía no existe en el inventario
-    // (Select2 "Cotizar nuevo material"). Sirve para no dejar el cálculo en
-    // $0 mientras bodega registra el insumo real.
-    const PRECIOS_FANTASMA = {
-        lana:                 0.0127,  // $1.15 / 90g
-        cinta_garza:          0.11,    // $5.00 / 45.72m
-        cinta_satin:          0.16,    // $3.00 / 18.28m
-        cinta_gross:          0.15,    // $3.50 / 22.86m
-        elastico:             0.09,    // $0.90 / 10m
-        cinchos:              0.02,    // $2.00 / 100u
-        cortina_fiesta_menor: 1.00,    // pedido < 12 bastones
-        cortina_fiesta_mayor: 0.50,    // pedido >= 12 bastones
-    };
-
-    // Cantidades fijas de insumos de ensamblaje por cada bastón producido.
-    const RECETA = {
-        cinchos_por_baston:  3,     // 3 cinchos por unidad
-        elastico_por_baston: 0.40,  // 0.40 m (40 cm) por unidad
-    };
-
-
-    // =======================================================
-    // 5.3 FUNCIÓN MAESTRA — Recalcula la tabla y los totales
+    // NOTA: ya NO hay constantes de precios/receta declaradas aquí.
+    // Todo viene de CONFIG_NEGOCIO (importado desde configNegocio.js).
     // =======================================================
 
     /**
@@ -422,7 +404,7 @@ $(document).ready(function () {
      * actualiza el panel de totales.
      *
      * Se dispara con debounce cada vez que el usuario cambia algún campo
-     * (ver sección 5.4).
+     * (ver sección 5.3).
      */
     function calcularCotizacion() {
 
@@ -463,21 +445,24 @@ $(document).ready(function () {
         // ---------------------------------------------------
         // FASE 1: BASE DEL BASTÓN
         // Precio unitario depende del acabado (plata/dorado) y de si el
-        // pedido alcanza el volumen de mayoreo (>= 12 unidades).
+        // pedido alcanza el volumen de mayoreo. Reglas en CONFIG_NEGOCIO.baseBaston.
         // ---------------------------------------------------
+        const cfgBase = CONFIG_NEGOCIO.baseBaston;
+        const esMayoreoBase = cantidadBastones >= cfgBase.umbralMayoreo;
+
         let precioBaseFantasma = 0;
         let nombreAcabado      = '';
 
         // 1. Definir el precio de emergencia (fantasma / mayoreo) por si no existe en BD
         if (colorBase === 'dorado') {
             nombreAcabado      = 'Dorado';
-            precioBaseFantasma = (cantidadBastones >= 12) ? 5.00 : 5.50;
+            precioBaseFantasma = esMayoreoBase ? cfgBase.dorado.mayoreo : cfgBase.dorado.normal;
         } else {
             nombreAcabado      = 'Plata';
-            precioBaseFantasma = (cantidadBastones >= 12) ? 4.50 : 5.00;
+            precioBaseFantasma = esMayoreoBase ? cfgBase.plata.mayoreo : cfgBase.plata.normal;
         }
 
-        let esGrande     = (tamanoBase === '55' || tamanoBase === '60');
+        let esGrande     = cfgBase.tamanosGrandes.includes(tamanoBase);
         let tamanoVisual = tamanoBase + ' cm';
 
         // 2. Buscamos en el inventario real la base que coincide en color + tamaño
@@ -523,19 +508,19 @@ $(document).ready(function () {
         // ---------------------------------------------------
         // FASE 2: INSUMOS FIJOS DE ENSAMBLAJE (cinchos + elástico)
         // Estos NO dependen del diseño elegido, solo de la cantidad de
-        // bastones, según la RECETA fija definida arriba.
+        // bastones, según CONFIG_NEGOCIO.receta.
         // ---------------------------------------------------
 
-        const totalCinchos  = RECETA.cinchos_por_baston  * cantidadBastones;
-        const totalElastico = RECETA.elastico_por_baston * cantidadBastones;
+        const totalCinchos  = CONFIG_NEGOCIO.receta.cinchos_por_baston  * cantidadBastones;
+        const totalElastico = CONFIG_NEGOCIO.receta.elastico_por_baston * cantidadBastones;
 
         // BUSCAR PRECIOS REALES EN EL KARDEX:
         const insumoCinchos  = INVENTARIO.find(item => item.categoria === 'cinchos');
         const insumoElastico = INVENTARIO.find(item => item.categoria === 'elastico');
 
         // Si existe en BD usa su precio real y lo forzamos a número (parseFloat), si no, usa el fantasma
-        const precioCinchosReal  = insumoCinchos  ? parseFloat(insumoCinchos.costo_unitario)  : PRECIOS_FANTASMA.cinchos;
-        const precioElasticoReal = insumoElastico ? parseFloat(insumoElastico.costo_unitario) : PRECIOS_FANTASMA.elastico;
+        const precioCinchosReal  = insumoCinchos  ? parseFloat(insumoCinchos.costo_unitario)  : CONFIG_NEGOCIO.preciosFantasma.cinchos;
+        const precioElasticoReal = insumoElastico ? parseFloat(insumoElastico.costo_unitario) : CONFIG_NEGOCIO.preciosFantasma.elastico;
 
         const costoCinchos  = totalCinchos  * precioCinchosReal;
         const costoElastico = totalElastico * precioElasticoReal;
@@ -586,7 +571,9 @@ $(document).ready(function () {
         // El consumo total de lana se reparte en partes iguales entre
         // los colores que el usuario haya seleccionado (1, 2 o 3 colores).
         // ---------------------------------------------------
-        const consumoLana_g = esGrande ? 150 : 135;
+        const consumoLana_g = esGrande
+            ? CONFIG_NEGOCIO.lana.consumoGramosGrande
+            : CONFIG_NEGOCIO.lana.consumoGramosNormal;
 
         // Una sola pasada por los selects: recogemos las selecciones válidas
         // y de una vez sabemos cuántas hay (antes se recorría el mismo
@@ -616,12 +603,12 @@ $(document).ready(function () {
                     stockActual = insumoBD.stock_actual;
                 }
             } else {
-                costoLana  = gramosPorColorTotal * PRECIOS_FANTASMA.lana;
+                costoLana  = gramosPorColorTotal * CONFIG_NEGOCIO.preciosFantasma.lana;
                 nombreLana = nombreLana.replace(' (Cotizar nuevo material)', '');
             }
 
             costoTotalMateriales += costoLana;
-            const madejasNecesarias = Math.ceil(gramosPorColorTotal / 90);
+            const madejasNecesarias = Math.ceil(gramosPorColorTotal / CONFIG_NEGOCIO.lana.gramosPorMadeja);
             const stockSuficiente   = !esTagNuevo && stockActual >= gramosPorColorTotal;
 
             const textoStock = stockSuficiente
@@ -651,9 +638,10 @@ $(document).ready(function () {
         // ---------------------------------------------------
 
         // 4.1 Cortinas de Lana — mismo patrón que el cuerpo, pero con un
-        // consumo fijo de 30g por color (no se reparte entre colores).
+        // consumo fijo por color (CONFIG_NEGOCIO.cortinas.lana), no se
+        // reparte entre colores.
         if ($('#swCortinaLana').is(':checked')) {
-            let gramosPorCortinaLana = 30 * cantidadBastones;
+            let gramosPorCortinaLana = CONFIG_NEGOCIO.cortinas.lana.gramosPorCortina * cantidadBastones;
 
             $('#contenedorCortinasLana select').each(function () {
                 let dataSelect = $(this).select2('data');
@@ -676,11 +664,11 @@ $(document).ready(function () {
                             stockDisponible = insumoBD.stock_actual;
                         }
                     } else {
-                        costoCalculado = gramosPorCortinaLana * PRECIOS_FANTASMA.lana;
+                        costoCalculado = gramosPorCortinaLana * CONFIG_NEGOCIO.preciosFantasma.lana;
                     }
 
                     costoTotalMateriales += costoCalculado;
-                    let madejasNecesarias = Math.ceil(gramosPorCortinaLana / 90);
+                    let madejasNecesarias = Math.ceil(gramosPorCortinaLana / CONFIG_NEGOCIO.lana.gramosPorMadeja);
 
                     if (esTagNuevo || stockDisponible < gramosPorCortinaLana) {
                         textoAlerta = `<span class="text-danger fw-bold">- ${gramosPorCortinaLana.toFixed(1)}g (${madejasNecesarias} Madejas)</span>`;
@@ -707,9 +695,12 @@ $(document).ready(function () {
             });
         }
 
-        // 4.2 Cortinas de Fiesta — se venden por paquete (4 unidades), y el
-        // precio "fantasma" depende del volumen total de cortinas del pedido.
+        // 4.2 Cortinas de Fiesta — se venden por paquete, y el precio
+        // "fantasma" depende del volumen total de cortinas del pedido.
+        // Reglas en CONFIG_NEGOCIO.cortinas.fiesta.
         if ($('#swCortinaFiesta').is(':checked')) {
+
+            const cfgFiesta = CONFIG_NEGOCIO.cortinas.fiesta;
 
             // Igual que en lana: una sola pasada para recoger las selecciones
             // válidas, en vez de recorrer el select dos veces.
@@ -721,12 +712,12 @@ $(document).ready(function () {
 
             if (seleccionesFiesta.length > 0) {
                 let totalCortinasFisicas = cantidadBastones * seleccionesFiesta.length;
-                let precioFantasmaFiesta = (totalCortinasFisicas >= 12)
-                    ? PRECIOS_FANTASMA.cortina_fiesta_mayor
-                    : PRECIOS_FANTASMA.cortina_fiesta_menor;
+                let precioFantasmaFiesta = (totalCortinasFisicas >= cfgFiesta.umbralMayoreo)
+                    ? CONFIG_NEGOCIO.preciosFantasma.cortina_fiesta_mayor
+                    : CONFIG_NEGOCIO.preciosFantasma.cortina_fiesta_menor;
 
                 let cortinasPorColor = cantidadBastones;
-                let paquetesPorColor = cortinasPorColor / 4;
+                let paquetesPorColor = cortinasPorColor / cfgFiesta.unidadesPorPaquete;
 
                 seleccionesFiesta.forEach(function (seleccion) {
                     let nombreMaterial = seleccion.text.replace(' (Cotizar nuevo material)', '');
@@ -772,7 +763,7 @@ $(document).ready(function () {
 
                     agregarAlCarrito({
                         insumo_id: insumoBD?.id ?? null,
-                        nombre_material: 'Cortina de Fiesta: ' + nombreMaterial, // <-- AQUÍ ESTÁ EL CAMBIO
+                        nombre_material: 'Cortina de Fiesta: ' + nombreMaterial,
                         cantidad_requerida: cortinasPorColor,
                         subtotal_calculado: costoCalculado,
                     });
@@ -817,12 +808,12 @@ $(document).ready(function () {
                 } else {
                     // Sin insumo real: adivinamos el tipo de cinta por el nombre
                     // para usar un precio fantasma más realista que el genérico.
-                    let precioFantasma  = PRECIOS_FANTASMA.cinta_gross; // Default
+                    let precioFantasma  = CONFIG_NEGOCIO.preciosFantasma.cinta_gross; // Default
                     let textoMinuscula  = nombreMaterial.toLowerCase();
 
-                    if (textoMinuscula.includes('garza'))                          precioFantasma = PRECIOS_FANTASMA.cinta_garza;
+                    if (textoMinuscula.includes('garza'))                          precioFantasma = CONFIG_NEGOCIO.preciosFantasma.cinta_garza;
                     else if (textoMinuscula.includes('satin') ||
-                             textoMinuscula.includes('satín'))                     precioFantasma = PRECIOS_FANTASMA.cinta_satin;
+                             textoMinuscula.includes('satín'))                     precioFantasma = CONFIG_NEGOCIO.preciosFantasma.cinta_satin;
 
                     costoCalculado = metrosTotales * precioFantasma;
                 }
@@ -864,33 +855,41 @@ $(document).ready(function () {
             }
         }
 
-        // 5.1 Lazo Simple (1.5m, sin recargo)
-        if ($('#swLazoSimple').is(':checked')) procesarCinta('select[name="cinta_lazo_simple"]', 'Lazo Simple', 1.5, 0);
+        // 5.1 Lazo Simple (metros/recargo definidos en CONFIG_NEGOCIO.decoracion.lazoSimple)
+        if ($('#swLazoSimple').is(':checked')) {
+            const cfg = CONFIG_NEGOCIO.decoracion.lazoSimple;
+            procesarCinta('select[name="cinta_lazo_simple"]', 'Lazo Simple', cfg.metrosPorUnidad, cfg.recargoManoObra);
+        }
 
-        // 5.2 Flores Dinámicas (1.0m cada una, cantidad variable definida por el usuario)
+        // 5.2 Flores Dinámicas (metros por flor en CONFIG_NEGOCIO.decoracion.flor, cantidad variable definida por el usuario)
         if ($('#swLazoFlor').is(':checked')) {
+            const cfg = CONFIG_NEGOCIO.decoracion.flor;
             let numeroFlor = 1;
             $('#contenedorFlores select').each(function () {
-                procesarCinta(this, `Flor ${numeroFlor}`, 1.0, 0);
+                procesarCinta(this, `Flor ${numeroFlor}`, cfg.metrosPorUnidad, cfg.recargoManoObra);
                 numeroFlor++;
             });
         }
 
-        // 5.3 Lazo con Nombre (1.0m + $0.70 de mano de obra por el bordado)
-        if ($('#swLazoNombre').is(':checked')) procesarCinta('select[name="cinta_lazo_nombre"]', 'Lazo c/ Nombre', 1.0, 0.70);
+        // 5.3 Lazo con Nombre (metros + recargo de mano de obra por el bordado, en CONFIG_NEGOCIO.decoracion.lazoConNombre)
+        if ($('#swLazoNombre').is(':checked')) {
+            const cfg = CONFIG_NEGOCIO.decoracion.lazoConNombre;
+            procesarCinta('select[name="cinta_lazo_nombre"]', 'Lazo c/ Nombre', cfg.metrosPorUnidad, cfg.recargoManoObra);
+        }
 
-        // 5.4 Apliques Manuales — no vienen de inventario, es un costo fijo por unidad ($0.50 c/u).
+        // 5.4 Apliques Manuales — no vienen de inventario, es un costo fijo por
+        // unidad definido en CONFIG_NEGOCIO.decoracion.apliques.
         if ($('#swApliques').is(':checked')) {
             let cantApliques  = parseInt($('#cantApliques').val()) || 1;
             let totalApliques = cantApliques * cantidadBastones;
-            let costoApliques = totalApliques * 0.50;
+            let costoApliques = totalApliques * CONFIG_NEGOCIO.decoracion.apliques.precioUnitario;
 
             costoTotalManoObra += costoApliques;
 
             filasHtml.push(`
                 <tr>
                     <td class="fw-bold text-dark">Detalles: Apliques</td>
-                    <td class="text-muted small">${totalApliques} u. totales × $0.50</td>
+                    <td class="text-muted small">${totalApliques} u. totales × $${CONFIG_NEGOCIO.decoracion.apliques.precioUnitario.toFixed(2)}</td>
                     <td class="fw-bold text-muted">$${costoApliques.toFixed(2)}</td>
                     <td class="text-end"><span class="text-muted">Extra Fijo</span></td>
                 </tr>
@@ -937,22 +936,23 @@ $(document).ready(function () {
         tabla.html(filasHtml.join(''));
 
         // =======================================================
-        // ACTUALIZACIÓN DEL PANEL FINANCIERO VISUAL (MARGEN 60%)
+        // ACTUALIZACIÓN DEL PANEL FINANCIERO VISUAL
+        // Margen definido en CONFIG_NEGOCIO.finanzas.porcentajeGanancia
         // =======================================================
-        
-        // 1. Calculamos la ganancia base dinámica (60% del costo de los insumos físicos)
-        let porcentajeGanancia = 0.60;
+
+        // 1. Calculamos la ganancia base dinámica sobre el costo de los insumos físicos
+        let porcentajeGanancia = CONFIG_NEGOCIO.finanzas.porcentajeGanancia;
         let gananciaBase       = costoTotalMateriales * porcentajeGanancia;
 
-        // 2. El gran total es la suma de las 3 partes separadas: 
-        // Materiales + Extras de Diseño + Ganancia Base (60%)
+        // 2. El gran total es la suma de las 3 partes separadas:
+        // Materiales + Extras de Diseño + Ganancia Base
         let granTotal     = costoTotalMateriales + costoTotalManoObra + gananciaBase;
         let costoUnitario = granTotal / cantidadBastones;
 
         // 3. Reflejamos en la interfaz respetando cada línea de tu HTML
         $('#txtCostoMateriales').text(`$ ${costoTotalMateriales.toFixed(2)}`);
         $('#txtCostoManoObra').text(`$ ${costoTotalManoObra.toFixed(2)}`); 
-        $('#txtGananciaFija').text(`$ ${gananciaBase.toFixed(2)} (60%)`);
+        $('#txtGananciaFija').text(`$ ${gananciaBase.toFixed(2)} (${(porcentajeGanancia * 100).toFixed(0)}%)`);
 
         // Totales
         $('#txtCostoTotal').text(`$ ${granTotal.toFixed(2)}`);
@@ -964,7 +964,7 @@ $(document).ready(function () {
     }
 
     // =======================================================
-    // 5.4 TRIGGERS — Eventos que disparan el recálculo
+    // 5.3 TRIGGERS — Eventos que disparan el recálculo
     // =======================================================
 
     // Debounce corto: agrupa cambios que llegan casi al mismo tiempo (por
@@ -995,7 +995,7 @@ $(document).ready(function () {
 
 
     // =======================================================
-    // 5.5 GUARDAR COTIZACIÓN — AJAX + modal de validación
+    // 5.4 GUARDAR COTIZACIÓN — AJAX + modal de validación
     // =======================================================
 
     // ---- PASO 1: Validación (botón verde de la pantalla principal) ----
@@ -1188,7 +1188,7 @@ $(document).ready(function () {
     });
 
     // =======================================================
-    // 5.6 FUNCIÓN DE RESETEO
+    // 5.5 FUNCIÓN DE RESETEO
     // Deja el formulario listo para cotizar un pedido nuevo desde cero.
     // =======================================================
     function resetearFormulario() {

@@ -428,15 +428,28 @@ class CotizadorController extends Controller
     {
         $pedido = \App\Models\Pedido::with('materiales')->findOrFail($id);
 
-        $costoTotalMateriales = 0;
+        // Acumuladores separados por tipo de costo. Solo $costoTotalMateriales
+        // recibe el 60% de margen (Fase B más abajo).
+        $costoTotalMateriales     = 0;
         $costoDisenoPersonalizado = 0;
+        $costoApliques            = 0;
+        $costoRecargoBordado      = 0;
+
         $esPedidoGrande = $pedido->cantidad_total_bastones >= 12;
+
+        // TODO (deuda técnica conocida): estos precios "fantasma" y el recargo
+        // de bordado (0.70) están duplicados a mano aquí y en
+        // resources/js/cotizador/configNegocio.js. Si cambias uno, cambia el
+        // otro o el PDF de receta se desincroniza del cotizador (como pasó
+        // con el margen de apliques). Candidato ideal para un futuro
+        // config/negocio.php compartido.
+        $recargoBordadoUnitario = 0.70;
 
         foreach ($pedido->materiales as $mat) {
             $stockActual = 0;
             $precioUnitario = 0;
             $insumo = null;
-            $esDiseno = str_contains(strtolower($mat->nombre_material), 'diseño') 
+            $esDiseno = str_contains(strtolower($mat->nombre_material), 'diseño')
                      || str_contains(strtolower($mat->nombre_material), 'diseno');
 
             if (!$esDiseno) {
@@ -507,7 +520,7 @@ class CotizadorController extends Controller
                 $mat->stock_visual = round($stock) . "g";
                 $mat->falta_visual = $falta > 0 ? "~{$madejasFalta} madejas (" . round($falta) . "g)" : "0";
             } elseif (str_contains($nombreLower, 'cortina')) {
-                // NUEVO: cada paquete de cortina rinde 4 unidades, igual criterio que las madejas de lana
+                // Cada paquete de cortina rinde 4 unidades, igual criterio que las madejas de lana
                 $paquetesReq   = ceil($cantReq / 4);
                 $paquetesFalta = ceil($falta / 4);
                 $mat->requerido_visual = "~{$paquetesReq} paquetes (" . round($cantReq) . " unid.)";
@@ -528,9 +541,13 @@ class CotizadorController extends Controller
             }
 
             // 2. CÁLCULO FINANCIERO
+            // Cada rama acumula en SU acumulador propio. Solo la rama "material
+            // normal" (el else final) toca $costoTotalMateriales, que es la
+            // única variable que después recibe el 60% de margen.
             $subtotal = 0;
 
             if ($esDiseno) {
+                // ---- Diseño Personalizado: mano de obra pura, sin margen ----
                 $precioDiseno = 1.50;
                 if (str_contains($nombreLower, 'intermedio')) $precioDiseno = 2.00;
                 if (str_contains($nombreLower, 'premium')) $precioDiseno = 3.00;
@@ -546,36 +563,67 @@ class CotizadorController extends Controller
                 $costoDisenoPersonalizado += $subtotal;
 
             } elseif (str_contains($nombreLower, 'aplique')) {
+                // ---- Apliques: extra fijo por unidad, sin margen ----
                 $precioUnitario = 0.50;
                 $subtotal = $cantReq * $precioUnitario;
                 $mat->precio_unitario_visual = "$" . number_format($precioUnitario, 2);
                 $mat->falta_comprar_num = $faltaComprarNumerico;
+
+                $costoApliques += $subtotal;
+
+            } elseif (str_contains($nombreLower, 'lazo') && str_contains($nombreLower, 'nombre')) {
+                // ---- Lazo con Nombre: cinta (SÍ lleva margen) + recargo de
+                // bordado (mano de obra fija, NO lleva margen). Se separan
+                // los dos dentro de esta misma fila para no perder el
+                // recargo, que antes se calculaba en cotizador.js pero
+                // nunca llegaba a este PDF.
+                $recargoBordado = $recargoBordadoUnitario * $pedido->cantidad_total_bastones;
+                $subtotalMaterial = $cantReq * $precioUnitario;
+                $subtotal = $subtotalMaterial + $recargoBordado;
+
+                $mat->precio_unitario_visual = "$" . number_format($precioUnitario, 4);
+                $mat->falta_comprar_num = $faltaComprarNumerico;
+                $mat->requerido_visual .= " <small>(+ $" . number_format($recargoBordado, 2) . " bordado)</small>";
+
+                $costoTotalMateriales += $subtotalMaterial; // solo el material lleva margen
+                $costoRecargoBordado  += $recargoBordado;   // el recargo, aparte y sin margen
+
             } else {
+                // ---- Material normal: base, lana, cortinas, cinchos, elástico, cintas sin recargo ----
                 $subtotal = $cantReq * $precioUnitario;
                 $mat->precio_unitario_visual = "$" . number_format($precioUnitario, 4);
                 $mat->falta_comprar_num = $faltaComprarNumerico;
+
+                $costoTotalMateriales += $subtotal;
             }
 
             $mat->subtotal_visual = "$" . number_format($subtotal, 2);
-            $costoTotalMateriales += $subtotal;
         }
 
         // 3. CÁLCULO DE MANO DE OBRA Y GRAN TOTAL (Alineado con el Frontend)
-        
-        // A. Aislamos el costo de los insumos físicos (restando los extras de diseño)
-        $costoTotalMateriales = $costoTotalMateriales - $costoDisenoPersonalizado;
-        
-        // B. La Mano de Obra ahora es exclusivamente la Ganancia Base (60% de materiales)
-        // Usamos la variable $costoManoObra para que tu Blade del PDF la reciba sin problemas
+
+        // A. $costoTotalMateriales ya es puro (cada rama de extras acumuló
+        // aparte), así que aquí NO hace falta restar nada.
+
+        // B. La Mano de Obra es exclusivamente la Ganancia Base: 60% sobre
+        // materiales físicos puros. Igual que en cotizador.js / CONFIG_NEGOCIO.finanzas.porcentajeGanancia.
         $costoManoObra = $costoTotalMateriales * 0.60;
-        
-        // C. Gran Total de Producción sumando las 3 partes por separado:
-        // Materiales + Extras (Diseño Personalizado) + Mano de Obra (60%)
-        $costoTotalProduccion = $costoTotalMateriales + $costoDisenoPersonalizado + $costoManoObra;
+
+        // C. Extras que NUNCA llevan margen (diseño + apliques + bordado).
+        $costoExtrasSinMargen = $costoDisenoPersonalizado + $costoApliques + $costoRecargoBordado;
+
+        // D. Gran Total de Producción: Materiales + Extras sin margen + Mano de Obra (60%)
+        $costoTotalProduccion = $costoTotalMateriales + $costoExtrasSinMargen + $costoManoObra;
 
         // Mandamos a generar el PDF
         $pdf = Pdf::loadView('reportes.receta', compact(
-            'pedido', 'costoTotalMateriales', 'costoManoObra', 'costoTotalProduccion', 'costoDisenoPersonalizado'
+            'pedido',
+            'costoTotalMateriales',
+            'costoManoObra',
+            'costoTotalProduccion',
+            'costoDisenoPersonalizado',
+            'costoApliques',
+            'costoRecargoBordado'
         ));
 
         return $pdf->stream('Receta_Bodega_Pedido_' . $pedido->id . '.pdf');
@@ -594,7 +642,11 @@ class CotizadorController extends Controller
         }
 
         // 3. SEGURIDAD
-        if ($dueno_id != Auth::id() && Auth::user()->role !== 'admin') {
+        // 'admin' y 'super_admin' pueden ver la nota de cualquier pedido del taller;
+        // cualquier otro usuario solo puede ver la suya (dueno_id === Auth::id()).
+        $esStaffAdmin = in_array(Auth::user()->role, ['admin', 'super_admin']);
+
+        if ($dueno_id != Auth::id() && !$esStaffAdmin) {
             abort(403, 'No tienes permiso para ver esta nota de venta.');
         }
 
