@@ -70,8 +70,14 @@
                     <!-- PANEL TÉCNICO: Solo visible para el Super Administrador -->
                     @if(auth()->check() && auth()->user()->role === 'super_admin')
                         <hr class="border-secondary opacity-25 my-2">
+                        
                         <a href="{{ route('super.usuarios.index') }}" class="nav-link-glass {{ request()->routeIs('super.usuarios.*') ? 'active' : '' }}">
                             <i class="fa-solid fa-users-gear me-2"></i> Gestión de Usuarios
+                        </a>
+
+                        <!-- NUEVO ENLACE: Configuraciones Globales -->
+                        <a href="{{ route('configuraciones.index') }}" class="nav-link-glass {{ request()->routeIs('configuraciones.*') ? 'active' : '' }}">
+                            <i class="fa-solid fa-sliders me-2"></i> Reglas de Negocio
                         </a>
                     @endif
                 </div>

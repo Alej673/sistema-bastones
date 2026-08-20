@@ -168,6 +168,8 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
     Route::get('/super-admin/usuarios', [UserController::class, 'index'])->name('super.usuarios.index');
     Route::patch('/super-admin/usuarios/{id}/rol', [UserController::class, 'updateRole'])->name('super.usuarios.rol');
     Route::patch('/super-admin/usuarios/{id}/ban', [UserController::class, 'toggleBan'])->name('super.usuarios.ban');
+    Route::get('/configuraciones', [App\Http\Controllers\ConfiguracionController::class, 'index'])->name('configuraciones.index');
+    Route::post('/configuraciones', [App\Http\Controllers\ConfiguracionController::class, 'update'])->name('configuraciones.update');
 });
 
 require __DIR__.'/auth.php';

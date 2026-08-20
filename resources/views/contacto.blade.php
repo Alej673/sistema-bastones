@@ -108,14 +108,17 @@
                     <p class="text-muted small text-center mb-3">¿Dudas sobre un pedido? Escríbenos directo:</p>
                     
                     @php
-                        $numeroBruto = $ajustesTaller['telefono_whatsapp'] ?? '593999856725';
-                        $numeroLimpio = preg_replace('/[^0-9]/', '', $numeroBruto);
+                        // 1. Extraemos el número directamente de las reglas de negocio (BD)
+                        $telefonoTaller = \App\Models\Ajuste::where('llave', 'contacto_whatsapp')->value('valor') ?? '593999856725';
+                        
+                        // 2. Limpiamos espacios y formateamos el código de país
+                        $numeroLimpio = preg_replace('/[^0-9]/', '', $telefonoTaller);
                         if (str_starts_with($numeroLimpio, '0')) {
                             $numeroLimpio = '593' . substr($numeroLimpio, 1);
                         }
                     @endphp
                     
-                    <a href="https://wa.me/{{ $numeroLimpio }}" target="_blank" class="btn rounded-pill w-100 shadow-sm" style="background-color: #25D366; color: white; font-weight: bold; padding: 12px;">
+                    <a href="https://wa.me/{{ $numeroLimpio }}" target="_blank" class="btn rounded-pill w-100 shadow-sm" style="background-color: #25D366; color: white; font-weight: bold; padding: 12px; transition: transform 0.2s ease;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                         <i class="fa-brands fa-whatsapp fs-5 me-2 align-middle"></i> Chatear por WhatsApp
                     </a>
                 </div>

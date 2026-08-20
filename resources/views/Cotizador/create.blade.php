@@ -657,6 +657,11 @@
     };
 </script>
 
+<!-- Puente de Base de Datos a JavaScript -->
+<script>
+    window.DB_AJUSTES = @json($configuraciones);
+</script>
+
 @push('js')
     @vite(['resources/js/cotizador.js', 'resources/js/cotizador_rapido.js'])
 @endpush

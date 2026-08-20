@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Insumo;
+use App\Models\Ajuste;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Pedido;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\NotaVentaMailable;
 use App\Models\QuoteRequest;
 use Illuminate\Support\Facades\Auth;
+
 
 class CotizadorController extends Controller
 {
@@ -41,6 +43,9 @@ class CotizadorController extends Controller
         // Esto le permitirá a JavaScript conocer ID, costos exactos por gramo/metro y stocks en tiempo real
         $insumosJson = $insumos->keyBy('id')->toJson();
 
+        // NUEVO: Extraemos la configuración para el JS
+        $configuraciones = Ajuste::pluck('valor', 'llave');
+
         // 4. Enviamos los datos empaquetados a la vista del cotizador
         return view('cotizador.create', compact(
             'insumos',
@@ -53,7 +58,8 @@ class CotizadorController extends Controller
             'cinchos', 
             'bases', 
             'unidadesSimples',
-            'insumosJson'
+            'insumosJson',
+            'configuraciones'
         ));
     }
 
@@ -427,23 +433,17 @@ class CotizadorController extends Controller
     public function generarPdfReceta($id)
     {
         $pedido = \App\Models\Pedido::with('materiales')->findOrFail($id);
+        
+        // NUEVO: Traemos los ajustes de la BD
+        $config = Ajuste::pluck('valor', 'llave');
 
-        // Acumuladores separados por tipo de costo. Solo $costoTotalMateriales
-        // recibe el 60% de margen (Fase B más abajo).
         $costoTotalMateriales     = 0;
         $costoDisenoPersonalizado = 0;
         $costoApliques            = 0;
         $costoRecargoBordado      = 0;
 
-        $esPedidoGrande = $pedido->cantidad_total_bastones >= 12;
-
-        // TODO (deuda técnica conocida): estos precios "fantasma" y el recargo
-        // de bordado (0.70) están duplicados a mano aquí y en
-        // resources/js/cotizador/configNegocio.js. Si cambias uno, cambia el
-        // otro o el PDF de receta se desincroniza del cotizador (como pasó
-        // con el margen de apliques). Candidato ideal para un futuro
-        // config/negocio.php compartido.
-        $recargoBordadoUnitario = 0.70;
+        $esPedidoGrande = $pedido->cantidad_total_bastones >= (int)($config['base_umbral_mayoreo'] ?? 12);
+        $recargoBordadoUnitario = (float)($config['deco_lazo_nombre_mo'] ?? 0.70);
 
         foreach ($pedido->materiales as $mat) {
             $stockActual = 0;
@@ -472,31 +472,31 @@ class CotizadorController extends Controller
             $stock = (float) $stockActual;
             $falta = (float) $faltaComprarNumerico;
 
-            // 1. OBTENCIÓN DEL PRECIO (Real del Kardex vs Fantasma del JS)
+            // 1. OBTENCIÓN DEL PRECIO (Real del Kardex vs Fantasma de la BD)
             if (!$esDiseno) {
                 if ($insumo && $insumo->costo_unitario > 0) {
                     $precioUnitario = $insumo->costo_unitario;
                 } else {
                     if (str_contains($nombreLower, 'base')) {
                         if (str_contains($nombreLower, 'dorado')) {
-                            $precioUnitario = $esPedidoGrande ? 5.00 : 5.50;
+                            $precioUnitario = $esPedidoGrande ? (float)($config['base_dorado_mayoreo'] ?? 5.00) : (float)($config['base_dorado_normal'] ?? 5.50);
                         } else {
-                            $precioUnitario = $esPedidoGrande ? 4.50 : 5.00;
+                            $precioUnitario = $esPedidoGrande ? (float)($config['base_plata_mayoreo'] ?? 4.50) : (float)($config['base_plata_normal'] ?? 5.00);
                         }
                     } elseif (str_contains($nombreLower, 'lana')) {
-                        $precioUnitario = 0.0127;
+                        $precioUnitario = (float)($config['pf_lana'] ?? 0.0127);
                     } elseif (str_contains($nombreLower, 'garza')) {
-                        $precioUnitario = 0.11;
+                        $precioUnitario = (float)($config['pf_cinta_garza'] ?? 0.11);
                     } elseif (str_contains($nombreLower, 'satin') || str_contains($nombreLower, 'satín')) {
-                        $precioUnitario = 0.16;
+                        $precioUnitario = (float)($config['pf_cinta_satin'] ?? 0.16);
                     } elseif (str_contains($nombreLower, 'gross')) {
-                        $precioUnitario = 0.15;
+                        $precioUnitario = (float)($config['pf_cinta_gross'] ?? 0.15);
                     } elseif (str_contains($nombreLower, 'cortina')) {
-                        $precioUnitario = $esPedidoGrande ? 0.50 : 1.00;
+                        $precioUnitario = $esPedidoGrande ? (float)($config['pf_cortina_mayor'] ?? 0.50) : (float)($config['pf_cortina_menor'] ?? 1.00);
                     } elseif (str_contains($nombreLower, 'elástico') || str_contains($nombreLower, 'elastico')) {
-                        $precioUnitario = 0.09;
+                        $precioUnitario = (float)($config['pf_elastico'] ?? 0.09);
                     } elseif (str_contains($nombreLower, 'cincho')) {
-                        $precioUnitario = 0.02;
+                        $precioUnitario = (float)($config['pf_cinchos'] ?? 0.02);
                     }
                 }
             }

@@ -30,6 +30,7 @@ export default defineConfig({
                 'resources/js/formulario.js',
                 'resources/css/gestion_usuarios.css',
                 'resources/js/gestion_usuarios.js',
+                'resources/css/reglas.css',
             ],
             refresh: true,
         }),

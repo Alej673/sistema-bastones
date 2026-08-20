@@ -1,0 +1,145 @@
+/* =======================================================
+   ESTILOS NEUMÓRFICOS PARA PANEL DE CONFIGURACIÓN
+   Requiere: variables.css cargado previamente
+======================================================= */
+
+/* 1. Contenedor Principal (Fondo base obligatorio) */
+.neumorphic-container {
+    background-color: var(--bg-base);
+    min-height: 100vh;
+    padding: 2rem;
+    color: var(--text-main);
+}
+
+/* 2. Tarjetas Neumórficas (Sobresalientes) */
+.card-neumorphic {
+    background-color: var(--bg-base);
+    border: none !important;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--neu-shadow-out-md);
+}
+
+.card-neumorphic .card-header {
+    background-color: var(--bg-base);
+    border-bottom: none;
+    padding: 1.5rem 2rem 0.5rem;
+    color: var(--accent-purple);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.card-neumorphic .card-body {
+    background-color: var(--bg-base);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    padding: 2rem;
+}
+
+/* 3. Pestañas (Tabs) Neumórficas */
+.nav-tabs.neumorphic-tabs {
+    border-bottom: none;
+    gap: 15px;
+    padding: 10px;
+}
+
+.nav-tabs.neumorphic-tabs .nav-link {
+    background-color: var(--bg-base);
+    color: var(--text-muted);
+    border: none;
+    border-radius: var(--radius-pill);
+    box-shadow: var(--neu-shadow-out-sm);
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: var(--t-base);
+}
+
+.nav-tabs.neumorphic-tabs .nav-link:hover {
+    color: var(--accent-hover);
+    box-shadow: var(--neu-shadow-out-md);
+}
+
+/* El truco del Neumorfismo: Cuando está activo, se hunde */
+.nav-tabs.neumorphic-tabs .nav-link.active {
+    background-color: var(--bg-base);
+    color: var(--accent-active);
+    box-shadow: var(--neu-shadow-in-sm);
+}
+
+/* 4. Inputs y Formularios (Hundidos) */
+.input-group.neumorphic-input {
+    background-color: var(--bg-base);
+    border-radius: var(--radius-md);
+    box-shadow: var(--neu-shadow-in-md);
+    border: none;
+    overflow: hidden;
+    transition: var(--t-base);
+}
+
+.input-group.neumorphic-input:focus-within {
+    box-shadow: var(--neu-shadow-in-md), var(--neu-glow-focus);
+}
+
+.input-group.neumorphic-input .input-group-text {
+    background-color: transparent;
+    border: none;
+    color: var(--accent-purple);
+    padding-left: 1.5rem;
+}
+
+.input-group.neumorphic-input .form-control {
+    background-color: transparent;
+    border: none;
+    color: var(--text-main);
+    box-shadow: none; /* Quitamos el focus por defecto de Bootstrap */
+    font-weight: 500;
+    padding-left: 0.5rem;
+}
+
+.input-group.neumorphic-input .form-control:focus {
+    background-color: transparent;
+    box-shadow: none;
+    outline: none;
+}
+
+/* 5. Botones Neumórficos */
+.btn-neumorphic {
+    background-color: var(--bg-base);
+    color: var(--accent-purple);
+    border: none;
+    border-radius: var(--radius-md);
+    box-shadow: var(--neu-shadow-out-sm);
+    padding: 12px 30px;
+    font-weight: 600;
+    transition: var(--t-fast);
+}
+
+.btn-neumorphic:hover {
+    color: var(--accent-hover);
+    box-shadow: var(--neu-shadow-out-md);
+}
+
+.btn-neumorphic:active {
+    box-shadow: var(--neu-shadow-in-sm);
+    transform: scale(0.98);
+}
+
+/* Botón especial para Guardar Cambios (con los colores que definiste) */
+.btn-neumorphic-success {
+    background-color: var(--color-success);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    /* Usamos una sombra más sutil porque el fondo es oscuro */
+    box-shadow: 4px 4px 10px rgba(0,0,0,0.15), -4px -4px 10px rgba(255,255,255,0.1);
+    padding: 12px 30px;
+    font-weight: 600;
+    transition: var(--t-fast);
+}
+
+.btn-neumorphic-success:hover {
+    background-color: #148f40;
+    box-shadow: 6px 6px 14px rgba(0,0,0,0.2), -2px -2px 8px rgba(255,255,255,0.1);
+}
+
+.btn-neumorphic-success:active {
+    box-shadow: inset 4px 4px 8px rgba(0,0,0,0.2);
+    transform: scale(0.98);
+}
