@@ -1,58 +1,107 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Sistema ERP & Cotizador BTO — Taller Arte Titi_Val
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Plataforma web integral bajo modelo Built-to-Order (BTO) para la gestión operativa y manufactura a medida de bastones institucionales. Centraliza desde el catálogo público de captación y el cotizador reactivo hasta el control de inventario (Kardex) y el módulo de despacho.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Contexto y reto de negocio
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+El taller operaba con estimaciones empíricas de insumos (lana, elásticos, bases pre-cortadas), sin trazabilidad de mermas ni control digital de inventario. Esto derivaba en paros imprevistos de producción y presupuestos inexactos.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+**Solución:** un sistema web desacoplado en dos capas:
 
-## Learning Laravel
+- **Capa pública / BTO:** catálogo dinámico que genera prospectos sin exponer la lógica de costos ni los márgenes del taller.
+- **Capa ERP interna:** panel administrativo con motor de cálculo reactivo, control de inventario en unidades mínimas de consumo (gramos/unidades) y módulo de despacho con tolerancia a fallos.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Stack tecnológico
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- **Backend:** PHP 8.x / Laravel (MVC, Eloquent ORM)
+- **Base de datos:** MySQL (InnoDB, transacciones ACID, Soft Deletes)
+- **Frontend:** Blade, JavaScript ES6 modular (Vite), Bootstrap 5
+- **Componentes UI:** Select2 (AJAX), SweetAlert2, Fetch API
+- **Utilidades:** barryvdh/laravel-dompdf, Compressor.js
 
-## Agentic Development
+---
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Decisiones arquitectónicas clave
+
+### Desacoplamiento MRP
+El cotizador y el guardado de pedidos operan como una reserva matemática. El descuento físico en bodega solo se ejecuta de forma transaccional (`DB::beginTransaction`) cuando el pedido pasa a estado "Realizado/Despachado".
+
+### Doble perímetro de seguridad
+Aislamiento total mediante middlewares por rol (`admin` / `cliente`). Los clientes acceden a su historial de proformas sin acceso a endpoints internos de costos, inventario o fórmulas de producción.
+
+### Despacho resiliente (deuda de inventario)
+Algoritmo de búsqueda inteligente (`LIKE` y mapeo por categoría) que tolera variaciones de nomenclatura. Si el stock físico es insuficiente, el sistema permite saldos negativos controlados y emite alertas visuales sin frenar la logística.
+
+### Modularización frontend (SoC)
+El formulario de cotización se refactorizó de un archivo monolítico a módulos ES6 independientes (`modulo_lana.js`, `modulo_cortinas.js`, `modulo_decoracion.js`, `modulo_diseno.js`) orquestados por un script principal y optimizados con Vite.
+
+---
+
+## Módulos del sistema
+
+| Módulo | Responsabilidad |
+|--------|-----------------|
+| Kardex | Registro continuo de entradas/salidas en unidad mínima. Motor traductor visual (madejas/rollos en UI, gramos/metros en BD). |
+| Cotizador | Motor de cálculo reactivo con costeo fraccional, reglas de mayoreo y blindaje contra race conditions (doble clic). |
+| Puente BTO | Sincronización bidireccional entre solicitudes web (`quote_requests`) y órdenes de producción (`pedidos`). |
+| Historial y despacho | Vista rápida asíncrona, trazabilidad de estados y generación de recetas de compra por déficit real de stock. |
+| Catálogo y reseñas | Landing con carga perezosa de imágenes, sistema de calificación AJAX e integración con WhatsApp. |
+| Alertas y KPIs | Detección de materiales huérfanos y resolución de inventario en 1 clic desde el panel principal. |
+
+---
+
+## Capturas
+
+| Kardex / Inventario | Cotizador Reactivo |
+| :---: | :---: |
+| *Trazabilidad de insumos en tiempo real* | *Cálculo de costos con costeo fraccional* |
+| ![Kardex](InventarioKardex.png) | ![Cotizador](Calculadora.png) |
+
+| Panel de Control | Catálogo Público BTO |
+| :---: | :---: |
+| *KPIs, centro de alertas y gestión de ventas* | *Vitrinas interactivas y solicitudes de cotización* |
+| ![Dashboard](GestionVentas.png) | ![Catalogo](Catalogo.png) |
+
+---
+
+## Estado del proyecto
+
+- **Versión:** 6.0
+- **Estado:** funcional (en uso por el taller)
+- **Próximo hito:** exportación de reportes en Excel y ampliación de KPIs
+- **Documentación:** +30 páginas de bitácora técnica
+
+---
+
+## Instalación local
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/Alej673/sistema-bastones.git
+cd sistema-bastones
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+# configurar base de datos en .env
+php artisan migrate --seed
+npm run dev
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
+## Enlaces
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- [Repositorio](URL)
+- [Video demo](URL) *(próximamente)*
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+**Autor:** Alejandro Larco  
+[GitHub](URL) · [LinkedIn](URL) · [Portafolio](URL)
 
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+*Proyecto de Integración Curricular (PTIC) — Titulación en Desarrollo de Software.*
