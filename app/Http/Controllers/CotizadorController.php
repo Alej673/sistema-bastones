@@ -591,20 +591,20 @@ class CotizadorController extends Controller
             $mat->subtotal_visual = "$" . number_format($subtotal, 2);
         }
 
-        // 3. CÁLCULO DE MANO DE OBRA Y GRAN TOTAL 
+        // 3. CÁLCULO DE MANO DE OBRA Y GRAN TOTAL (Extracción directa sin recalcular)
+        
+        $costoTotalMateriales = (float) $pedido->costo_materiales;
+        
+        // En lugar de multiplicar por el porcentaje y arriesgarnos al centavo de redondeo,
+        // leemos directamente el costo de mano de obra exacto que guardó el navegador en el pedido.
+        // (Si por alguna razón la columna está vacía, hacemos el respaldo con la fórmula).
+        $costoManoObra = (float) ($pedido->costo_mano_obra ?? ($costoTotalMateriales * (float)($config['margen_ganancia'] ?? 0.60)));
 
-        // CORRECCIÓN 2: Leemos el margen de ganancia dinámico desde la Base de Datos (Si no existe, asume 70%)
-        $porcentajeGanancia = $esPedidoGrande 
-            ? (float)($config['margen_ganancia_mayoreo'] ?? 0.60) 
-            : (float)($config['margen_ganancia_normal'] ?? 0.70);
+        // Extras puros guardados en el pedido
+        $costoExtrasSinMargen = (float) $pedido->costo_extras;
 
-        $costoManoObra = $costoTotalMateriales * $porcentajeGanancia;
-
-        // C. Extras que NUNCA llevan margen
-        $costoExtrasSinMargen = $costoDisenoPersonalizado + $costoApliques + $costoRecargoBordado;
-
-        // D. Gran Total de Producción
-        $costoTotalProduccion = $costoTotalMateriales + $costoExtrasSinMargen + $costoManoObra;
+        // Gran Total de Producción exacto
+        $costoTotalProduccion = (float) $pedido->costo_total;
 
         // Mandamos a generar el PDF
         $pdf = Pdf::loadView('reportes.receta', compact(

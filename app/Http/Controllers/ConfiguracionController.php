@@ -31,7 +31,59 @@ class ConfiguracionController extends Controller
         $datos = $request->except(['_token', '_method']);
 
         // =========================================================
-        // 2. EL TRADUCTOR INVERSO (Comercial -> Costo Interno)
+        // 2. VALIDACIÓN (vacíos, negativos, tipo de dato)
+        // =========================================================
+        // Necesitamos saber el grupo y la descripción de cada llave para:
+        //  a) decidir si la regla es numérica (precios/margenes/recetas) o de texto (contacto)
+        //  b) mostrar el nombre real del ajuste en el mensaje de error, no la llave cruda
+        $ajustesInfo = Ajuste::whereIn('llave', array_keys($datos))
+            ->get(['llave', 'grupo', 'descripcion'])
+            ->keyBy('llave');
+
+        $reglas = [];
+        $atributos = [];
+
+        foreach (array_keys($datos) as $llave) {
+            $info = $ajustesInfo->get($llave);
+            $grupo = $info->grupo ?? null;
+
+            $atributos[$llave] = $info->descripcion ?? $llave;
+
+            if ($grupo && str_contains($grupo, 'contacto')) {
+                // Campos de contacto (whatsapp, redes, teléfono): no numéricos, pero no pueden ir vacíos
+                $reglas[$llave] = 'required|string|max:255';
+            } else {
+                // Todo lo demás son valores del cotizador: sin vacíos, sin negativos
+                $reglas[$llave] = 'required|numeric|min:0';
+            }
+        }
+
+        $mensajes = [
+            'required' => 'El campo ":attribute" no puede quedar vacío.',
+            'numeric'  => 'El campo ":attribute" debe ser un valor numérico.',
+            'min'      => 'El campo ":attribute" no puede ser negativo.',
+            'string'   => 'El campo ":attribute" no es válido.',
+        ];
+
+        $validador = validator($datos, $reglas, $mensajes, $atributos);
+
+        if ($validador->fails()) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validador->errors()->first(),
+                    'errors'  => $validador->errors(),
+                ], 422);
+            }
+
+            return redirect()->back()->withErrors($validador)->withInput();
+        }
+
+        $datos = $validador->validated();
+        // =========================================================
+
+        // =========================================================
+        // 3. EL TRADUCTOR INVERSO (Comercial -> Costo Interno)
         // =========================================================
         // Leemos los divisores directamente de lo que el usuario acaba de enviar
         $divisores = [
@@ -56,7 +108,7 @@ class ConfiguracionController extends Controller
         try {
             DB::beginTransaction();
 
-            // 3. Guardamos los datos (ahora sí, con la matemática interna correcta)
+            // 4. Guardamos los datos (ahora sí, validados y con la matemática interna correcta)
             foreach ($datos as $llave => $valor) {
                 Ajuste::where('llave', $llave)->update(['valor' => $valor]);
             }

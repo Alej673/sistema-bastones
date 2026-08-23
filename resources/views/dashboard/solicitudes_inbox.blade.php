@@ -1,5 +1,7 @@
 @extends('layouts.admin') 
 
+@section('titulo', 'Buzon de Solicitudes')
+
 @section('contenido')
 <div class="container-fluid py-2">
     <div class="d-flex justify-content-between align-items-center mb-4">

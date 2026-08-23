@@ -1,5 +1,7 @@
 @extends('layouts.admin') 
 
+@section('titulo', 'Gestión de Usuarios')
+
 @section('contenido') 
 
     @vite([

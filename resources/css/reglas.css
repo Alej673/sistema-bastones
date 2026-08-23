@@ -45,11 +45,27 @@
 }
 
 /* 3. Pestañas (Tabs) Neumórficas */
+
+/* Wrapper que permite deslizar las tabs horizontalmente en vez de
+   que se amontonen o partan raro en pantallas angostas */
+.tabs-scroll-wrapper {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.tabs-scroll-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
 .nav-tabs.neumorphic-tabs {
     border-bottom: none;
     gap: 12px;
     padding: 10px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    width: max-content;
+    min-width: 100%;
 }
 
 .nav-tabs.neumorphic-tabs .nav-link {
@@ -62,6 +78,8 @@
     font-size: 0.9rem;
     font-weight: 600;
     letter-spacing: 0.2px;
+    white-space: nowrap;
+    flex-shrink: 0;
     transition: box-shadow 0.25s ease, color 0.25s ease, transform 0.15s ease;
 }
 
@@ -152,6 +170,65 @@
     color: var(--text-muted);
 }
 
+/* 4.1 Switch Neumórfico (Activado / Desactivado) */
+.neumorphic-switch {
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding-left: 0;
+}
+
+.neumorphic-switch .form-check-input {
+    width: 3em;
+    height: 1.6em;
+    margin-top: 0;
+    background-color: var(--bg-base);
+    background-image: none;
+    position: relative;
+    border: none;
+    border-radius: var(--radius-pill);
+    box-shadow: var(--neu-shadow-in-sm);
+    cursor: pointer;
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* "Bolita" del switch dibujada a mano porque quitamos el background-image por defecto de Bootstrap */
+.neumorphic-switch .form-check-input::before {
+    content: "";
+    position: absolute;
+    top: 0.15em;
+    left: 0.15em;
+    width: 1.3em;
+    height: 1.3em;
+    border-radius: 50%;
+    background-color: var(--bg-base);
+    box-shadow: var(--neu-shadow-out-sm);
+    transition: transform 0.25s ease, background-color 0.25s ease;
+}
+
+.neumorphic-switch .form-check-input:checked {
+    background-color: var(--color-success);
+    box-shadow: var(--neu-shadow-in-sm);
+}
+
+.neumorphic-switch .form-check-input:checked::before {
+    transform: translateX(1.4em);
+    background-color: white;
+}
+
+.neumorphic-switch .form-check-input:focus {
+    outline: none;
+    box-shadow: var(--neu-shadow-in-sm), var(--neu-glow-focus);
+}
+
+.neumorphic-switch .form-check-label {
+    color: var(--text-main);
+    font-weight: 500;
+    margin-left: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+}
+
 /* 5. Botones Neumórficos */
 .btn-neumorphic {
     background-color: var(--bg-base);
@@ -218,5 +295,9 @@
     .nav-tabs.neumorphic-tabs .nav-link {
         padding: 8px 16px;
         font-size: 0.85rem;
+    }
+
+    .neumorphic-switch {
+        min-height: 2.5rem;
     }
 }

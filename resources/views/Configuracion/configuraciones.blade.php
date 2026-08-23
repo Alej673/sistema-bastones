@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Ajustes del Sistema')
+@section('titulo', 'Ajustes del Sistema')
 
 @push('css')
     <!-- Aseguramos que tus estilos neumórficos carguen aquí -->
@@ -24,19 +24,22 @@
                 @csrf
                 
                 <!-- Pestañas Neumórficas -->
-                <ul class="nav nav-tabs neumorphic-tabs mb-4" id="configTabs" role="tablist">
-                    @foreach($grupos as $nombreGrupo => $ajustes)
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link {{ $loop->first ? 'active' : '' }} text-capitalize" 
-                                    id="tab-{{ $nombreGrupo }}" 
-                                    data-bs-toggle="tab" 
-                                    data-bs-target="#content-{{ $nombreGrupo }}" 
-                                    type="button" role="tab">
-                                {{ str_replace('_', ' ', $nombreGrupo) }}
-                            </button>
-                        </li>
-                    @endforeach
-                </ul>
+                <div class="tabs-scroll-wrapper mb-4">
+                    <ul class="nav nav-tabs neumorphic-tabs" id="configTabs" role="tablist">
+                        @foreach($grupos as $nombreGrupo => $ajustes)
+                            @continue($nombreGrupo === 'sistema')
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link {{ $loop->first ? 'active' : '' }} text-capitalize" 
+                                        id="tab-{{ $nombreGrupo }}" 
+                                        data-bs-toggle="tab" 
+                                        data-bs-target="#content-{{ $nombreGrupo }}" 
+                                        type="button" role="tab">
+                                    {{ str_replace('_', ' ', $nombreGrupo) }}
+                                </button>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
 
                 <!-- Contenido de las Pestañas -->
                 <div class="tab-content" id="configTabsContent">
@@ -59,6 +62,7 @@
                     @endphp
         
                     @foreach($grupos as $nombreGrupo => $ajustes)
+                        @continue($nombreGrupo === 'sistema')
                         <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" 
                              id="content-{{ $nombreGrupo }}" role="tabpanel">
                             
@@ -67,6 +71,13 @@
                                     @php
                                         // Verificamos si este input necesita traducción comercial
                                         $esTraducido = array_key_exists($ajuste->llave, $traductores);
+
+                                        // Verificamos si es un ajuste de encendido/apagado (grupo sistema, valor 0 o 1)
+                                        $esBooleano = $ajuste->grupo === 'sistema' && in_array($ajuste->valor, ['0', '1'], true);
+
+                                        // Verificamos si la descripción trae un porcentaje escrito a mano, ej: "...(60%)"
+                                        // para reemplazarlo por el valor real guardado, en vez de mostrar el texto congelado.
+                                        $tienePorcentajeFijo = (bool) preg_match('/\(\s*\d+(\.\d+)?\s*%\s*\)/', $ajuste->descripcion ?? '');
                                     @endphp
 
                                     <div class="col-md-6 col-lg-4 mb-4">
@@ -74,11 +85,32 @@
                                             <label for="{{ $ajuste->llave }}" class="form-label fw-semibold" style="color: var(--text-main); font-size: 0.95rem;">
                                                 @if($esTraducido)
                                                     {{ trim(explode('(', $ajuste->descripcion)[0]) }} (Total x {{ $traductores[$ajuste->llave]['divisor'] }}{{ $traductores[$ajuste->llave]['unidad'] }})
+                                                @elseif($tienePorcentajeFijo)
+                                                    @php
+                                                        $descripcionSinPorcentaje = trim(preg_replace('/\(\s*\d+(\.\d+)?\s*%\s*\)/', '', $ajuste->descripcion));
+                                                        // El valor se guarda como decimal (0.60), lo pasamos a porcentaje (60) solo para mostrarlo
+                                                        $valorPorcentaje = rtrim(rtrim(number_format((float)$ajuste->valor * 100, 2), '0'), '.');
+                                                    @endphp
+                                                    {{ $descripcionSinPorcentaje }} ({{ $valorPorcentaje }}%)
                                                 @else
                                                     {{ $ajuste->descripcion ?? ucfirst(str_replace('_', ' ', $ajuste->llave)) }}
                                                 @endif
                                             </label>
                                             
+                                            @if($esBooleano)
+                                                <!-- Switch neumórfico Activado/Desactivado -->
+                                                <div class="form-check form-switch neumorphic-switch">
+                                                    <input type="hidden" name="{{ $ajuste->llave }}" value="0">
+                                                    <input class="form-check-input" type="checkbox" role="switch"
+                                                           id="{{ $ajuste->llave }}"
+                                                           name="{{ $ajuste->llave }}"
+                                                           value="1"
+                                                           {{ $ajuste->valor === '1' ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="{{ $ajuste->llave }}">
+                                                        {{ $ajuste->valor === '1' ? 'Activado' : 'Desactivado' }}
+                                                    </label>
+                                                </div>
+                                            @else
                                             <div class="input-group neumorphic-input">
                                                 <span class="input-group-text">
                                                     {{-- LÓGICA DE ÍCONOS MEJORADA --}}
@@ -136,6 +168,7 @@
                                                            value="{{ $ajuste->valor }}">
                                                 @endif
                                             </div>
+                                            @endif
 
                                             {{-- Texto de ayuda (Costo interno actual) solo para los traducidos --}}
                                             @if($esTraducido)
@@ -172,6 +205,14 @@
     document.addEventListener('DOMContentLoaded', function () {
         const form = document.getElementById('formConfiguraciones');
         const btnGuardar = document.getElementById('btnGuardar');
+
+        // Actualiza el texto del switch (Activado/Desactivado) al cambiarlo
+        document.querySelectorAll('.neumorphic-switch .form-check-input').forEach(function (input) {
+            input.addEventListener('change', function () {
+                const label = this.closest('.neumorphic-switch').querySelector('.form-check-label');
+                label.textContent = this.checked ? 'Activado' : 'Desactivado';
+            });
+        });
 
         form.addEventListener('submit', function (e) {
             e.preventDefault(); 

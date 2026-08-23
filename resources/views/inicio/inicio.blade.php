@@ -1,5 +1,7 @@
 @extends('layouts.admin')
 
+@section('titulo', 'Inicio')
+
 @push('css')
     @vite(['resources/css/inico.css' , 'resources/css/variables.css'])
 @endpush

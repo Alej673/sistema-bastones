@@ -380,9 +380,6 @@ $(document).ready(function () {
     // =======================================================
     // 5.2 FUNCIÓN MAESTRA — Recalcula la tabla y los totales
     // =======================================================
-    // NOTA: ya NO hay constantes de precios/receta declaradas aquí.
-    // Todo viene de CONFIG_NEGOCIO (importado desde configNegocio.js).
-    // =======================================================
 
     /**
      * Agrega una línea al carrito global (window.carritoInsumos), que luego
