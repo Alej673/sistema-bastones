@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CatalogItem;
 use Illuminate\Http\Request;
+use App\Models\Review;
 
 class PublicCatalogController extends Controller
 {
@@ -35,7 +36,20 @@ class PublicCatalogController extends Controller
                                    ->take(6)
                                    ->get();
 
-        return view('catalogo.index', compact('bastones', 'lazos', 'apliques', 'manualidades'));
+        // ===== COMENTARIOS (solo el primer lote, 6) =====
+        $comentariosQuery = Review::whereNull('review_padre_id')
+            ->where('activo', true)
+            ->with(['user', 'likes', 'respuestas.user']);
+
+        if (request()->filled('estrellas')) {
+            $comentariosQuery->where('calificacion', request('estrellas'));
+        }
+
+        $comentarios = $comentariosQuery->latest()->paginate(6);
+
+        return view('catalogo.index', compact(
+            'bastones', 'lazos', 'apliques', 'manualidades', 'comentarios'
+        ));
     }
 
     public function showCategory(Request $request, $categoria)

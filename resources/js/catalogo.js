@@ -218,13 +218,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // --- 3.4. Botón Responder (Admin) ---
+    // --- 3.4. Botón Responder (Admin/Superadmin) ---
     document.addEventListener('click', function (e) {
         const btnResponder = e.target.closest('.btn-responder');
         if (!btnResponder) return;
 
         e.preventDefault();
         const nombreUsuario = btnResponder.getAttribute('data-nombre');
+        const comentarioId = btnResponder.getAttribute('data-id');
 
         Swal.fire({
             title: `Responder a ${nombreUsuario}`,
@@ -250,8 +251,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            formComentario.querySelector('textarea[name="contenido"]').value = `@${nombreUsuario} - ${result.value}`;
-            
+            const inputPadre = document.getElementById('review_padre_id_input');
+            if (inputPadre) inputPadre.value = comentarioId;
+
+            formComentario.querySelector('textarea[name="contenido"]').value = result.value;
+
             currentRating = 5;
             if (inputCalificacion) inputCalificacion.value = 5;
             pintarEstrellas(5);
@@ -261,6 +265,68 @@ document.addEventListener('DOMContentLoaded', function () {
                 : formComentario.dispatchEvent(new Event('submit', { cancelable: true }));
         });
     });
+
+    // --- 3.5. Cargar más comentarios (AJAX incremental) ---
+    const btnCargarMas = document.getElementById('btn-cargar-mas');
+    const trackComentarios = document.getElementById('comentarios-grid');
+
+    if (btnCargarMas && trackComentarios) {
+        btnCargarMas.addEventListener('click', function () {
+            const label = btnCargarMas.querySelector('.btn-cargar-mas-label');
+            const spinner = btnCargarMas.querySelector('.btn-cargar-mas-spinner');
+            const page = trackComentarios.getAttribute('data-next-page');
+            const estrellas = trackComentarios.getAttribute('data-estrellas');
+
+            btnCargarMas.disabled = true;
+            label.textContent = 'Cargando...';
+            spinner.classList.remove('d-none');
+
+            const url = new URL(CARGAR_MAS_URL); // define esta constante global, ver nota abajo
+            url.searchParams.set('page', page);
+            if (estrellas) url.searchParams.set('estrellas', estrellas);
+
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                // Guardamos qué elementos ya existían antes de insertar
+                const antes = new Set(trackComentarios.querySelectorAll('.review-scroll-item'));
+
+                trackComentarios.insertAdjacentHTML('beforeend', data.html);
+                trackComentarios.setAttribute('data-next-page', data.next_page);
+
+                // Las tarjetas nuevas son las que NO estaban en "antes"
+                trackComentarios.querySelectorAll('.review-scroll-item').forEach(item => {
+                    if (!antes.has(item)) {
+                        const card = item.querySelector('.scroll-hidden');
+                        if (card) {
+                            card.classList.remove('scroll-hidden');
+                            card.classList.add('scroll-visible');
+                        }
+                    }
+                });
+
+                if (!data.has_more) {
+                    document.getElementById('cargar-mas-wrap')?.remove();
+                } else {
+                    btnCargarMas.disabled = false;
+                    label.textContent = 'Cargar más comentarios';
+                    spinner.classList.add('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar más comentarios:', error);
+                mostrarToast('error', 'Ups...', 'No se pudieron cargar más comentarios.');
+                btnCargarMas.disabled = false;
+                label.textContent = 'Cargar más comentarios';
+                spinner.classList.add('d-none');
+            });
+        });
+    }
 });
 
 // ============================================================

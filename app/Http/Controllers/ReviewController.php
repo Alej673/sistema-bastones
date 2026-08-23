@@ -13,19 +13,26 @@ class ReviewController extends Controller
         $request->validate([
             'contenido' => 'required|string|max:500',
             'calificacion' => 'required|integer|min:1|max:5',
+            'review_padre_id' => 'nullable|exists:reviews,id',
         ]);
+
+        // Solo admin/superadmin pueden crear una respuesta (con padre)
+        if ($request->filled('review_padre_id')) {
+            if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'superadmin'])) {
+                abort(403, 'No autorizado para responder comentarios.');
+            }
+        }
 
         $review = Review::create([
             'user_id' => Auth::id(),
+            'review_padre_id' => $request->review_padre_id,
             'contenido' => $request->contenido,
             'calificacion' => $request->calificacion,
             'activo' => true,
         ]);
 
-        // Cargamos la relación del usuario para poder mostrar su nombre
         $review->load('user');
 
-        // Si la petición se envía mediante fetch/AJAX, respondemos con JSON
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
@@ -34,7 +41,6 @@ class ReviewController extends Controller
             ]);
         }
 
-        // Fallback por si acaso falla JavaScript
         return back()->with('success', '¡Gracias por compartir tu experiencia con Arte Titi_Val!');
     }
 
@@ -43,22 +49,41 @@ class ReviewController extends Controller
         $review = Review::findOrFail($id);
         $user_id = Auth::id();
 
-        // Buscamos si ya existe el like de este usuario
         $like = $review->likes()->where('user_id', $user_id)->first();
 
         if ($like) {
-            $like->delete(); // Se lo quitamos
+            $like->delete();
             $isLiked = false;
         } else {
-            $review->likes()->create(['user_id' => $user_id]); // Se lo ponemos
+            $review->likes()->create(['user_id' => $user_id]);
             $isLiked = true;
         }
 
-        // Devolvemos la respuesta al JavaScript
         return response()->json([
             'success' => true,
             'isLiked' => $isLiked,
             'likesCount' => $review->likes()->count()
+        ]);
+    }
+
+    // NUEVO: carga incremental de comentarios (AJAX)
+    public function cargarMas(Request $request)
+    {
+        $query = Review::whereNull('review_padre_id')
+            ->where('activo', true)
+            ->with(['user', 'likes', 'respuestas.user']);
+
+        if ($request->filled('estrellas')) {
+            $query->where('calificacion', $request->estrellas);
+        }
+
+        $comentarios = $query->latest()
+            ->paginate(6, ['*'], 'page', $request->input('page', 2));
+
+        return response()->json([
+            'html' => view('partials.review-card-list', compact('comentarios'))->render(),
+            'has_more' => $comentarios->hasMorePages(),
+            'next_page' => $comentarios->currentPage() + 1,
         ]);
     }
 }

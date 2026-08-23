@@ -135,7 +135,7 @@
     <section id="comentarios" style="padding: 80px 0; background-color: #ffffff;">
         <div class="container">
 
-            <!-- Filtros -->
+            <!-- Título -->
             <h2 class="section-title text-center mb-5" style="font-family: 'Playfair Display', serif; color: var(--color-lila-fuerte);">
                 <i class="fa-solid fa-comments" style="color: var(--color-oro);"></i> Lo que dicen en la Pista
             </h2>
@@ -152,62 +152,32 @@
                 @endforeach
             </div>
 
-            <!-- Lista de comentarios -->
-            @forelse($comentarios as $comentario)
-                <div class="col-md-4">
-                    <div class="card review-card h-100 shadow-sm text-center scroll-hidden d-flex flex-column {{ $comentario->user->role === 'admin' ? 'review-card-admin' : '' }}">
-                        <div class="card-body p-4">
-
-                            @if($comentario->user->role === 'admin')
-                                <span class="badge-taller">
-                                    <i class="fa-solid fa-scissors"></i> Equipo Arte Titi_Val
-                                </span>
-                            @else
-                                <div class="review-stars mb-3">
-                                    @for($i = 1; $i <= 5; $i++)
-                                        <i class="{{ $i <= $comentario->calificacion ? 'fa-solid' : 'fa-regular' }} fa-star"></i>
-                                    @endfor
-                                </div>
-                            @endif
-
-                            <p class="review-texto">"{{ $comentario->contenido }}"</p>
-                            <h6 class="fw-bold review-autor">— {{ $comentario->user->name }}</h6>
-                        </div>
-
-                        <div class="card-footer bg-transparent border-0 d-flex justify-content-around pb-3">
-                            <button type="button"
-                                    class="btn btn-sm btn-link text-decoration-none btn-util {{ $comentario->isLikedByAuthUser() ? 'is-liked' : '' }}"
-                                    data-id="{{ $comentario->id }}">
-                                <i class="{{ $comentario->isLikedByAuthUser() ? 'fa-solid' : 'fa-regular' }} fa-heart me-1 icon-heart"></i> Útil
-                                <span class="badge ms-1 like-counter {{ $comentario->isLikedByAuthUser() ? 'is-liked' : '' }}">
-                                    {{ $comentario->likes->count() }}
-                                </span>
-                            </button>
-
-                            @if(auth()->check() && auth()->user()->role === 'admin')
-                                <button type="button" class="btn btn-sm btn-link text-decoration-none btn-responder"
-                                        data-nombre="{{ $comentario->user->name }}">
-                                    <i class="fa-solid fa-reply me-1"></i> Responder
-                                </button>
-                            @endif
-                        </div>
-                    </div>
+            <!-- Lista de comentarios: carrusel horizontal con scroll + carga incremental -->
+            <div class="review-scroll-wrap">
+                <div class="review-scroll-track"
+                    id="comentarios-grid"
+                    data-next-page="2"
+                    data-has-more="{{ $comentarios->hasMorePages() ? '1' : '0' }}"
+                    data-estrellas="{{ request('estrellas') }}">
+                    @include('partials.review-card-list', ['comentarios' => $comentarios])
                 </div>
-                
-                @empty
-                    <div id="sin-comentarios" class="col-12 text-center p-5 scroll-hidden review-empty">
-                        <i class="fa-regular fa-comment-dots fa-3x mb-3" style="color: var(--color-lila-fuerte); opacity: 0.5;"></i>
-                        <h4 style="color: var(--color-texto-principal); font-family: 'Playfair Display', serif;">Aún no hay opiniones</h4>
-                    </div>
-                @endforelse
+
+                <div class="review-scroll-hint d-md-none">
+                    <i class="fa-solid fa-arrow-right"></i> Desliza para ver más
+                </div>
             </div>
 
-            <div class="d-flex justify-content-center mb-5">
-                {{ $comentarios->links('pagination::bootstrap-5') }}
-            </div>
+            @if($comentarios->hasMorePages())
+                <div class="d-flex justify-content-center mb-5 mt-4" id="cargar-mas-wrap">
+                    <button id="btn-cargar-mas" class="btn btn-ver-mas rounded-pill px-4">
+                        <span class="btn-cargar-mas-label">Cargar más comentarios</span>
+                        <i class="fa-solid fa-spinner fa-spin d-none btn-cargar-mas-spinner"></i>
+                    </button>
+                </div>
+            @endif
 
             <!-- Caja de escritura -->
-            <div class="row justify-content-center scroll-hidden">
+            <div class="row justify-content-center scroll-hidden mt-5">
                 <div class="col-md-8 text-center p-5 shadow-sm review-write-box">
 
                     @auth
@@ -218,6 +188,7 @@
                         <form id="form-comentario" action="{{ route('comentarios.store') }}" method="POST">
                             @csrf
                             <input type="hidden" name="calificacion" id="calificacion_input" value="0">
+                            <input type="hidden" name="review_padre_id" id="review_padre_id_input" value="">
 
                             <div class="mb-3 text-start">
                                 <label class="form-label fw-bold" style="color: var(--color-lila-fuerte); font-size: 0.85rem;">

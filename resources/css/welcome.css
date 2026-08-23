@@ -831,6 +831,7 @@ body {
     border: none;
     border-bottom: 4px solid var(--color-lila-medio);
     border-radius: 16px;
+    overflow: hidden; /* 👈 evita que el reply-wrap rompa las esquinas redondeadas */
     transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -1686,4 +1687,125 @@ body {
     .titi-action-btn-title { font-size: 0.8rem; }
     .titi-action-btn-sub { font-size: 0.65rem; }
     #modalConsultaCat .modal-body { padding: 1.25rem !important; }
+}
+
+/* ===== Carrusel horizontal de comentarios ===== */
+.review-scroll-wrap {
+    position: relative;
+}
+
+.review-scroll-track {
+    display: flex;
+    gap: 24px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 6px 6px 20px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-lila-medio) transparent;
+}
+
+.review-scroll-track::-webkit-scrollbar {
+    height: 8px;
+}
+.review-scroll-track::-webkit-scrollbar-thumb {
+    background-color: var(--color-lila-suave);
+    border-radius: 10px;
+}
+.review-scroll-track::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-lila-medio);
+}
+
+.review-scroll-item {
+    flex: 0 0 auto;
+    width: 340px;
+    scroll-snap-align: start;
+}
+
+@media (max-width: 576px) {
+    .review-scroll-item {
+        width: 82vw;
+    }
+}
+
+.review-scroll-empty {
+    flex: 1 1 100%;
+    width: 100%;
+}
+
+.review-scroll-hint {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--color-texto-mutado);
+    margin-top: -4px;
+}
+
+.review-scroll-hint i {
+    color: var(--color-oro);
+    margin-right: 4px;
+    animation: hint-slide 1.4s ease-in-out infinite;
+}
+
+@keyframes hint-slide {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(5px); }
+}
+
+/* ===== Respuesta del taller anidada: paleta dorada/glass distinta al comentario del cliente ===== */
+.review-reply-wrap {
+    background: linear-gradient(135deg, rgba(234, 217, 255, 0.55), rgba(255, 255, 255, 0.35));
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid rgba(201, 160, 82, 0.45);
+    border-bottom: 3px solid var(--color-oro);
+    border-radius: 0 0 16px 16px; /* 👈 sigue la curva de la card */
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    padding: 14px 18px 18px;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+}
+
+.review-reply-wrap::before {
+    content: "";
+    position: absolute;
+    top: 0; left: -60%;
+    width: 40%; height: 100%;
+    background: linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0) 100%);
+    transform: skewX(-20deg);
+    pointer-events: none;
+}
+
+.review-reply-item + .review-reply-item {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(201, 160, 82, 0.35);
+}
+
+.badge-taller-sm {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(107, 47, 163, 0.9);
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 3px 12px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+    border: 1px solid rgba(201, 160, 82, 0.5);
+}
+
+.badge-taller-sm i {
+    font-size: 0.62rem;
+    color: var(--color-oro-claro);
+}
+
+.review-reply-texto {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: var(--color-texto-principal);
+    font-style: italic;
+    margin: 0;
 }

@@ -287,6 +287,10 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/compressorjs/1.2.1/compressor.min.js"></script>
 
+<script>
+    const CARGAR_MAS_URL = "{{ route('comentarios.cargar-mas') }}";
+</script>
+
     @vite(['resources/js/catalogo.js'])
     @stack('js')
 
@@ -344,6 +348,8 @@
         });
     });
 </script>
+
+
 @endif
 </body>
 </html>

@@ -8,20 +8,32 @@ use Illuminate\Support\Facades\Auth;
 
 class Review extends Model
 {
-    use HasFactory;
+    protected $fillable = [
+        'user_id',
+        'review_padre_id',
+        'contenido',
+        'calificacion',
+        'activo',
+    ];
 
-    protected $fillable = ['user_id', 'contenido', 'calificacion', 'activo'];
-
-    // Relación: Una reseña pertenece a un usuario
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Un comentario tiene muchos likes
     public function likes()
     {
-        return $this->hasMany(ReviewLike::class);
+        return $this->hasMany(ReviewLike::class); // ajusta al nombre real de tu modelo de likes
+    }
+
+    public function respuestas()
+    {
+        return $this->hasMany(Review::class, 'review_padre_id')->with('user');
+    }
+
+    public function padre()
+    {
+        return $this->belongsTo(Review::class, 'review_padre_id');
     }
 
     // Función rápida para saber si el usuario conectado ya le dio like

@@ -35,13 +35,15 @@ Route::get('/', function (Request $request) {
     $destacados = CatalogItem::where('activo', true)->where('es_destacado', true)->take(6)->get();
     $recientes = CatalogItem::where('activo', true)->latest()->take(6)->get();
 
-    $queryComentarios = Review::with('user')->where('activo', true)->latest();
+    $queryComentarios = Review::whereNull('review_padre_id')
+        ->where('activo', true)
+        ->with(['user', 'likes', 'respuestas.user']);
 
     if ($request->filled('estrellas')) {
         $queryComentarios->where('calificacion', $request->estrellas);
     }
 
-    $comentarios = $queryComentarios->paginate(6)->withQueryString()->fragment('comentarios');
+    $comentarios = $queryComentarios->latest()->paginate(6)->withQueryString()->fragment('comentarios');
 
     $top5Populares = CatalogItem::where('activo', true)
         ->where('contador_consultas', '>', 0)
@@ -59,6 +61,8 @@ Route::prefix('catalogo')->name('catalogo.')->group(function () {
     Route::get('/', [PublicCatalogController::class, 'index'])->name('index');
     Route::get('/{categoria}', [PublicCatalogController::class, 'showCategory'])->name('categoria');
 });
+
+Route::get('/comentarios/cargar-mas', [ReviewController::class, 'cargarMas'])->name('comentarios.cargar-mas');
 
 // Páginas de contenido
 Route::view('/nosotros', 'nosotros')->name('nosotros');
