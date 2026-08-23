@@ -78,6 +78,10 @@
                                         // Verificamos si la descripción trae un porcentaje escrito a mano, ej: "...(60%)"
                                         // para reemplazarlo por el valor real guardado, en vez de mostrar el texto congelado.
                                         $tienePorcentajeFijo = (bool) preg_match('/\(\s*\d+(\.\d+)?\s*%\s*\)/', $ajuste->descripcion ?? '');
+
+                                        // Identificamos si este input es el del teléfono de WhatsApp,
+                                        // para engancharle el auto-formateo visual desde el JS de abajo.
+                                        $esWhatsapp = str_contains($ajuste->llave, 'whatsapp');
                                     @endphp
 
                                     <div class="col-md-6 col-lg-4 mb-4">
@@ -160,12 +164,13 @@
                                                            name="{{ $ajuste->llave }}" 
                                                            value="{{ $precioComercial }}">
                                                 @else
-                                                    <!-- Input estándar -->
+                                                    <!-- Input estándar (agregamos data-whatsapp-format en el campo del teléfono) -->
                                                     <input type="text" 
                                                            class="form-control" 
                                                            id="{{ $ajuste->llave }}" 
                                                            name="{{ $ajuste->llave }}" 
-                                                           value="{{ $ajuste->valor }}">
+                                                           value="{{ $ajuste->valor }}"
+                                                           @if($esWhatsapp) data-whatsapp-format="1" inputmode="numeric" maxlength="12" @endif>
                                                 @endif
                                             </div>
                                             @endif
@@ -211,6 +216,48 @@
             input.addEventListener('change', function () {
                 const label = this.closest('.neumorphic-switch').querySelector('.form-check-label');
                 label.textContent = this.checked ? 'Activado' : 'Desactivado';
+            });
+        });
+
+        // ============================================================
+        // AUTO-FORMATEO DEL NÚMERO DE WHATSAPP
+        // Aplica a cualquier input marcado con data-whatsapp-format="1"
+        // (hoy solo "contacto_whatsapp", pero queda listo si en el futuro
+        // agregas otro campo de teléfono en el grupo "contacto").
+        // ============================================================
+        document.querySelectorAll('[data-whatsapp-format="1"]').forEach(function (inputWhatsapp) {
+
+            // Mientras el usuario escribe: mostramos "98 432 2541"
+            inputWhatsapp.addEventListener('input', function (e) {
+                // 1. Nos quedamos solo con dígitos
+                let digitos = e.target.value.replace(/\D/g, '');
+
+                // 2. Si viene con el '0' inicial típico de Ecuador, lo quitamos para el formateo visual
+                if (digitos.startsWith('0')) {
+                    digitos = digitos.substring(1);
+                }
+
+                // 3. Límite razonable (9 dígitos sin el 0, estándar de celular EC)
+                digitos = digitos.substring(0, 9);
+
+                // 4. Agrupamos visualmente: XX XXX XXXX
+                let formateado = digitos;
+                if (digitos.length > 2 && digitos.length <= 5) {
+                    formateado = `${digitos.slice(0, 2)} ${digitos.slice(2)}`;
+                } else if (digitos.length > 5) {
+                    formateado = `${digitos.slice(0, 2)} ${digitos.slice(2, 5)} ${digitos.slice(5)}`;
+                }
+
+                e.target.value = formateado;
+            });
+
+            // Al enviar el formulario: reconstruimos el formato limpio "593XXXXXXXXX"
+            // que espera wa.me, para que se guarde en BD ya listo para usar.
+            inputWhatsapp.closest('form').addEventListener('submit', function () {
+                const soloDigitos = inputWhatsapp.value.replace(/\D/g, '');
+                if (soloDigitos) {
+                    inputWhatsapp.value = '593' + soloDigitos;
+                }
             });
         });
 

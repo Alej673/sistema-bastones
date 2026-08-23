@@ -2,14 +2,20 @@
 @php
     // Extraemos la información de contacto y redes desde la BD
     $telefonoTaller = \App\Models\Ajuste::where('llave', 'contacto_whatsapp')->value('valor') ?? '593999856725';
-    
+
+    // Limpiamos el número UNA SOLA VEZ aquí arriba, para que tanto el <body> (data-telefono,
+    // usado por catalogo.js) como el footer usen exactamente el mismo valor normalizado.
+    $numeroLimpio = preg_replace('/[^0-9]/', '', $telefonoTaller);
+    if (str_starts_with($numeroLimpio, '0')) {
+        $numeroLimpio = '593' . substr($numeroLimpio, 1);
+    }
+
     // Redes sociales (Si no existen en BD, devuelven null)
     $linkTiktok = \App\Models\Ajuste::where('llave', 'red_tiktok')->value('valor') ?? 'https://www.tiktok.com/@titi_val_0905?lang=es-419';
     $linkFacebook = \App\Models\Ajuste::where('llave', 'red_facebook')->value('valor');
     $linkInstagram = \App\Models\Ajuste::where('llave', 'red_instagram')->value('valor');
 @endphp
-<!DOCTYPE html>
-<html lang="es">
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -34,7 +40,7 @@
 </head>
 <body data-csrf="{{ csrf_token() }}" 
       data-home-url="{{ url('/') }}" 
-      data-telefono="{{ $telefonoTaller }}">
+      data-telefono="{{ $numeroLimpio }}">
 
     <!-- NAVBAR -->
     <nav class="navbar">
@@ -183,14 +189,6 @@
                         </li>
                         <li>
                             <i class="fa-brands fa-whatsapp me-2" style="color: #25D366; font-size: 1.1rem;"></i> 
-                            
-                            @php
-                                // Limpiamos espacios y guiones, y quitamos el '0' o '+' al inicio si existe
-                                $numeroLimpio = preg_replace('/[^0-9]/', '', $telefonoTaller);
-                                if (str_starts_with($numeroLimpio, '0')) {
-                                    $numeroLimpio = '593' . substr($numeroLimpio, 1);
-                                }
-                            @endphp
 
                             <!-- El enlace wa.me abre directamente WhatsApp con el número estandarizado -->
                             <a href="https://wa.me/{{ $numeroLimpio }}" 

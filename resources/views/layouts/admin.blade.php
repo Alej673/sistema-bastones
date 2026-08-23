@@ -60,7 +60,7 @@
                     <!-- NUEVO: Buzón de Solicitudes Web -->
                     <a href="{{ route('admin.solicitudes.inbox') }}" class="nav-link-glass d-flex justify-content-between align-items-center {{ request()->routeIs('admin.solicitudes.*') ? 'active' : '' }}">
                         <span><i class="fa-solid fa-inbox me-2"></i> Buzón de Solicitudes</span>
-                        {{-- @if($solicitudesWeb->count() > 0) 
+                        {{-- @if(isset($solicitudesWeb) && $solicitudesWeb->count() > 0) 
                             <span class="badge rounded-pill bg-danger" style="font-size: 0.7rem;">
                                 {{ $solicitudesWeb->count() }} 
                             </span>

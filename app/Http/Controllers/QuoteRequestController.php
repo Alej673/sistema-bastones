@@ -70,7 +70,8 @@ class QuoteRequestController extends Controller
     $cotizacion = QuoteRequest::findOrFail($id);
 
     // Verificamos que el usuario logueado sea el dueño o tenga el rol de administrador
-    if ($cotizacion->user_id !== Auth::id() && Auth::user()->role !== 'admin') {
+    // Verificamos que el usuario logueado sea el dueño o tenga el rol de administrador
+    if ($cotizacion->user_id !== Auth::id() && Auth::user()->role !== 'admin' && Auth::user()->role !== 'super_admin') {
         abort(403, 'No tienes permiso para ver este documento.');
     }
 

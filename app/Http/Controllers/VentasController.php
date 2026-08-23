@@ -3,139 +3,276 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pedido;
+use App\Models\Insumo;
+use App\Models\Movimiento;
+use App\Models\QuoteRequest;
+use App\Models\CatalogItem;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Mail\NotaVentaMailable;
 
 class VentasController extends Controller
 {
+    // =======================================================
+    // CONFIGURACIÓN CENTRAL: qué se considera "no es un insumo físico"
+    // =======================================================
+    // Cualquier línea del carrito cuyo nombre contenga uno de estos
+    // fragmentos es mano de obra, servicio o una cotización rápida ya
+    // facturada como bloque único. NUNCA se debe:
+    //   - buscar en el Kardex
+    //   - descontar stock
+    //   - reportar como "material fantasma" (no encontrado)
+    // Si mañana agregas una nueva categoría de "servicio" (ej. grabado,
+    // empaque especial, etc.) solo la agregas aquí y automáticamente
+    // queda blindada en TODO el controlador.
+    private const FRAGMENTOS_IGNORABLES = [
+        'aplique',
+        'diseño',
+        'diseno',
+        '[coti-rápida]',
+        '[coti-rapida]',
+    ];
+
+    /**
+     * True si esta línea del carrito es un servicio / mano de obra / coti-rápida,
+     * y por lo tanto debe excluirse de descuentos de inventario y de auditorías
+     * de "material no encontrado".
+     */
+    private function esMaterialIgnorable(string $nombreMaterial): bool
+    {
+        $nombreLower = strtolower($nombreMaterial);
+
+        foreach (self::FRAGMENTOS_IGNORABLES as $fragmento) {
+            if (str_contains($nombreLower, strtolower($fragmento))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Intenta resolver el Insumo real del Kardex correspondiente a una línea
+     * de material cotizada. Devuelve null si no lo logra encontrar.
+     *
+     * Estrategia (en orden):
+     *  1. Por insumo_id, si ya venía enlazado desde la cotización.
+     *  2. Por coincidencia flexible del nombre completo cotizado.
+     *  3. Por categoría detectada + palabras clave del "color/variante".
+     *
+     * NOTA IMPORTANTE: el frontend guarda los nombres con un PREFIJO fijo
+     * seguido de dos puntos, ej: "Cortina de Fiesta: Rojo", "Cortina de
+     * Lana: Azul", "Cinta Satín: Dorado". El insumo real en el Kardex solo
+     * se llama por la variante ("Rojo", "Azul", "Dorado"). Por eso, en vez
+     * de mantener una lista de "palabras basura" que hay que actualizar
+     * cada vez que se inventa un prefijo nuevo, cortamos todo lo que va
+     * ANTES de los ":" y trabajamos solo con lo que sobra.
+     */
+    private function resolverInsumo($item): ?Insumo
+    {
+        // 1. Ya viene enlazado
+        if ($item->insumo_id) {
+            $insumo = Insumo::find($item->insumo_id);
+            if ($insumo) {
+                return $insumo;
+            }
+        }
+
+        $nombreCotizado = $item->nombre_material;
+
+        // 2. Coincidencia flexible del nombre completo
+        // (paréntesis y espacios dobles se vuelven comodines)
+        $nombreLimpio = str_replace(['(', ')', ' '], '%', $nombreCotizado);
+        $nombreLimpio = preg_replace('/%+/', '%', $nombreLimpio);
+
+        $insumo = Insumo::where('nombre', 'LIKE', "%{$nombreLimpio}%")->first();
+        if ($insumo) {
+            return $insumo;
+        }
+
+        // 3. Detección de categoría + variante
+        $nombreMinuscula = strtolower($nombreCotizado);
+        $tagDetectado = $this->detectarCategoria($nombreMinuscula);
+
+        if (!$tagDetectado) {
+            return null;
+        }
+
+        // Insumos fijos de ensamblaje: uno solo por categoría, sin variantes
+        if (in_array($tagDetectado, ['cinchos', 'elastico'])) {
+            return Insumo::where('categoria', $tagDetectado)->first();
+        }
+
+        // Insumos con variedad de color/diseño: aislamos la variante real
+        $textoVariante = $this->extraerVariante($nombreCotizado);
+        $palabrasClave = array_filter(explode(' ', trim($textoVariante)));
+
+        $query = Insumo::where('categoria', $tagDetectado);
+        foreach ($palabrasClave as $palabra) {
+            $palabraValida = trim($palabra);
+            if (strlen($palabraValida) >= 2) {
+                $query->where('nombre', 'LIKE', '%' . $palabraValida . '%');
+            }
+        }
+
+        return $query->first();
+    }
+
+    /**
+     * Detecta a qué categoría del Kardex pertenece un nombre de material
+     * cotizado, según los 8 tags reales usados en toda la app.
+     */
+    private function detectarCategoria(string $nombreMinuscula): ?string
+    {
+        return match (true) {
+            str_contains($nombreMinuscula, 'base')                                             => 'base_baston',
+            str_contains($nombreMinuscula, 'lana') || str_contains($nombreMinuscula, 'cuerpo')  => 'lana',
+            str_contains($nombreMinuscula, 'garza')                                             => 'cinta_garza',
+            str_contains($nombreMinuscula, 'satin') || str_contains($nombreMinuscula, 'satín')  => 'cinta_satin',
+            str_contains($nombreMinuscula, 'gross')                                             => 'cinta_gross',
+            str_contains($nombreMinuscula, 'cortina')                                           => 'cortina_fiesta',
+            str_contains($nombreMinuscula, 'cincho')                                            => 'cinchos',
+            str_contains($nombreMinuscula, 'elástico') || str_contains($nombreMinuscula, 'elastico') => 'elastico',
+            default => null,
+        };
+    }
+
+    /**
+     * Extrae la "variante" real (color / medida) de un nombre de material
+     * cotizado con formato "Prefijo: Variante" (ej. "Cortina de Fiesta: Rojo").
+     * Si no hay ":", cae de vuelta a limpiar palabras conocidas como respaldo.
+     */
+    private function extraerVariante(string $nombreCotizado): string
+    {
+        if (str_contains($nombreCotizado, ':')) {
+            return trim(explode(':', $nombreCotizado, 2)[1]);
+        }
+
+        // Respaldo por si algún día se guarda un nombre sin ":"
+        $palabrasBasura = [
+            'lazo', 'simple', 'flor', 'corte', 'cinta', 'cortina',
+            'de', 'fiesta', 'lana', 'base', 'cuerpo', 'c/', 'nombre',
+            ':', '1', '2', '3',
+        ];
+
+        return str_ireplace($palabrasBasura, '', $nombreCotizado);
+    }
+
+    /**
+     * Calcula el desglose financiero (ingresos / mano de obra / insumos)
+     * de un solo pedido, usando el modelo híbrido:
+     *   - Manualidades: regla fija 60% mano de obra / 40% insumos.
+     *   - Todo lo demás (bastones, lazos, ensamblajes): top-down usando
+     *     el costo_materiales real guardado, con respaldo del 40% si falta.
+     *
+     * Se reutiliza tanto en el index (KPIs del mes) como en el reporte
+     * mensual en PDF, para que ambos SIEMPRE coincidan.
+     */
+    private function calcularFinancieroPedido(Pedido $pedido): array
+    {
+        $precioFinal = $pedido->costo_total ?? 0;
+        $esManualidad = in_array(strtolower($pedido->categoria ?? ''), ['manualidad', 'manualidades']);
+
+        if ($esManualidad) {
+            $ganancia = $precioFinal * 0.60;
+            $insumos  = $precioFinal * 0.40;
+        } else {
+            $insumos = (!empty($pedido->costo_materiales) && $pedido->costo_materiales > 0)
+                ? $pedido->costo_materiales
+                : ($precioFinal * 0.40);
+
+            $ganancia = $precioFinal - $insumos;
+        }
+
+        return [
+            'ingreso'  => $precioFinal,
+            'ganancia' => $ganancia,
+            'insumos'  => $insumos,
+        ];
+    }
+
+    // =======================================================
+    // LISTADO PRINCIPAL DE VENTAS + KPIs
+    // =======================================================
     public function index(Request $request)
     {
-        // 1. OBTENER VARIABLES DE FILTROS (Para la búsqueda asíncrona o síncrona)
         $buscar = $request->input('buscar');
-        $fecha = $request->input('fecha');
+        $fecha  = $request->input('fecha');
         $estado = $request->input('estado');
 
-        // 2. CONSTRUIR LA CONSULTA BASE DE PEDIDOS
-        // Usamos Eager Loading con 'materiales' para optimizar la base de datos
         $query = Pedido::with('materiales');
 
-        // Aplicar filtro de búsqueda por cliente o número de documento
         if ($buscar) {
-            $query->where(function($q) use ($buscar) {
-                // CORRECCIÓN: Usamos 'cliente_nombre' tal como está en la BD
+            $query->where(function ($q) use ($buscar) {
                 $q->where('cliente_nombre', 'LIKE', "%{$buscar}%")
                   ->orWhere('id', 'LIKE', "%{$buscar}%");
             });
         }
 
-        // Aplicar filtro de fecha exacta
         if ($fecha) {
             $query->whereDate('created_at', $fecha);
         }
 
-        // Aplicar filtro por estado de producción
         if ($estado) {
             $query->where('estado', $estado);
         }
 
-        // Obtener los pedidos ordenados por el más reciente
         $pedidos = $query->orderBy('created_at', 'desc')->paginate(10);
 
-
-        // 3. CÁLCULO DE KPIs (Estadísticas para las tarjetas superiores)
-        $mesActual = Carbon::now()->month;
+        // --- KPIs del mes ---
+        $mesActual  = Carbon::now()->month;
         $anioActual = Carbon::now()->year;
-        
-        // Nombre del mes dinámico en español
-        $nombreMes = ucfirst(Carbon::now()->locale('es')->translatedFormat('F'));
+        $nombreMes  = ucfirst(Carbon::now()->locale('es')->translatedFormat('F'));
 
-        // Traemos todos los pedidos en estado 'realizado' del mes actual
         $pedidosMes = Pedido::where('estado', 'realizado')
             ->whereMonth('created_at', $mesActual)
             ->whereYear('created_at', $anioActual)
             ->get();
 
-        // =======================================================
-        // NUEVO MODELO HÍBRIDO FINANCIERO
-        // =======================================================
-        $ingresosMes = 0;
-        $manoObraEstimada = 0;
+        $ingresosMes          = 0;
+        $manoObraEstimada     = 0;
         $costoInsumosEstimado = 0;
 
         foreach ($pedidosMes as $pedido) {
-            $precioFinal = $pedido->costo_total ?? 0;
-            $ingresosMes += $precioFinal;
-
-            // Evaluamos la categoría (Asegúrate de que 'categoria' exista en tu modelo Pedido, 
-            // si viene de una relación usa algo como $pedido->quoteRequest->categoria)
-            $esManualidad = in_array(strtolower($pedido->categoria ?? ''), ['manualidad', 'manualidades']);
-
-            if ($esManualidad) {
-                // FASE A: MODELO ARTESANAL (Regla del 60%)
-                // Venta directa sin desglose de materiales
-                $ganancia = $precioFinal * 0.60;
-                $insumos = $precioFinal * 0.40;
-                
-                $manoObraEstimada += $ganancia;
-                $costoInsumosEstimado += $insumos;
-                } else {
-                // FASE B: MODELO TOP-DOWN (Ensamblajes, Bastones, Lazos)
-                
-                // CORRECCIÓN: Leemos la columna correcta de tu BD (costo_materiales)
-                // Si es mayor a 0 usa el valor real, si no, usa la emergencia del 40%.
-                $insumos = (!empty($pedido->costo_materiales) && $pedido->costo_materiales > 0) 
-                            ? $pedido->costo_materiales 
-                            : ($precioFinal * 0.40);
-                
-                // La ganancia es la diferencia exacta: absorbe el margen base y diseños especiales.
-                $ganancia = $precioFinal - $insumos;
-
-                $costoInsumosEstimado += $insumos;
-                $manoObraEstimada += $ganancia;
-            }
+            $desglose = $this->calcularFinancieroPedido($pedido);
+            $ingresosMes          += $desglose['ingreso'];
+            $manoObraEstimada     += $desglose['ganancia'];
+            $costoInsumosEstimado += $desglose['insumos'];
         }
 
-        // Tarjeta 2: Cantidad de pedidos actualmente en producción
-        $enProduccion = Pedido::where('estado', 'en_produccion')->count();
-
-        // Tarjeta 3: Cantidad de cotizaciones en estado pendiente
+        $enProduccion           = Pedido::where('estado', 'en_produccion')->count();
         $cotizacionesPendientes = Pedido::where('estado', 'pendiente')->count();
 
-        // Tarjeta 4: Diseño Más Popular y Top 5 (Marketing Web)
-        $top5Populares = \App\Models\CatalogItem::where('activo', true)
-                            ->where('contador_consultas', '>', 0)
-                            ->orderBy('contador_consultas', 'desc')
-                            ->take(5)
-                            ->get();
-        
-        // El modelo estrella será simplemente el primero de esa lista de 5
-        $modeloEstrella = $top5Populares->first();
-        
-        // Verificamos si existe
-        if ($modeloEstrella) {
-            $nombreModeloEstrella = $modeloEstrella->titulo;
-            $consultasModeloEstrella = $modeloEstrella->contador_consultas;
-        } else {
-            $nombreModeloEstrella = 'Ninguno aún';
-            $consultasModeloEstrella = 0;
-        }
+        $top5Populares = CatalogItem::where('activo', true)
+            ->where('contador_consultas', '>', 0)
+            ->orderBy('contador_consultas', 'desc')
+            ->take(5)
+            ->get();
 
-        // 4. RETORNAR LA VISTA CON LOS DATOS COMPLETOS
+        $modeloEstrella = $top5Populares->first();
+        $nombreModeloEstrella     = $modeloEstrella->titulo ?? 'Ninguno aún';
+        $consultasModeloEstrella  = $modeloEstrella->contador_consultas ?? 0;
+
         return view('Ventas.ventas', compact(
-            'pedidos', 
-            'ingresosMes', 
+            'pedidos',
+            'ingresosMes',
             'nombreMes',
             'manoObraEstimada',
             'costoInsumosEstimado',
-            'enProduccion', 
-            'cotizacionesPendientes', 
+            'enProduccion',
+            'cotizacionesPendientes',
             'nombreModeloEstrella',
             'consultasModeloEstrella',
-            'top5Populares' // <-- ¡AQUÍ AGREGAMOS LA NUEVA VARIABLE PARA EL MENÚ!
+            'top5Populares'
         ));
     }
 
+    // =======================================================
+    // VINCULAR PEDIDO A SOLICITUD WEB
+    // =======================================================
     public function vincularPedido(Request $request, $id)
     {
         try {
@@ -143,28 +280,22 @@ class VentasController extends Controller
 
             $pedido = Pedido::findOrFail($id);
 
-            // 1. Vincular a la Web (Si se seleccionó un ID)
             if ($request->filled('quote_request_id')) {
-                
-                // --- LÓGICA DE LIMPIEZA (La que ya pusimos) ---
                 if ($pedido->quote_request_id != null && $pedido->quote_request_id != $request->quote_request_id) {
-                    $solicitudAnterior = \App\Models\QuoteRequest::find($pedido->quote_request_id);
+                    $solicitudAnterior = QuoteRequest::find($pedido->quote_request_id);
                     if ($solicitudAnterior) {
                         $solicitudAnterior->estado = 'pendiente';
-                        $solicitudAnterior->precio_final = null; 
+                        $solicitudAnterior->precio_final = null;
                         $solicitudAnterior->save();
                     }
                 }
 
-                // Actualizamos el pedido físico con el NUEVO ID
                 $pedido->quote_request_id = $request->quote_request_id;
-                
-                // Actualizamos el estado y precio de la solicitud web para el NUEVO cliente
-                $solicitudWeb = \App\Models\QuoteRequest::find($request->quote_request_id);
+
+                $solicitudWeb = QuoteRequest::find($request->quote_request_id);
                 if ($solicitudWeb) {
                     $solicitudWeb->precio_final = $pedido->costo_total;
-                    
-                    // Emparejamos los estados
+
                     $estadoInterno = strtolower($pedido->estado);
                     if ($estadoInterno === 'realizado') {
                         $solicitudWeb->estado = 'entregado';
@@ -175,202 +306,109 @@ class VentasController extends Controller
                     }
                     $solicitudWeb->save();
 
-                    // --- NUEVO: ACTUALIZAR DATOS DEL CLIENTE EN EL PEDIDO ---
-                    $pedido->cliente_nombre = $solicitudWeb->nombre; 
+                    $pedido->cliente_nombre = $solicitudWeb->nombre;
 
-                    // Si el usuario web tiene correo, lo forzamos en el pedido para no mandar correos al cliente equivocado
                     if ($solicitudWeb->user) {
                         $pedido->correo_cliente = $solicitudWeb->user->email;
                     }
-                    // --- FIN DE LO NUEVO ---
                 }
 
-                // Guardamos los cambios del nombre, correo y el nuevo ID en el pedido
                 $pedido->save();
             }
 
-            // 2. Reenviar Correo (Si escribió un email en el modal y NO se reescribió arriba)
             if ($request->filled('correo') && !$request->filled('quote_request_id')) {
                 $pedido->correo_cliente = $request->correo;
                 $pedido->save();
             }
 
-            // Si hay correo, mandamos la nota de venta
             if ($pedido->correo_cliente) {
-                \Illuminate\Support\Facades\Mail::to($pedido->correo_cliente)
-                    ->send(new \App\Mail\NotaVentaMailable($pedido));
+                Mail::to($pedido->correo_cliente)->send(new NotaVentaMailable($pedido));
             }
 
             DB::commit();
 
             return response()->json(['success' => true]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
-                'success' => false, 
-                'message' => $e->getMessage()
+                'success' => false,
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
 
+    // =======================================================
+    // CAMBIO DE ESTADO + DESCUENTO DE INVENTARIO
+    // =======================================================
     public function actualizarEstado(Request $request, $id)
     {
         try {
             DB::beginTransaction();
 
             $pedido = Pedido::with('materiales')->findOrFail($id);
-            $nuevoEstado = $request->input('estado');
-            $estadoAnterior = $pedido->estado;
-            
-            $materialesNoEncontrados = []; // Aquí guardaremos los "fantasmas"
-            $materialesEnNegativo = []; // Para controlar la deuda
-            $listaExitosos = [];
+            $nuevoEstado    = $request->input('estado');
 
-            // REGLA DE NEGOCIO BLINDADA: Solo descontar si pasa a 'realizado' 
-            // Y comprobamos en la base de datos que NUNCA se haya descontado antes.
+            $materialesNoEncontrados = [];
+            $materialesEnNegativo    = [];
+            $listaExitosos           = [];
+
+            // Solo descontar si pasa a 'realizado' y NUNCA se ha descontado antes.
             if ($nuevoEstado === 'realizado' && $pedido->inventario_descontado == false) {
-                
                 foreach ($pedido->materiales as $item) {
-                    $nombreLower = strtolower($item->nombre_material);
 
-                    // =======================================================
-                    // ARQUITECTURA BYPASS: Ignorar mano de obra, servicios y cotizaciones rápidas
-                    // =======================================================
-                    if (str_contains($nombreLower, 'aplique') || 
-                        str_contains($nombreLower, 'diseño') || 
-                        str_contains($nombreLower, 'diseno') ||
-                        str_contains($nombreLower, '[coti-rápida]') || 
-                        str_contains($nombreLower, '[coti-rapida]') || 
-                        str_contains($item->nombre_material, '[COTI-RÁPIDA]')) { 
+                    // Servicios / mano de obra / coti-rápida: nunca tocan inventario
+                    // ni cuentan como "material no encontrado".
+                    if ($this->esMaterialIgnorable($item->nombre_material)) {
                         continue;
                     }
 
-                    $insumo = null;
+                    $insumo = $this->resolverInsumo($item);
 
-                    // 1. Intentar buscar por ID (si ya estaba enlazado desde la cotización)
-                    if ($item->insumo_id) {
-                        $insumo = \App\Models\Insumo::find($item->insumo_id);
-                    }
-                    
-                    // 2. LA MAGIA EVOLUCIONADA: Búsqueda Inteligente (Fusión Tag + Nombre)[cite: 2]
-                    if (!$insumo) {
-                        $nombreCotizado = $item->nombre_material;
-
-                        // Intento A: Búsqueda flexible (Illa paréntesis y espacios dobles con comodines %)[cite: 2]
-                        $nombreLimpio = str_replace(['(', ')', ' '], '%', $nombreCotizado);
-                        $nombreLimpio = preg_replace('/%+/', '%', $nombreLimpio);
-
-                        $insumo = \App\Models\Insumo::where('nombre', 'LIKE', "%{$nombreLimpio}%")->first();
-
-                        // Intento B: Mapeo exhaustivo por CATEGORÍAS (Tags exactos de la BD)
-                        if (!$insumo) {
-                            $tagDetectado = null;
-                            $nombreMinuscula = strtolower($nombreCotizado);
-
-                            // Mapeo contra los 8 tags reales de tu objeto JS / BD:
-                            if (str_contains($nombreMinuscula, 'base')) {
-                                $tagDetectado = 'base_baston';
-                            } elseif (str_contains($nombreMinuscula, 'lana') || str_contains($nombreMinuscula, 'cuerpo')) {
-                                $tagDetectado = 'lana';
-                            } elseif (str_contains($nombreMinuscula, 'garza')) {
-                                $tagDetectado = 'cinta_garza';
-                            } elseif (str_contains($nombreMinuscula, 'satin') || str_contains($nombreMinuscula, 'satín')) {
-                                $tagDetectado = 'cinta_satin';
-                            } elseif (str_contains($nombreMinuscula, 'gross')) {
-                                $tagDetectado = 'cinta_gross';
-                            } elseif (str_contains($nombreMinuscula, 'cortina')) {
-                                $tagDetectado = 'cortina_fiesta';
-                            } elseif (str_contains($nombreMinuscula, 'cincho')) {
-                                $tagDetectado = 'cinchos';
-                            } elseif (str_contains($nombreMinuscula, 'elástico') || str_contains($nombreMinuscula, 'elastico')) {
-                                $tagDetectado = 'elastico';
-                            }
-
-                            // Búsqueda dentro de la categoría detectada
-                            if ($tagDetectado) {
-                                // Caso 1: Insumos fijos de ensamblaje (cinchos, elástico)
-                                if (in_array($tagDetectado, ['cinchos', 'elastico'])) {
-                                    $insumo = \App\Models\Insumo::where('categoria', $tagDetectado)->first();
-                                } 
-                                // Caso 2: Insumos con variedad de color/diseño (bases, lanas, cintas, cortinas)
-                                else {
-                                    // Aislamos palabras clave del texto (ej. "roja", "azul", "dorada", "55cm")
-                                    $palabrasBasura = ['lazo', 'simple', 'flor', 'corte', 'cinta', 'cortina', 'base', 'cuerpo', 'c/', 'nombre', ':', '1', '2', '3'];
-                                    
-                                    // Limpiamos la cadena cotizada
-                                    $textoLimpio = str_ireplace($palabrasBasura, '', $nombreCotizado);
-                                    $palabrasClave = array_filter(explode(' ', trim($textoLimpio)));
-
-                                    $query = \App\Models\Insumo::where('categoria', $tagDetectado);
-                                    
-                                    // Buscamos que el insumo en el Kardex contenga al menos el atributo (color o tamaño)
-                                    foreach ($palabrasClave as $palabra) {
-                                        $palabraValida = trim($palabra);
-                                        if (strlen($palabraValida) >= 2) {
-                                            $query->where('nombre', 'LIKE', '%' . $palabraValida . '%');
-                                        }
-                                    }
-                                    $insumo = $query->first();
-                                }
-                            }
-                        }
-
-                        // Si la magia funcionó, amarramos permanentemente el insumo_id en la BD
-                        if ($insumo) {
-                            $item->insumo_id = $insumo->id;
-                            $item->save();
-                        }
+                    // Si la búsqueda inteligente encontró el insumo pero la línea
+                    // no traía insumo_id, lo amarramos permanentemente.
+                    if ($insumo && !$item->insumo_id) {
+                        $item->insumo_id = $insumo->id;
+                        $item->save();
                     }
 
-                    // 3. Proceder con el descuento si logramos encontrarlo de alguna de las dos formas
                     if ($insumo) {
-                        // Restamos el stock físico
                         $insumo->stock_actual -= $item->cantidad_requerida;
                         $insumo->save();
 
-                        // NUEVO: Registramos el éxito para que el modal lo muestre en verde
                         $listaExitosos[] = $item->nombre_material . ' (' . $item->cantidad_requerida . ')';
 
-                        // LA NUEVA MAGIA: Si después de restar quedó en negativo, lo guardamos
                         if ($insumo->stock_actual < 0) {
                             $materialesEnNegativo[] = $insumo->nombre . ' (Quedó en ' . $insumo->stock_actual . ')';
                         }
 
-                        // Escribimos en la bitácora de auditoría (Kardex)
-                        \App\Models\Movimiento::create([
-                            'insumo_id' => $insumo->id,
+                        Movimiento::create([
+                            'insumo_id'       => $insumo->id,
                             'tipo_movimiento' => 'Salida (Venta)',
-                            'cantidad' => -$item->cantidad_requerida,
-                            'detalle' => 'Descuento automático por Pedido #' . str_pad($pedido->id, 4, '0', STR_PAD_LEFT)
+                            'cantidad'        => -$item->cantidad_requerida,
+                            'detalle'         => 'Descuento automático por Pedido #' . str_pad($pedido->id, 4, '0', STR_PAD_LEFT),
                         ]);
                     } else {
-                        // 4. Definitivamente sigue sin existir en el inventario (Soft Fail)
                         $materialesNoEncontrados[] = $item->nombre_material;
                     }
                 }
 
-                // 🛑 EL CANDADO DE SEGURIDAD 🛑
-                // Marcamos que ya se descontó para que jamás vuelva a entrar a este bloque IF
                 $pedido->inventario_descontado = true;
             }
 
-            // Guardamos el nuevo estado de la cabecera (y el candado si se activó)
             $pedido->estado = $nuevoEstado;
             $pedido->save();
 
-        // --- INICIO: SINCRONIZACIÓN CON EL PORTAL WEB (EL ESPEJO) ---
+            // --- Sincronización con el portal web ---
             if (!is_null($pedido->quote_request_id)) {
-                $solicitudWeb = \App\Models\QuoteRequest::find($pedido->quote_request_id);
-                
+                $solicitudWeb = QuoteRequest::find($pedido->quote_request_id);
+
                 if ($solicitudWeb) {
-                    $estadoLimpio = strtolower($nuevoEstado); 
-                    
-                    // Traductor de estados (Taller -> Cliente Web)
+                    $estadoLimpio = strtolower($nuevoEstado);
+
                     if ($estadoLimpio === 'en_produccion') {
                         $solicitudWeb->estado = 'en_produccion';
                     } elseif ($estadoLimpio === 'realizado') {
-                        $solicitudWeb->estado = 'entregado'; 
+                        $solicitudWeb->estado = 'entregado';
                     } elseif ($estadoLimpio === 'cancelado') {
                         $solicitudWeb->estado = 'cancelado';
                     }
@@ -378,44 +416,42 @@ class VentasController extends Controller
                     $solicitudWeb->save();
                 }
             }
-            // --- FIN: SINCRONIZACIÓN CON EL PORTAL WEB ---
 
             DB::commit();
 
-            // Retornamos la respuesta a JavaScript
             return response()->json([
-                'success' => true,
-                'descontados' => $listaExitosos,
+                'success'        => true,
+                'descontados'    => $listaExitosos,
                 'no_encontrados' => $materialesNoEncontrados,
-                'en_negativo' => $materialesEnNegativo
+                'en_negativo'    => $materialesEnNegativo,
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Error crítico: ' . $e->getMessage()
+                'message' => 'Error crítico: ' . $e->getMessage(),
             ], 500);
         }
     }
 
+    // =======================================================
+    // BÚSQUEDA DE CLIENTES (Select2)
+    // =======================================================
     public function buscarClientesAjax(Request $request)
     {
         $term = $request->input('q');
 
-        // Buscamos clientes únicos que coincidan con el término escrito
         $clientes = Pedido::select('cliente_nombre')
             ->where('cliente_nombre', 'LIKE', "%{$term}%")
             ->groupBy('cliente_nombre')
             ->orderBy('cliente_nombre', 'asc')
-            ->limit(10) // Limitamos a 10 sugerencias para optimizar rendimiento
+            ->limit(10)
             ->get();
 
-        // Formateamos la respuesta para que Select2 la entienda (id y text)
         $results = $clientes->map(function ($pedido) {
             return [
-                'id' => $pedido->cliente_nombre,
-                'text' => $pedido->cliente_nombre
+                'id'   => $pedido->cliente_nombre,
+                'text' => $pedido->cliente_nombre,
             ];
         });
 
@@ -424,103 +460,107 @@ class VentasController extends Controller
 
     public function obtenerDetalles($id)
     {
-        // Traemos el pedido incluyendo sus materiales asociados
-        $pedido = \App\Models\Pedido::with('materiales')->findOrFail($id);
-        
+        $pedido = Pedido::with('materiales')->findOrFail($id);
+
         return response()->json($pedido);
     }
 
+    // =======================================================
+    // REPORTE MENSUAL (PDF)
+    // =======================================================
     public function generarReporteMensual(Request $request)
     {
-        // 1. Obtenemos fechas
-        $mes = (int) $request->input('mes', \Carbon\Carbon::now()->month);
-        $anio = (int) $request->input('anio', \Carbon\Carbon::now()->year);
-        $nombreMes = ucfirst(\Carbon\Carbon::create()->month($mes)->locale('es')->translatedFormat('F'));
+        $mes  = (int) $request->input('mes', Carbon::now()->month);
+        $anio = (int) $request->input('anio', Carbon::now()->year);
+        $nombreMes = ucfirst(Carbon::create()->month($mes)->locale('es')->translatedFormat('F'));
 
-        // 2. Traemos TODOS los pedidos del mes (para estadísticas globales)
         $todosPedidosMes = Pedido::with('materiales')
             ->whereMonth('created_at', $mes)
             ->whereYear('created_at', $anio)
             ->get();
 
-        // 3. Conteo Operativo (El Embudo)
         $estadosCount = [
-            'realizado' => $todosPedidosMes->where('estado', 'realizado')->count(),
+            'realizado'     => $todosPedidosMes->where('estado', 'realizado')->count(),
             'en_produccion' => $todosPedidosMes->where('estado', 'en_produccion')->count(),
-            'pendiente' => $todosPedidosMes->where('estado', 'pendiente')->count(),
-            'cancelado' => $todosPedidosMes->where('estado', 'cancelado')->count(),
+            'pendiente'     => $todosPedidosMes->where('estado', 'pendiente')->count(),
+            'cancelado'     => $todosPedidosMes->where('estado', 'cancelado')->count(),
         ];
 
-        // 4. Aislamos solo los realizados para el cálculo financiero
         $pedidosCompletados = $todosPedidosMes->where('estado', 'realizado');
 
-        $ingresosTotales = 0; $manoObraTotal = 0; $costoInsumosTotal = 0;
-        $consumoInsumos = []; // Para el Top 5
-        $materialesFantasmas = []; // Los que no se encontraron
+        $ingresosTotales   = 0;
+        $manoObraTotal     = 0;
+        $costoInsumosTotal = 0;
+        $consumoInsumos       = [];
+        $materialesFantasmas  = [];
 
         foreach ($pedidosCompletados as $pedido) {
-            // --- Cálculo Financiero ---
-            $precioFinal = $pedido->costo_total ?? 0;
-            $ingresosTotales += $precioFinal;
+            $desglose = $this->calcularFinancieroPedido($pedido);
+            $ingresosTotales   += $desglose['ingreso'];
+            $manoObraTotal     += $desglose['ganancia'];
+            $costoInsumosTotal += $desglose['insumos'];
 
-            $esManualidad = in_array(strtolower($pedido->categoria ?? ''), ['manualidad', 'manualidades']);
-
-            if ($esManualidad) {
-                $ganancia = $precioFinal * 0.60;
-                $insumos = $precioFinal * 0.40;
-            } else {
-                $insumos = (!empty($pedido->costo_materiales) && $pedido->costo_materiales > 0) 
-                            ? $pedido->costo_materiales : ($precioFinal * 0.40);
-                $ganancia = $precioFinal - $insumos;
-            }
-
-            $costoInsumosTotal += $insumos;
-            $manoObraTotal += $ganancia;
-
-            // --- Auditoría de Materiales de este pedido ---
             foreach ($pedido->materiales as $mat) {
-                // Ignoramos mano de obra o diseños extra
-                if ($mat->es_diseno || str_contains(strtolower($mat->nombre_material), 'aplique')) continue;
+                // MISMA regla que actualizarEstado(): servicios, diseños,
+                // apliques y coti-rápida jamás son "material fantasma".
+                if ($this->esMaterialIgnorable($mat->nombre_material)) {
+                    continue;
+                }
 
                 if ($mat->insumo_id) {
-                    // Si se descontó bien, lo sumamos al ranking
                     $nombre = $mat->nombre_material;
                     if (!isset($consumoInsumos[$nombre])) {
                         $consumoInsumos[$nombre] = 0;
                     }
                     $consumoInsumos[$nombre] += $mat->cantidad_requerida;
                 } else {
-                    // Si el insumo_id es nulo, es un fantasma
-                    $materialesFantasmas[] = [
-                        'nombre' => $mat->nombre_material,
-                        'pedido' => $pedido->id,
-                        'cantidad' => $mat->cantidad_requerida
-                    ];
+                    // Si a estas alturas (pedido ya 'realizado') sigue sin
+                    // insumo_id, es porque actualizarEstado() tampoco pudo
+                    // resolverlo. Reintentamos una vez más aquí por si el
+                    // insumo se dio de alta DESPUÉS de descontar el pedido.
+                    $insumo = $this->resolverInsumo($mat);
+
+                    if ($insumo) {
+                        $nombre = $mat->nombre_material;
+                        if (!isset($consumoInsumos[$nombre])) {
+                            $consumoInsumos[$nombre] = 0;
+                        }
+                        $consumoInsumos[$nombre] += $mat->cantidad_requerida;
+                    } else {
+                        $materialesFantasmas[] = [
+                            'nombre'   => $mat->nombre_material,
+                            'pedido'   => $pedido->id,
+                            'cantidad' => $mat->cantidad_requerida,
+                        ];
+                    }
                 }
             }
         }
 
-        // 5. Procesar Ranking de Insumos (Ordenamos de mayor a menor y sacamos los 5 primeros)
         arsort($consumoInsumos);
         $topInsumos = array_slice($consumoInsumos, 0, 5, true);
 
-        // 6. Alerta Roja: Inventario en Negativo (Directo de la tabla insumos)
-        $stockNegativo = \App\Models\Insumo::where('stock_actual', '<', 0)->get();
+        $stockNegativo = Insumo::where('stock_actual', '<', 0)->get();
 
-        // 7. Marketing: Los más consultados (Top 5 del Catálogo)
-        $topProductos = \App\Models\CatalogItem::where('activo', true)
-                            ->orderBy('contador_consultas', 'desc')
-                            ->take(5)
-                            ->get();
+        $topProductos = CatalogItem::where('activo', true)
+            ->orderBy('contador_consultas', 'desc')
+            ->take(5)
+            ->get();
 
-        // 8. Enviar todo al PDF
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reportes.reporte_mensual_pdf', compact(
-            'pedidosCompletados', 'ingresosTotales', 'costoInsumosTotal', 'manoObraTotal', 
-            'nombreMes', 'anio', 'estadosCount', 'topInsumos', 'materialesFantasmas', 
-            'stockNegativo', 'topProductos'
+        $pdf = Pdf::loadView('reportes.reporte_mensual_pdf', compact(
+            'pedidosCompletados',
+            'ingresosTotales',
+            'costoInsumosTotal',
+            'manoObraTotal',
+            'nombreMes',
+            'anio',
+            'estadosCount',
+            'topInsumos',
+            'materialesFantasmas',
+            'stockNegativo',
+            'topProductos'
         ));
-        
-        return $pdf->stream('Reporte_Gerencial_'.$nombreMes.'_'.$anio.'.pdf');
+
+        return $pdf->stream('Reporte_Gerencial_' . $nombreMes . '_' . $anio . '.pdf');
     }
 }
-

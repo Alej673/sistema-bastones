@@ -46,7 +46,7 @@
 
             <div class="mt-auto">
                 @guest
-                    <button onclick="enviarWhatsAppDirecto({{ $item->id }}, '{{ $item->titulo }}', '{{ asset('storage/' . $item->imagen_path) }}')" class="btn w-100 rounded-pill shadow-sm btn-whatsapp-direct mb-2">
+                    <button onclick="enviarWhatsAppDirecto({{ $item->id }}, '{{ addslashes($item->titulo) }}', '{{ asset('storage/' . $item->imagen_path) }}')" class="btn w-100 rounded-pill shadow-sm btn-whatsapp-direct mb-2">
                         <i class="fa-brands fa-whatsapp me-2"></i> Consulta Rápida
                     </button>
 
@@ -57,7 +57,7 @@
                 @endguest
 
                 @auth
-                    <button onclick="abrirConsultaRapida({{ $item->id }}, '{{ $item->titulo }}', '{{ $item->nivel_diseno ?? 'Básico' }}', '{{ $item->medida_cm ?? '50 cm' }}', '{{ asset('storage/' . $item->imagen_path) }}', '{{ $item->categoria ?? 'na' }}')" class="btn w-100 rounded-pill shadow-sm btn-titi-action">
+                    <button onclick="abrirConsultaRapida({{ $item->id }}, '{{ addslashes($item->titulo) }}', '{{ $item->nivel_diseno ?? 'Básico' }}', '{{ $item->medida_cm ?? '50 cm' }}', '{{ asset('storage/' . $item->imagen_path) }}', '{{ $item->categoria ?? 'na' }}')" class="btn w-100 rounded-pill shadow-sm btn-titi-action">
                         <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Personalizar Modelo
                     </button>
                 @endauth
