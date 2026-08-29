@@ -57,9 +57,16 @@
                 @endguest
 
                 @auth
-                    <button onclick="abrirConsultaRapida({{ $item->id }}, '{{ addslashes($item->titulo) }}', '{{ $item->nivel_diseno ?? 'Básico' }}', '{{ $item->medida_cm ?? '50 cm' }}', '{{ asset('storage/' . $item->imagen_path) }}', '{{ $item->categoria ?? 'na' }}')" class="btn w-100 rounded-pill shadow-sm btn-titi-action">
-                        <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Personalizar Modelo
-                    </button>
+                    <div class="d-flex flex-column gap-2">
+                        <button onclick="abrirConsultaRapida({{ $item->id }}, '{{ addslashes($item->titulo) }}', '{{ $item->nivel_diseno ?? 'Básico' }}', '{{ $item->medida_cm ?? '50 cm' }}', '{{ asset('storage/' . $item->imagen_path) }}', '{{ $item->categoria ?? 'na' }}')" class="btn w-100 rounded-pill shadow-sm btn-titi-action">
+                            <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Personalizar Modelo
+                        </button>
+                        
+                        <!-- NUEVO BOTÓN: Cotizar Exacto -->
+                        <button onclick="abrirCotizacionExacta({{ $item->id }}, '{{ addslashes($item->titulo) }}', '{{ $item->nivel_diseno ?? 'Básico' }}', '{{ $item->medida_cm ?? '50 cm' }}', '{{ asset('storage/' . $item->imagen_path) }}')" class="btn w-100 rounded-pill shadow-sm btn-titi-outline">
+                            <i class="fa-solid fa-file-invoice-dollar me-2"></i> Cotizar Modelo Exacto
+                        </button>
+                    </div>
                 @endauth
             </div>
         </div>

@@ -13,6 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        
+        // 1. Agregamos esta línea para confiar en ngrok y evitar el error 403
+        $middleware->trustProxies(at: '*');
+
         // Asignamos los alias a nuestros middlewares
         $middleware->alias([
             'admin'       => \App\Http\Middleware\CheckAdminRole::class,

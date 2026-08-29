@@ -452,6 +452,25 @@ window.enviarWhatsAppDirecto = function(id, titulo, imagenUrl) {
     window.open(`https://wa.me/${TELEFONO_TALLER}?text=${textoWhatsapp}`, '_blank');
 };
 
+// ============================================================
+// FUNCIONES DEL NUEVO MODAL: COTIZACIÓN EXACTA
+// ============================================================
+window.abrirCotizacionExacta = function (id, titulo, nivel, tamano, imagenUrl) {
+    // 1. Llenar los datos visuales del resumen
+    document.getElementById('ce-imagen').src = imagenUrl;
+    document.getElementById('ce-nombre').textContent = titulo;
+    document.getElementById('ce-nivel').textContent = nivel;
+    document.getElementById('ce-tamano').textContent = tamano !== 'na' ? tamano + ' cm' : '';
+
+    // 2. Llenar los campos ocultos para el formulario
+    document.getElementById('ce-producto-titulo').value = titulo;
+    document.getElementById('ce-producto-imagen').value = imagenUrl;
+
+    // 3. Abrir el modal usando Bootstrap 5
+    var modalExacto = new bootstrap.Modal(document.getElementById('modalCotizacionExacta'));
+    modalExacto.show();
+};
+
 // Botones internos del modal: sí pueden enlazarse normalmente en DOMContentLoaded
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -592,6 +611,113 @@ document.addEventListener('DOMContentLoaded', function () {
                 btn.disabled = false;
             }
         });
+
+        // --- ACCIÓN: ENVIAR A WHATSAPP (COTIZACIÓN EXACTA) ---
+    document.getElementById('btnConsultarWhatsappExacto')?.addEventListener('click', function () {
+        const nombreCliente = document.getElementById('ceClienteNombre').value.trim();
+        const producto = document.getElementById('ce-producto-titulo').value;
+        const urlImagen = document.getElementById('ce-producto-imagen').value;
+
+        if (!nombreCliente) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Falta tu nombre',
+                text: 'Por favor ingresa tu nombre para saber con quién hablamos en WhatsApp.',
+                confirmButtonColor: '#25D366'
+            });
+            return;
+        }
+
+        const textoWhatsapp = 
+            `👋 Hola Taller Arte Titi_Val, soy *${nombreCliente}*.%0A%0A` +
+            `Me interesa adquirir este modelo exacto de su catálogo:%0A` +
+            `*${producto}*%0A` +
+            `🔗 Link de referencia: ${urlImagen}%0A%0A` +
+            `¿Me podrían ayudar con el precio y tiempo de entrega?`;
+
+        window.open(`https://wa.me/${TELEFONO_TALLER}?text=${textoWhatsapp}`, '_blank');
+        
+        // Cerramos el modal
+        const modalEl = document.getElementById('modalCotizacionExacta');
+        const modalInst = bootstrap.Modal.getInstance(modalEl);
+        if (modalInst) modalInst.hide();
+    });
+
+    // --- ACCIÓN: ENVIAR AL SISTEMA WEB (COTIZACIÓN EXACTA) ---
+    document.getElementById('btnGuardarCotizacionExacta')?.addEventListener('click', function () {
+        const nombreCliente = document.getElementById('ceClienteNombre').value.trim();
+        const telefonoCliente = document.getElementById('ceClienteTelefono').value.trim();
+        const producto = document.getElementById('ce-producto-titulo').value;
+        const urlImagenCatalogo = document.getElementById('ce-producto-imagen').value;
+        
+        if (!nombreCliente || !telefonoCliente) {
+            mostrarToast('warning', 'Campos incompletos', 'Por favor llena tu nombre y teléfono.');
+            return;
+        }
+
+        const btn = this;
+        const textoOriginal = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generando...';
+        btn.disabled = true;
+
+        try {
+            const badgeTamano = document.getElementById('ce-tamano');
+            const medidaBadge = badgeTamano ? badgeTamano.innerText.trim().replace(' cm', '') : 'na';
+            
+            const formData = new FormData();
+            formData.append('nombre', nombreCliente);
+            formData.append('telefono', telefonoCliente);
+            formData.append('cantidad', 1);
+            formData.append('medida_cm', medidaBadge);
+            formData.append('acabado', 'Plata'); // Acabado estándar
+            formData.append('colores', `Diseño estándar del modelo: ${producto}`);
+            formData.append('descripcion_diseno_especial', 'Cotización de modelo exacto de catálogo sin modificaciones extras.');
+            formData.append('categoria', 'baston');
+            if (urlImagenCatalogo) formData.append('imagen_catalogo_url', urlImagenCatalogo);
+
+            fetch('/cotizar', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(async response => {
+                const data = await response.json();
+                if (!response.ok) throw data;
+                return data;
+            })
+            .then(data => {
+                const modalEl = document.getElementById('modalCotizacionExacta');
+                const modalInst = bootstrap.Modal.getInstance(modalEl);
+                if (modalInst) modalInst.hide();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Cotización Generada!',
+                    text: 'Tu solicitud de este modelo ha sido guardada en el sistema.',
+                    confirmButtonColor: 'var(--color-lila-fuerte)',
+                    background: 'var(--color-fondo-claro)',
+                    color: 'var(--color-texto-principal)'
+                });
+            })
+            .catch(error => {
+                console.error('Error al guardar:', error);
+                mostrarToast('error', 'Ups...', 'No se pudo generar la cotización.');
+            })
+            .finally(() => {
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
+            });
+        } catch (err) {
+            console.error('Error JS:', err);
+            mostrarToast('error', 'Error', 'Ocurrió un problema procesando la solicitud.');
+            btn.innerHTML = textoOriginal;
+            btn.disabled = false;
+        }
+    });
 
 });
 

@@ -1615,10 +1615,26 @@ body {
     .titi-card-img { height: 180px !important; padding: 10px !important; }
 }
 
+.btn-titi-outline {
+    border: 2px solid var(--color-oro);
+    color: var(--color-lila-oscuro);
+    background-color: transparent;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-titi-outline:hover {
+    background-color: var(--color-oro);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(212, 175, 55, 0.35);
+}
+
 /* =====================================================
    10. MODAL — CONSULTA RÁPIDA / PERSONALIZACIÓN
    ===================================================== */
-#modalConsultaCat .modal-content {
+#modalConsultaCat .modal-content,
+#modalCotizacionExacta .modal-content {
     border: 2px solid var(--color-oro-claro);
     border-radius: 15px;
     overflow: hidden;

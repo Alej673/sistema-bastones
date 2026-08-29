@@ -7,7 +7,10 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Schema;
 use App\Models\AjusteTaller;
 
-// 1. Nuevas importaciones para personalizar los correos de Breeze
+// Importación necesaria para forzar HTTPS con ngrok
+use Illuminate\Support\Facades\URL;
+
+// Nuevas importaciones para personalizar los correos de Breeze
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Auth\Notifications\ResetPassword;
@@ -27,6 +30,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // ==========================================
+        // FORZAR HTTPS PARA NGROK / PRODUCCIÓN
+        // ==========================================
+        if (config('app.env') !== 'local' || request()->header('x-forwarded-proto') === 'https') {
+            URL::forceScheme('https');
+            URL::forceRootUrl(config('app.url')); // <-- AGREGAR ESTA LÍNEA
+        }
+
         // Verificamos que la tabla exista para evitar fallos en instalaciones limpias
         if (Schema::hasTable('ajuste_tallers')) {
             View::composer('layouts.public', function ($view) {

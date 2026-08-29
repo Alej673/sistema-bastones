@@ -85,3 +85,78 @@
         </div>
     </div>
 </div>
+
+<!-- Modal de Cotización Exacta (Sin modificaciones) -->
+<div class="modal fade" id="modalCotizacionExacta" tabindex="-1" aria-labelledby="modalCotizacionExactaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header" style="background-color: var(--color-lila-oscuro); color: var(--color-texto-sobre-oscuro);">
+                <h5 class="modal-title" id="modalCotizacionExactaLabel" style="font-family: 'Playfair Display', serif;">
+                    <i class="fas fa-check-circle me-2" style="color: var(--color-oro);"></i> Cotizar Modelo Estándar
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4" style="background-color: var(--color-fondo-claro);">
+
+                <div class="d-flex align-items-center mb-3 p-3 mc-resumen-box">
+                    <img id="ce-imagen" src="" alt="Producto" class="mc-resumen-img me-3">
+                    <div>
+                        <h6 id="ce-nombre" class="mb-1" style="color: var(--color-lila-fuerte); font-weight: bold;">Nombre del Modelo</h6>
+                        <span id="ce-tamano" class="badge mc-badge-tamano">50 cm</span>
+                        <span id="ce-nivel" class="badge mc-badge-nivel">Básico</span>
+                    </div>
+                </div>
+
+                <form id="formCotizacionExacta">
+                    <input type="hidden" id="ce-producto-titulo" name="producto_referencia">
+                    <input type="hidden" id="ce-producto-imagen" name="imagen_referencia_url">
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="titi-label">Tu Nombre *</label>
+                            <input type="text" class="titi-input" id="ceClienteNombre" name="nombre" placeholder="Ej. María Pérez" required>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="titi-label">Teléfono de Contacto (WhatsApp) *</label>
+                            <input type="text" class="titi-input" id="ceClienteTelefono" name="telefono" placeholder="Ej. 098xxxxx21" required>
+                        </div>
+                    </div>
+                    
+                    <p class="text-center text-muted mt-2 mb-4" style="font-size: 0.9rem;">
+                        <i class="fa-solid fa-circle-info me-1"></i> Estás solicitando la cotización de este bastón tal cual se muestra en la imagen.
+                    </p>
+
+                    <div class="mt-4 pt-3 mc-actions border-top">
+                        <div class="d-flex flex-column flex-md-row justify-content-center gap-3 titi-action-choices">
+                            
+                            @auth
+                                @if(!auth()->user()->hasVerifiedEmail())
+                                    <a href="{{ route('verification.notice') }}" class="titi-action-btn titi-action-btn-verificar text-decoration-none">
+                                        <i class="fa-solid fa-envelope-circle-check"></i>
+                                        <span class="titi-action-btn-title">Verificar Correo</span>
+                                        <span class="titi-action-btn-sub">Requerido para el sistema web</span>
+                                    </a>
+                                @else
+                                    <button type="button" id="btnGuardarCotizacionExacta" class="titi-action-btn titi-action-btn-interno">
+                                        <i class="fas fa-inbox"></i>
+                                        <span class="titi-action-btn-title">Generar Cotización</span>
+                                        <span class="titi-action-btn-sub">Guardar en el sistema en PDF</span>
+                                    </button>
+                                @endif
+                            @endauth
+
+                            <button type="button" id="btnConsultarWhatsappExacto" class="titi-action-btn titi-action-btn-whatsapp">
+                                <i class="fab fa-whatsapp"></i>
+                                <span class="titi-action-btn-title">Pedir por WhatsApp</span>
+                                <span class="titi-action-btn-sub">Enviar mensaje directo</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
