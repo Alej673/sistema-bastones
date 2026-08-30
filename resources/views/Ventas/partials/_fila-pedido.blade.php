@@ -1,10 +1,21 @@
 <tr>
+    <!-- 1. Columna N° Doc (Vuelve a quedar limpia) -->
     <td class="ps-4 fw-bold text-accent">#{{ str_pad($pedido->id, 4, '0', STR_PAD_LEFT) }}</td>
-    
+
     <td class="text-lavanda">{{ $pedido->created_at->format('d/m/Y H:i') }}</td>
-    
-    <!-- 1. CORRECCIÓN: variable cliente_nombre -->
-    <td class="fw-bold">{{ $pedido->cliente_nombre }}</td>
+
+    <!-- 2. Columna Cliente (Nombre + Badge debajo si existe vinculación) -->
+    <td class="fw-bold">
+        <div>{{ $pedido->cliente_nombre }}</div>
+        
+        @if($pedido->quote_request_id)
+            <div class="mt-1">
+                <span class="badge bg-secondary opacity-75" style="font-size: 0.7rem; font-weight: normal; letter-spacing: 0.5px;" title="Vinculado a Solicitud Web BTO">
+                    RQ-{{ str_pad($pedido->quote_request_id, 4, '0', STR_PAD_LEFT) }}
+                </span>
+            </div>
+        @endif
+    </td>
     
     <!-- 2. RESUMEN DE PEDIDO (Lógica de Detección Dual) -->
     <td class="text-lavanda">

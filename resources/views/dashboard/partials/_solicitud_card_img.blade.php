@@ -65,6 +65,11 @@
         <span class="badge top-badge {{ $catColor }} shadow-sm" style="right: 12px; left: auto; top: 40px;">
             <i class="{{ $catIcon }} me-1"></i> {{ $catNombre }}
         </span>
+
+        {{-- Burbuja flotante: PDF de la Cotización Original --}}
+        <a href="{{ route('cotizacion.pdf', $solicitud->id) }}" target="_blank" class="action-btn-float pdf-btn" title="Ver Cotización Original">
+            <i class="fas fa-file-pdf"></i>
+        </a>
     @else
         {{-- Categoría (arriba a la derecha) --}}
         <span class="badge top-badge {{ $catColor }} shadow-sm" style="right: 12px; left: auto; top: 12px;">

@@ -120,13 +120,19 @@
                                     <i class="fab fa-whatsapp me-1"></i> Escribir
                                 </a>
 
-                                <!-- 2. Botón de PDF Reducido -->
-                                <a href="{{ route('cotizacion.pdf', $solicitud->id) }}" 
-                                target="_blank" 
-                                class="btn btn-sm btn-outline-secondary flex-grow-1 d-flex align-items-center justify-content-center" 
-                                style="border-radius: 8px;">
-                                    <i class="fas fa-file-pdf me-1"></i> PDF
-                                </a>
+                                <!-- 2. NUEVO: Botón de Nota de Venta Oficial -->
+                                @php
+                                    $pedidoVinculado = \App\Models\Pedido::where('quote_request_id', $solicitud->id)->first();
+                                @endphp
+
+                                @if($pedidoVinculado)
+                                    <a href="{{ route('pedidos.pdf_nota', $pedidoVinculado->id) }}" 
+                                    target="_blank" 
+                                    class="btn btn-sm btn-outline-secondary flex-grow-1 d-flex align-items-center justify-content-center fw-bold" 
+                                    style="border-radius: 8px;" title="Descargar Nota de Venta Oficial">
+                                        <i class="fas fa-file-pdf me-1"></i> Nota de Venta
+                                    </a>
+                                @endif
                             </div>
                         </div>
                     </div>
