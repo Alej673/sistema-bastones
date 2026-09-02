@@ -20,6 +20,7 @@ return new class extends Migration
             $table->decimal('costo_unitario', 8, 4); 
             $table->decimal('stock_actual', 8, 2)->default(0); 
             $table->decimal('stock_minimo', 8, 2)->default(10); 
+            $table->softDeletes(); 
             $table->timestamps();
         });
     }

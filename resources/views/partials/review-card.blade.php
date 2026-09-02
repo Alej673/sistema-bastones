@@ -8,7 +8,7 @@
             </div>
 
             <p class="review-texto">"{{ $comentario->contenido }}"</p>
-            <h6 class="fw-bold review-autor">— {{ $comentario->user->name }}</h6>
+            <h6 class="fw-bold review-autor">{{ $comentario->user?->name ?? 'Usuario Anónimo' }}</h6>
         </div>
 
         <div class="card-footer bg-transparent border-0 d-flex justify-content-around pb-3">
@@ -24,7 +24,7 @@
             @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'superadmin']))
                 <button type="button" class="btn btn-sm btn-link text-decoration-none btn-responder"
                         data-id="{{ $comentario->id }}"
-                        data-nombre="{{ $comentario->user->name }}">
+                        data-nombre="{{ $comentario->user?->name ?? 'Anónimo' }}">
                     <i class="fa-solid fa-reply me-1"></i> Responder
                 </button>
             @endif

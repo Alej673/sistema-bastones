@@ -144,10 +144,15 @@
                                     <span class="badge glass-badge-danger">➖ Salida</span>
                                 @endif
                             </td>
-                            <td class="fw-bold text-dark">{{ $mov->insumo->nombre ?? 'Insumo Eliminado' }}</td>
+                            
+                            {{-- CORRECCIÓN 1: Agregar ? antes de ->nombre --}}
+                            <td class="fw-bold text-dark">{{ $mov->insumo?->nombre ?? 'Insumo Eliminado' }}</td>
+                            
                             <td class="fw-bold fs-6 text-dark">
                                 {{ floatval($mov->cantidad) }}
-                                <span class="text-muted small">{{ $mov->insumo->unidad_medida ?? '' }}</span>
+                                
+                                {{-- CORRECCIÓN 2: Agregar ? antes de ->unidad_medida --}}
+                                <span class="text-muted small">{{ $mov->insumo?->unidad_medida ?? '' }}</span>
                             </td>
                             <td class="text-muted small pe-4">{{ $mov->detalle }}</td>
                         </tr>

@@ -62,14 +62,6 @@ class VentasController extends Controller
      *  1. Por insumo_id, si ya venía enlazado desde la cotización.
      *  2. Por coincidencia flexible del nombre completo cotizado.
      *  3. Por categoría detectada + palabras clave del "color/variante".
-     *
-     * NOTA IMPORTANTE: el frontend guarda los nombres con un PREFIJO fijo
-     * seguido de dos puntos, ej: "Cortina de Fiesta: Rojo", "Cortina de
-     * Lana: Azul", "Cinta Satín: Dorado". El insumo real en el Kardex solo
-     * se llama por la variante ("Rojo", "Azul", "Dorado"). Por eso, en vez
-     * de mantener una lista de "palabras basura" que hay que actualizar
-     * cada vez que se inventa un prefijo nuevo, cortamos todo lo que va
-     * ANTES de los ":" y trabajamos solo con lo que sobra.
      */
     private function resolverInsumo($item): ?Insumo
     {

@@ -12,11 +12,15 @@ class InsumoController extends Controller
     // Función para mostrar la página de index
     public function index()
     {
+        // 1. Esto traerá todos los insumos activos (automáticamente oculta los SoftDeletes)
         $insumos = \App\Models\Insumo::all(); 
 
-        $movimientos = \App\Models\Movimiento::with(['insumo' => function($query) {
-            $query->withTrashed();
-        }])->latest()->take(15)->get();
+        // 2. CORRECCIÓN: Filtramos para que solo traiga movimientos de insumos que NO están eliminados
+        $movimientos = \App\Models\Movimiento::with('insumo')
+            ->has('insumo') 
+            ->latest()
+            ->take(15)
+            ->get();
         
         return view('insumos.index', compact('insumos', 'movimientos'));
     }
