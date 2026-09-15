@@ -17,7 +17,7 @@ El taller operaba con estimaciones empíricas de insumos (lana, elásticos, base
 
 ## 🛠️ Stack Tecnológico
 
-- **Backend:** PHP 8.x / Laravel 11 (MVC, Eloquent ORM)
+- **Backend:** PHP 8.3 / Laravel 13 (MVC, Eloquent ORM)
 - **Base de Datos:** MySQL (InnoDB, transacciones ACID, Soft Deletes)
 - **Frontend:** Blade, JavaScript ES6 modular (Vite), Bootstrap 5
 - **Componentes UI:** Select2 (AJAX), SweetAlert2, Fetch API
