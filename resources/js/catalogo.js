@@ -455,16 +455,26 @@ window.enviarWhatsAppDirecto = function(id, titulo, imagenUrl) {
 // ============================================================
 // FUNCIONES DEL NUEVO MODAL: COTIZACIÓN EXACTA
 // ============================================================
-window.abrirCotizacionExacta = function (id, titulo, nivel, tamano, imagenUrl) {
+window.abrirCotizacionExacta = function (id, titulo, nivel, tamano, imagenUrl, categoria) {
     // 1. Llenar los datos visuales del resumen
     document.getElementById('ce-imagen').src = imagenUrl;
     document.getElementById('ce-nombre').textContent = titulo;
     document.getElementById('ce-nivel').textContent = nivel;
-    document.getElementById('ce-tamano').textContent = tamano !== 'na' ? tamano + ' cm' : '';
+    document.getElementById('ce-tamano').textContent = (tamano && tamano !== 'na') ? tamano + ' cm' : 'N/A';
 
     // 2. Llenar los campos ocultos para el formulario
     document.getElementById('ce-producto-titulo').value = titulo;
     document.getElementById('ce-producto-imagen').value = imagenUrl;
+
+    // Creamos/actualizamos un campo oculto para la categoría real (fix: ya no se manda "baston" quemado)
+    let catInput = document.getElementById('ce-producto-categoria');
+    if (!catInput) {
+        catInput = document.createElement('input');
+        catInput.type = 'hidden';
+        catInput.id = 'ce-producto-categoria';
+        document.body.appendChild(catInput);
+    }
+    catInput.value = categoria || 'na';
 
     // 3. Abrir el modal usando Bootstrap 5
     var modalExacto = new bootstrap.Modal(document.getElementById('modalCotizacionExacta'));
@@ -474,13 +484,13 @@ window.abrirCotizacionExacta = function (id, titulo, nivel, tamano, imagenUrl) {
 // Botones internos del modal: sí pueden enlazarse normalmente en DOMContentLoaded
 document.addEventListener('DOMContentLoaded', function () {
 
-    // Acción: Enviar a WhatsApp
+    // --- ACCIÓN: ENVIAR A WHATSAPP (CONSULTA RÁPIDA) ---
     document.getElementById('btnConsultarWhatsapp')?.addEventListener('click', function () {
         const nombreCliente = document.getElementById('clienteNombre').value.trim();
         const mensaje = document.getElementById('clienteMensaje').value.trim();
-        
-        // Capturamos el producto y la URL de la imagen de los inputs ocultos que creamos antes
-        const producto = document.getElementById('mc-producto-titulo').value || document.getElementById('formConsultaRapida').dataset.productoActual;
+
+        const producto = document.getElementById('mc-producto-titulo').value
+            || document.getElementById('formConsultaRapida').dataset.productoActual;
         const urlImagen = document.getElementById('mc-producto-imagen').value;
 
         if (!nombreCliente || !mensaje) {
@@ -488,13 +498,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 icon: 'warning',
                 title: 'Campos incompletos',
                 text: 'Por favor ingresa tu nombre y lo que deseas consultar para escribirte por WhatsApp.',
-                confirmButtonColor: '#25D366' // Color de WhatsApp para este botón
+                confirmButtonColor: '#25D366'
             });
             return;
         }
 
-        // Construimos un mensaje formateado con saltos de línea (%0A) y negritas de WhatsApp (*)
-        const textoWhatsapp = 
+        const textoWhatsapp =
             `👋 Hola Taller Arte Titi_Val, soy *${nombreCliente}*.%0A%0A` +
             `Me interesa personalizar este modelo de su catálogo:%0A` +
             `*${producto}*%0A` +
@@ -502,117 +511,100 @@ document.addEventListener('DOMContentLoaded', function () {
             `📝 *Mi consulta es:*%0A` +
             `${mensaje}`;
 
-        // Abrimos WhatsApp en una nueva pestaña
         window.open(`https://wa.me/${TELEFONO_TALLER}?text=${textoWhatsapp}`, '_blank');
-        
-        // Ocultamos el modal para limpiar la pantalla
+
         if (typeof modalConsulta !== 'undefined' && modalConsulta) {
             modalConsulta.hide();
         }
     });
 
-    // --- ACCIÓN: ENVIAR AL SISTEMA DESDE EL MODAL DEL CATÁLOGO ---
-        document.getElementById('btnGuardarSistema')?.addEventListener('click', function () {
-            // 1. Capturamos los datos básicos
-            const nombreCliente = document.getElementById('clienteNombre').value.trim();
-            const telefonoCliente = document.getElementById('clienteTelefono').value.trim();
-            const mensaje = document.getElementById('clienteMensaje').value.trim();
-            const producto = document.getElementById('mc-producto-titulo').value;
-            const urlImagenCatalogo = document.getElementById('mc-producto-imagen').value;
-            
-            // NUEVO 1: Capturamos la categoría desde el input oculto que creamos
-            const categoriaProducto = document.getElementById('mc-producto-categoria')?.value || 'na';
+    // --- ACCIÓN: ENVIAR AL SISTEMA (CONSULTA RÁPIDA / PERSONALIZADA) ---
+    document.getElementById('btnGuardarSistema')?.addEventListener('click', function () {
+        const nombreCliente = document.getElementById('clienteNombre').value.trim();
+        const telefonoCliente = document.getElementById('clienteTelefono').value.trim();
+        const mensaje = document.getElementById('clienteMensaje').value.trim();
+        const producto = document.getElementById('mc-producto-titulo').value;
+        const urlImagenCatalogo = document.getElementById('mc-producto-imagen').value;
 
-            // 2. Validación rápida
-            if (!nombreCliente || !telefonoCliente || !mensaje) {
-                mostrarToast('warning', 'Campos incompletos', 'Por favor llena tu nombre, teléfono y consulta.');
-                return;
+        const categoriaProducto = document.getElementById('mc-producto-categoria')?.value || 'na';
+
+        if (!nombreCliente || !telefonoCliente || !mensaje) {
+            mostrarToast('warning', 'Campos incompletos', 'Por favor llena tu nombre, teléfono y consulta.');
+            return;
+        }
+
+        const btn = this;
+        const textoOriginal = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Enviando...';
+        btn.disabled = true;
+
+        try {
+            const badgeTamano = document.getElementById('mc-tamano');
+            let medidaBadge = badgeTamano ? badgeTamano.innerText.trim() : 'na';
+            if (medidaBadge === '' || medidaBadge === 'N/A') medidaBadge = 'na';
+
+            const esBaston = (categoriaProducto.toLowerCase() === 'baston' || categoriaProducto.toLowerCase() === 'bastones');
+
+            const formData = new FormData();
+            formData.append('nombre', nombreCliente);
+            formData.append('telefono', telefonoCliente);
+            formData.append('cantidad', 1);
+            formData.append('medida_cm', medidaBadge);
+            formData.append('acabado', esBaston ? 'Plata' : 'na');
+            formData.append('colores', `Basado en modelo: ${producto}`);
+            formData.append('descripcion_diseno_especial', mensaje);
+            formData.append('categoria', categoriaProducto);
+
+            if (urlImagenCatalogo) {
+                formData.append('imagen_catalogo_url', urlImagenCatalogo);
             }
 
-            // 3. Cambiamos el botón a estado "Cargando"
-            const btn = this;
-            const textoOriginal = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Enviando...';
-            btn.disabled = true;
-
-            // Usamos un try-catch para que, si algo falla internamente, el botón se destrabe
-            try {
-                // Leemos los badges visuales (con protección por si acaso no existen)
-                const badgeTamano = document.getElementById('mc-tamano');
-                const badgeNivel = document.getElementById('mc-nivel');
-                
-                const medidaBadge = badgeTamano ? badgeTamano.innerText.trim() : 'na';
-                const nivelBadge = badgeNivel ? badgeNivel.innerText.trim() : 'na';
-                const esBaston = (categoriaProducto.toLowerCase() === 'baston' || categoriaProducto.toLowerCase() === 'bastones');
-
-                // 4. Armamos el paquete de datos para Laravel
-                const formData = new FormData();
-                formData.append('nombre', nombreCliente);
-                formData.append('telefono', telefonoCliente);
-                formData.append('cantidad', 1);
-                formData.append('medida_cm', medidaBadge);
-                formData.append('acabado', esBaston ? 'Plata' : 'na');
-                formData.append('colores', `Basado en modelo: ${producto}`);
-                formData.append('descripcion_diseno_especial', mensaje);
-                
-                // NUEVO 2: Adjuntamos la categoría al paquete que viaja a Laravel
-                formData.append('categoria', categoriaProducto);
-
-                // Si hay URL de imagen, la adjuntamos
-                if (urlImagenCatalogo) {
-                    formData.append('imagen_catalogo_url', urlImagenCatalogo);
+            fetch('/cotizar', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
-
-                // 5. Enviamos a la ruta /cotizar
-                fetch('/cotizar', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRF-TOKEN': CSRF_TOKEN,
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest' // Fundamental para que Laravel devuelva JSON
-                    }
-                })
-                .then(async response => {
-                    const data = await response.json();
-                    if (!response.ok) throw data;
-                    return data;
-                })
-                .then(data => {
-                    // Éxito: Ocultamos el modal y mostramos la alerta
-                    if (typeof modalConsulta !== 'undefined' && modalConsulta) {
-                        modalConsulta.hide();
-                    }
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Consulta Registrada!',
-                        text: 'Tu solicitud de personalización ha sido enviada al taller.',
-                        confirmButtonColor: 'var(--color-lila-fuerte)',
-                        background: 'var(--color-fondo-claro)',
-                        color: 'var(--color-texto-principal)'
-                    });
-                })
-                .catch(error => {
-                    // Error de servidor o validación
-                    console.error('Error al guardar consulta en el servidor:', error);
-                    mostrarToast('error', 'Ups...', 'No se pudo registrar la consulta. Revisa los datos.');
-                })
-                .finally(() => {
-                    // 6. PASE LO QUE PASE, devolvemos el botón a la normalidad
-                    btn.innerHTML = textoOriginal;
-                    btn.disabled = false;
+            })
+            .then(async response => {
+                const data = await response.json();
+                if (!response.ok) throw data;
+                return data;
+            })
+            .then(data => {
+                if (typeof modalConsulta !== 'undefined' && modalConsulta) {
+                    modalConsulta.hide();
+                }
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Consulta Registrada!',
+                    text: 'Tu solicitud de personalización ha sido enviada al taller.',
+                    confirmButtonColor: 'var(--color-lila-fuerte)',
+                    background: 'var(--color-fondo-claro)',
+                    color: 'var(--color-texto-principal)'
                 });
-
-            } catch (err) {
-                // Si hay un error de sintaxis en el JS, lo atrapamos aquí para que no se congele
-                console.error('Error interno de JavaScript:', err);
-                mostrarToast('error', 'Error', 'Ocurrió un problema procesando el formulario.');
+            })
+            .catch(error => {
+                console.error('Error al guardar consulta en el servidor:', error);
+                if (error.errors) console.table(error.errors);
+                mostrarToast('error', 'Ups...', 'No se pudo registrar la consulta. Revisa los datos.');
+            })
+            .finally(() => {
                 btn.innerHTML = textoOriginal;
                 btn.disabled = false;
-            }
-        });
+            });
 
-        // --- ACCIÓN: ENVIAR A WHATSAPP (COTIZACIÓN EXACTA) ---
+        } catch (err) {
+            console.error('Error interno de JavaScript:', err);
+            mostrarToast('error', 'Error', 'Ocurrió un problema procesando el formulario.');
+            btn.innerHTML = textoOriginal;
+            btn.disabled = false;
+        }
+    });
+
+    // --- ACCIÓN: ENVIAR A WHATSAPP (COTIZACIÓN EXACTA) ---
     document.getElementById('btnConsultarWhatsappExacto')?.addEventListener('click', function () {
         const nombreCliente = document.getElementById('ceClienteNombre').value.trim();
         const producto = document.getElementById('ce-producto-titulo').value;
@@ -628,7 +620,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        const textoWhatsapp = 
+        const textoWhatsapp =
             `👋 Hola Taller Arte Titi_Val, soy *${nombreCliente}*.%0A%0A` +
             `Me interesa adquirir este modelo exacto de su catálogo:%0A` +
             `*${producto}*%0A` +
@@ -636,8 +628,7 @@ document.addEventListener('DOMContentLoaded', function () {
             `¿Me podrían ayudar con el precio y tiempo de entrega?`;
 
         window.open(`https://wa.me/${TELEFONO_TALLER}?text=${textoWhatsapp}`, '_blank');
-        
-        // Cerramos el modal
+
         const modalEl = document.getElementById('modalCotizacionExacta');
         const modalInst = bootstrap.Modal.getInstance(modalEl);
         if (modalInst) modalInst.hide();
@@ -649,7 +640,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const telefonoCliente = document.getElementById('ceClienteTelefono').value.trim();
         const producto = document.getElementById('ce-producto-titulo').value;
         const urlImagenCatalogo = document.getElementById('ce-producto-imagen').value;
-        
+
+        // Recuperamos la categoría real que dejó abrirCotizacionExacta() (fix: ya no va "baston" quemado)
+        const categoriaProducto = document.getElementById('ce-producto-categoria')?.value || 'na';
+
         if (!nombreCliente || !telefonoCliente) {
             mostrarToast('warning', 'Campos incompletos', 'Por favor llena tu nombre y teléfono.');
             return;
@@ -662,17 +656,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             const badgeTamano = document.getElementById('ce-tamano');
-            const medidaBadge = badgeTamano ? badgeTamano.innerText.trim().replace(' cm', '') : 'na';
-            
+            let medidaBadge = badgeTamano ? badgeTamano.innerText.trim().replace(' cm', '') : 'na';
+            if (medidaBadge === 'N/A' || medidaBadge === '') medidaBadge = 'na';
+
+            const esBaston = (categoriaProducto.toLowerCase() === 'baston' || categoriaProducto.toLowerCase() === 'bastones');
+
             const formData = new FormData();
             formData.append('nombre', nombreCliente);
             formData.append('telefono', telefonoCliente);
             formData.append('cantidad', 1);
             formData.append('medida_cm', medidaBadge);
-            formData.append('acabado', 'Plata'); // Acabado estándar
+            formData.append('acabado', esBaston ? 'Plata' : 'na');
             formData.append('colores', `Diseño estándar del modelo: ${producto}`);
             formData.append('descripcion_diseno_especial', 'Cotización de modelo exacto de catálogo sin modificaciones extras.');
-            formData.append('categoria', 'baston');
+            formData.append('categoria', categoriaProducto);
             if (urlImagenCatalogo) formData.append('imagen_catalogo_url', urlImagenCatalogo);
 
             fetch('/cotizar', {
@@ -705,6 +702,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(error => {
                 console.error('Error al guardar:', error);
+                if (error.errors) console.table(error.errors);
                 mostrarToast('error', 'Ups...', 'No se pudo generar la cotización.');
             })
             .finally(() => {
@@ -720,7 +718,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
 });
-
 
 // ============================================================
 // 6. FORMULARIO "DISEÑA TU BASTÓN DESDE CERO"

@@ -20,12 +20,12 @@ class DatabaseSeeder extends Seeder
             'role' => 'super_admin', // <-- Cambiado a super_admin
         ]);
 
-        // 2. USUARIO REAL DE PRODUCCIÓN (Administrador del Taller)
+        // 2. USUARIO DE ADMINISTRACIÓN (Taller)
         User::create([
             'name' => 'Admin Taller',
-            'email' => 'cristinatenelema2018@gmail.com',
-            'password' => bcrypt('Daron-102'),
-            'role' => 'admin', // <-- Mantiene rol de administración del taller
+            'email' => 'taller@demo.com',
+            'password' => bcrypt('admin123'),
+            'role' => 'admin',
         ]);
 
         // 3. LLAMAR A LOS DEMÁS SEEDERS

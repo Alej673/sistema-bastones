@@ -224,7 +224,7 @@ class CotizadorController extends Controller
                 $pedido->cliente_nombre   = $request->input('nombre_cliente');
                 $pedido->correo_cliente   = $request->input('correo_cliente');
                 
-                // Llenamos con "ceros" la estructura de bastones para no romper tu base de datos
+                // Llenamos con "ceros" la estructura de bastones para no romper la base de datos
                 $pedido->cantidad_total_bastones = 1; 
                 $pedido->costo_materiales = 0;
                 $pedido->costo_extras     = 0;
