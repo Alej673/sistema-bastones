@@ -120,7 +120,7 @@ Al ejecutar las migraciones con `--seed`, el sistema genera automáticamente dos
 - **Repositorio:** [github.com/Alej673/sistema-bastones](https://github.com/Alej673/sistema-bastones)
 - **Video Demostración Técnica:** [Ver en YouTube (Arquitectura y Módulos)](https://www.youtube.com/watch?v=OHmGes--sms)
 - **Manual / Guía de Usuario:** [Enlace Drive](https://drive.google.com/file/d/1ENVcdZkvP_v1N2SrP-pfbQPsirlW1aK3/view?usp=sharing)
-))_
+- **Caso de estudio (portafolio):** [Análisis técnico y arquitectura]([https://alej673.github.io/proyecto-LIA.html](https://alej673.github.io/proyecto-bastones.html))
 
 ---
 
