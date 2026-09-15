@@ -101,6 +101,20 @@ php artisan serve
 ```
 ---
 
+### 🔑 Credenciales de Acceso (Demo Local)
+
+Al ejecutar las migraciones con `--seed`, el sistema genera automáticamente dos cuentas de prueba para evaluar los distintos perímetros de seguridad:
+
+**1. Super Administrador (Acceso total y Configuración Global)**
+- **Correo:** `admin@demo.com`
+- **Contraseña:** `admin123`
+
+**2. Administrador de Taller (Kardex, Cotizador y Despachos)**
+- **Correo:** `taller@demo.com`
+- **Contraseña:** `admin123`
+
+*(Para registrar una cuenta con rol de "Cliente", puedes utilizar el flujo de registro normal en la pantalla de inicio).*
+
 ## 🔗 Enlaces del Proyecto
 
 - **Repositorio:** [github.com/Alej673/sistema-bastones](https://github.com/Alej673/sistema-bastones)
