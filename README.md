@@ -17,7 +17,7 @@ El taller operaba con estimaciones empíricas de insumos (lana, elásticos, base
 
 ## 🛠️ Stack Tecnológico
 
-- **Backend:** PHP 8.x / Laravel 11 (MVC, Eloquent ORM)
+- **Backend:** PHP 8.3 / Laravel 13 (MVC, Eloquent ORM)
 - **Base de Datos:** MySQL (InnoDB, transacciones ACID, Soft Deletes)
 - **Frontend:** Blade, JavaScript ES6 modular (Vite), Bootstrap 5
 - **Componentes UI:** Select2 (AJAX), SweetAlert2, Fetch API
@@ -120,7 +120,7 @@ Al ejecutar las migraciones con `--seed`, el sistema genera automáticamente dos
 - **Repositorio:** [github.com/Alej673/sistema-bastones](https://github.com/Alej673/sistema-bastones)
 - **Video Demostración Técnica:** [Ver en YouTube (Arquitectura y Módulos)](https://www.youtube.com/watch?v=OHmGes--sms)
 - **Manual / Guía de Usuario:** [Enlace Drive](https://drive.google.com/file/d/1ENVcdZkvP_v1N2SrP-pfbQPsirlW1aK3/view?usp=sharing)
-))_
+- **Caso de estudio (portafolio):** [Análisis técnico y arquitectura](https://alej673.github.io/proyecto-bastones.html)
 
 ---
 
