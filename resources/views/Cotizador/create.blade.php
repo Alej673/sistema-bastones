@@ -428,6 +428,13 @@
                                             <label class="form-label fw-bold small text-muted">Detalles o Especificaciones</label>
                                             <textarea class="form-control glass-input" id="inputDetallesRapido" rows="2" placeholder="Ej. Muñeca de 30cm con vestido blanco..."></textarea>
                                         </div>
+                                        {{-- NUEVO CAMPO: Imagen de Referencia --}}
+                                        <div class="col-12 mt-3 p-3 rounded-3" style="background-color: rgba(var(--accent-purple-rgb), 0.05); border: 1px dashed rgba(var(--accent-purple-rgb), 0.3);">
+                                            <label class="form-label fw-bold small text-muted">
+                                                <i class="fa-solid fa-image" style="color: var(--accent-purple);"></i> Imagen de Referencia (Opcional)
+                                            </label>
+                                            <input type="file" class="form-control glass-input" id="inputImagenReferenciaRapido" accept="image/jpeg,image/png,image/jpg,image/webp">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -544,6 +551,16 @@
                     <div class="mb-4">
                         <label class="form-label text-muted small fw-bold mb-1">Correo Electrónico (Opcional)</label>
                         <input type="email" class="form-control glass-input" id="inputCorreoCliente" placeholder="ejemplo@correo.com">
+                    </div>
+                    {{-- NUEVO CAMPO: Imagen de Referencia --}}
+                    <div class="mb-4 p-3 rounded-3" style="background-color: rgba(var(--accent-purple-rgb), 0.05); border: 1px dashed rgba(var(--accent-purple-rgb), 0.3);">
+                        <label class="form-label text-muted small fw-bold mb-1">
+                            <i class="fa-solid fa-image" style="color: var(--accent-purple);"></i> Imagen de Referencia (Opcional)
+                        </label>
+                        <input type="file" class="form-control glass-input" id="inputImagenReferencia" accept="image/jpeg,image/png,image/jpg,image/webp">
+                        <div class="form-text mt-1 text-muted" style="font-size: 0.75rem;">
+                            Sube un boceto o referencia para adjuntar a la Nota de Venta (Máx: 2MB).
+                        </div>
                     </div>
 
                     <button type="button" class="btn glass-btn-primary w-100 fw-bold rounded-3 py-2 shadow-sm" id="btnConfirmarPedidoModal">

@@ -14,9 +14,10 @@ return new class extends Migration
         Schema::create('movimientos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('insumo_id')->constrained('insumos')->onDelete('cascade');
-            $table->enum('tipo_movimiento', ['entrada', 'salida', 'ingreso_nuevo']);
-            $table->decimal('cantidad', 8, 2); // Cantidad procesada
-            $table->string('detalle')->nullable(); // Para poner "Ajuste manual" o "Compra"
+            // Agregamos 'eliminado' al array de opciones permitidas
+            $table->enum('tipo_movimiento', ['entrada', 'salida', 'ingreso_nuevo', 'eliminado']);
+            $table->decimal('cantidad', 8, 2); 
+            $table->string('detalle')->nullable(); 
             $table->timestamps();
         });
     }

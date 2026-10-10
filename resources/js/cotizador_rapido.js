@@ -92,8 +92,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const quoteId = $('#selectSolicitudWebRapida').val();
 
         // Validación básica
-        if (!cliente || !concepto || !precio || precio <= 0) {
-            Swal.fire('Atención', 'Por favor llena los campos obligatorios (Nombre, Concepto y Precio).', 'warning');
+        const precioNum = parseFloat(precio);
+        if (!cliente || !concepto || isNaN(precioNum) || precioNum <= 0) {
+            Swal.fire('Atención', 'Por favor llena los campos obligatorios con valores válidos.', 'warning');
             return;
         }
 
@@ -102,22 +103,48 @@ document.addEventListener('DOMContentLoaded', function () {
         const textoOriginal = btn.html();
         btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-2"></i> Guardando...');
 
-        // Enviamos por AJAX a la MISMA ruta de siempre, pero con la bandera "modo_rapido"
+        // ==========================================
+        // NUEVA FORMA: Usando FormData nativo
+        // ==========================================
+        let formData = new FormData();
+        formData.append('modo_rapido', true);
+        if (quoteId) formData.append('quote_request_id', quoteId);
+        formData.append('nombre_cliente', cliente);
+        formData.append('correo_cliente', correo);
+        formData.append('concepto_rapido', concepto);
+        formData.append('detalles_rapido', detalles);
+        formData.append('costo_total', precio);
+        
+        // Capturamos el archivo de la imagen (NUEVO)
+        const inputFileRapido = document.getElementById('inputImagenReferenciaRapido');
+        if (inputFileRapido && inputFileRapido.files[0]) {
+            const file = inputFileRapido.files[0];
+            const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+            const maxMb = 5;
+
+            if (!tiposPermitidos.includes(file.type)) {
+                Swal.fire('Formato inválido', 'Solo se permiten imágenes JPG, PNG o WEBP.', 'warning');
+                return;
+            }
+
+            if (file.size > maxMb * 1024 * 1024) {
+                Swal.fire('Archivo muy pesado', `La imagen no puede pesar más de ${maxMb}MB.`, 'warning');
+                return;
+            }
+
+            formData.append('imagen_referencia', file);
+        }
+
+        // Enviamos por AJAX a la MISMA ruta de siempre
         $.ajax({
             url: '/cotizaciones/guardar', 
             type: 'POST',
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
-            data: {
-                modo_rapido: true, // ESTA ES LA BANDERA CLAVE PARA EL BACKEND
-                quote_request_id: quoteId,
-                nombre_cliente: cliente,
-                correo_cliente: correo,
-                concepto_rapido: concepto,
-                detalles_rapido: detalles,
-                costo_total: precio
-            },
+            data: formData, // Mandamos el FormData
+            processData: false, // CLAVE
+            contentType: false, // CLAVE
             success: function (response) {
                 // Ocultamos el formulario y mostramos el panel de éxito
                 $('#formCotizadorRapido').slideUp();

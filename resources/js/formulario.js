@@ -317,3 +317,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
     bindSweetAlertEliminar();
 });
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Buscamos el formulario de subida
+    const formCatalogo = document.querySelector('form[enctype="multipart/form-data"]');
+    
+    if (formCatalogo) {
+        const btnSubmit = formCatalogo.querySelector('button[type="submit"]');
+
+        formCatalogo.addEventListener('submit', function () {
+            // El navegador hace su validación nativa (required, formatos, etc)
+            if (formCatalogo.checkValidity()) {
+                // Bloqueamos el botón físicamente para evitar el doble clic
+                btnSubmit.disabled = true;
+                
+                // Cambiamos el texto para dar retroalimentación visual
+                btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Subiendo...';
+                btnSubmit.classList.add('btn-limite-alcanzado');
+                
+                // No usamos e.preventDefault() para que Laravel reciba la petición POST
+            }
+        });
+    }
+});

@@ -40,30 +40,22 @@ class InsumoController extends Controller
     public function store(Request $request)
     {
         // 1. Estandarizar el texto ANTES de validar (Blindaje de datos)
-        // Esto convierte " lana azul ", "LANA AZUL" o "lana azul" estrictamente en "Lana azul"
         if ($request->has('nombre')) {
             $request->merge([
                 'nombre' => ucfirst(strtolower(trim($request->nombre)))
             ]);
         }
 
-        // 2. Validamos usando la regla unique (Ahora sí incluida en el campo nombre)
-        $request->validate([
-            'nombre' => 'required|string|max:255|unique:insumos,nombre',
-            'categoria' => 'required|string',
-            'cantidad_comprada' => 'required|numeric|min:0',
-            'precio_unitario' => 'required|numeric|min:0', 
-            'alerta_minima' => 'required|numeric|min:0',
-        ],[
-            // Mensajes personalizados
-            'nombre.unique' => 'Este insumo ya se encuentra registrado en el Kardex.'
-        ]);
+        // 2. Buscar si existe el insumo pero está eliminado lógicamente
+        $insumoEliminado = \App\Models\Insumo::withTrashed()
+            ->where('nombre', $request->nombre)
+            ->whereNotNull('deleted_at')
+            ->first();
 
-        // Preparar las variables que necesita la base de datos
+        // 3. Preparar las variables que necesita la base de datos (Motor de Traducción)
         $multiplicador = 1;
         $unidad = 'Unidades';
 
-        // 2. El Motor de Traducción 
         switch ($request->categoria) {
             case 'lana':
                 $multiplicador = 90; 
@@ -103,18 +95,56 @@ class InsumoController extends Controller
                 break;
         }
 
-        // 3. Ejecutar las matemáticas exactas
+        // Ejecutar las matemáticas exactas
         $stock_actual_calculado = $request->cantidad_comprada * $multiplicador;
         $stock_minimo_calculado = $request->alerta_minima * $multiplicador;
         
-        // Ingreso de cantidad por unidad/madeja
         if ($multiplicador > 0) {
             $costo_unitario_calculado = $request->precio_unitario / $multiplicador;
         } else {
             $costo_unitario_calculado = 0;
         }
 
-        // 4. Atrapamos el resultado en la variable $insumo
+        // 4. Si el insumo estaba eliminado, lo restauramos
+        if ($insumoEliminado) {
+            $insumoEliminado->restore(); // Quita el deleted_at
+            
+            // Actualizamos con los nuevos valores calculados
+            $insumoEliminado->update([
+                'categoria' => $request->categoria,
+                'unidad_medida' => $unidad,
+                'costo_unitario' => $costo_unitario_calculado,
+                'stock_actual' => $stock_actual_calculado,
+                'stock_minimo' => $stock_minimo_calculado,
+            ]);
+
+            \App\Models\Movimiento::create([
+                'insumo_id' => $insumoEliminado->id,
+                'tipo_movimiento' => 'ingreso_nuevo',
+                'cantidad' => $insumoEliminado->stock_actual,
+                'detalle' => 'Restauración de insumo previamente eliminado'
+            ]);
+
+            return redirect()->route('insumos.index')
+                ->with('success', 'El insumo que estaba eliminado ha sido restaurado exitosamente con el nuevo stock.');
+        }
+
+        // =========================================================
+        // 5. SI NO ESTABA ELIMINADO, FLUJO NORMAL DE CREACIÓN
+        // =========================================================
+        
+        // Validamos usando la regla unique (ya que sabemos que es nuevo)
+        $request->validate([
+            'nombre' => 'required|string|max:255|unique:insumos,nombre',
+            'categoria' => 'required|string',
+            'cantidad_comprada' => 'required|numeric|min:0',
+            'precio_unitario' => 'required|numeric|min:0', 
+            'alerta_minima' => 'required|numeric|min:0',
+        ],[
+            'nombre.unique' => 'Este insumo ya se encuentra registrado en el Kardex y está activo.'
+        ]);
+
+        // Atrapamos el resultado en la variable $insumo
         $insumo = \App\Models\Insumo::create([
             'nombre' => $request->nombre,
             'categoria' => $request->categoria,
@@ -124,15 +154,16 @@ class InsumoController extends Controller
             'stock_minimo' => $stock_minimo_calculado,
         ]);
 
-        // Registrar en bitácora la creación (Ahora $insumo sí existe y tiene ID)
+        // Registrar en bitácora la creación
         \App\Models\Movimiento::create([
             'insumo_id' => $insumo->id,
             'tipo_movimiento' => 'ingreso_nuevo',
             'cantidad' => $insumo->stock_actual,
             'detalle' => 'Creación de nuevo insumo en sistema'
         ]);
+
         return redirect()->route('insumos.index')
-        ->with('success', 'El insumo fue registrado exitosamente en el Kardex.');
+            ->with('success', 'El insumo fue registrado exitosamente en el Kardex.');
     }
     /**
      * Display the specified resource.

@@ -234,6 +234,14 @@ class CotizadorController extends Controller
                 $pedido->estado           = 'pendiente'; 
                 $pedido->save();
 
+                // === NUEVO: GUARDAR IMAGEN (Modo Rápido) ===
+                if ($request->hasFile('imagen_referencia')) {
+                    $rutaImagen = $request->file('imagen_referencia')->store('cotizaciones_referencias', 'public');
+                    $pedido->imagen_referencia = $rutaImagen;
+                    $pedido->save(); // Guardamos de nuevo para que agarre la ruta
+                }
+                // ============================================
+
                 // B. Sincronización BTO
                 if ($request->filled('quote_request_id')) {
                     $solicitudWeb = \App\Models\QuoteRequest::find($request->input('quote_request_id'));
@@ -356,6 +364,15 @@ class CotizadorController extends Controller
             
             $pedido->estado = 'pendiente'; 
             $pedido->save();
+
+            // === NUEVO: GUARDAR IMAGEN (Modo Bastones) ===
+            if ($request->hasFile('imagen_referencia')) {
+                // Sube la imagen a storage/app/public/cotizaciones_referencias
+                $rutaImagen = $request->file('imagen_referencia')->store('cotizaciones_referencias', 'public');
+                $pedido->imagen_referencia = $rutaImagen;
+                $pedido->save(); 
+            }
+            // ===============================================
 
             // Si el pedido tiene un ID web asociado, actualizamos la tabla del cliente
             if ($request->filled('quote_request_id')) {
@@ -653,8 +670,26 @@ class CotizadorController extends Controller
             $pedido->materiales->first()->nombre_material = $nombreLimpio;
         }
 
-        // 5. Generar el PDF enviando la nueva variable de estado
-        $pdf = Pdf::loadView('reportes.nota', compact('pedido', 'esCotizacionRapida'));
+        // === NUEVA LÓGICA DE IMAGEN CORREGIDA ===
+        $rutaImagenPdf = null;
+
+        // 1. Prioridad Alta: Imagen subida manualmente en el cotizador
+        if ($pedido->imagen_referencia) {
+            $rutaImagenPdf = public_path('storage/' . $pedido->imagen_referencia);
+        } 
+        // 2. Prioridad Baja: Imagen proveniente de la solicitud web (BTO)
+        elseif ($pedido->quote_request_id) {
+            $solicitudOriginal = \App\Models\QuoteRequest::find($pedido->quote_request_id);
+            
+            // Usamos el nombre correcto de tu columna: imagen_path
+            if ($solicitudOriginal && $solicitudOriginal->imagen_path) {
+                $rutaImagenPdf = public_path('storage/' . $solicitudOriginal->imagen_path);
+            }
+        }
+        // ========================================
+
+        // 5. Generar el PDF enviando la nueva variable de estado y la ruta de la imagen
+        $pdf = Pdf::loadView('reportes.nota', compact('pedido', 'esCotizacionRapida', 'rutaImagenPdf'));
 
         return $pdf->stream('Nota_Venta_Pedido_' . $pedido->id . '.pdf');
     }

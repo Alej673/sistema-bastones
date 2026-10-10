@@ -235,9 +235,8 @@ function mostrarAlerta(contenido, titulo = 'Faltan campos obligatorios', tipo = 
     });
 
     // ---- Mostrar ----
-    const modal = new bootstrap.Modal(
-        document.getElementById('modalValidacion')
-    );
+    const modalEl = document.getElementById('modalValidacion');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
 }
 
@@ -1076,8 +1075,9 @@ $(document).ready(function () {
             return;
         }
 
-        // Todo bien: mostramos el modal para pedir los datos del cliente.
-        const modalCliente = new bootstrap.Modal(document.getElementById('modalDatosCliente'));
+        // Todo bien: mostramos el modal reciclando la instancia
+        const modalClienteEl = document.getElementById('modalDatosCliente');
+        const modalCliente = bootstrap.Modal.getOrCreateInstance(modalClienteEl);
         modalCliente.show();
     });
 
@@ -1104,45 +1104,51 @@ $(document).ready(function () {
 
         // Armamos el payload: todos los campos del form + datos del cliente
         // + el resumen de costos ya formateado + el detalle del carrito.
-        let datosFormulario = $('#formCotizador').serializeArray();
-        // INYECTAMOS EL ID EN EL PAYLOAD (NUEVO)
-        if (quoteRequestId) {
-            datosFormulario.push({ name: 'quote_request_id', value: quoteRequestId });
+        // ==========================================
+        // NUEVA FORMA: Usando FormData nativo
+        // ==========================================
+        const formularioBase = document.getElementById('formCotizador');
+        let formData = new FormData(formularioBase); // Captura TODOS los inputs normales automáticamente
+        
+        // Inyectamos los datos calculados y los manuales del modal
+        if (quoteRequestId) formData.append('quote_request_id', quoteRequestId);
+        formData.append('nombre_cliente', nombreCliente);
+        formData.append('correo_cliente', correoCliente);
+        
+        // Capturamos el archivo de la imagen (NUEVO)
+        const inputFile = document.getElementById('inputImagenReferencia');
+        if (inputFile && inputFile.files[0]) {
+            formData.append('imagen_referencia', inputFile.files[0]);
         }
-        datosFormulario.push({ name: 'nombre_cliente', value: nombreCliente });
-        datosFormulario.push({ name: 'correo_cliente', value: correoCliente });
-        datosFormulario.push({ name: 'costo_materiales', value: $('#txtCostoMateriales').text().replace('$', '').trim() });
-        datosFormulario.push({ name: 'costo_extras',     value: $('#txtCostoManoObra').text().replace('$', '').trim() });
-        datosFormulario.push({ name: 'ganancia_fija',    value: $('#txtGananciaFija').text().replace('$', '').trim() });
-        datosFormulario.push({ name: 'costo_total',      value: $('#txtCostoTotal').text().replace('$', '').trim() });
-        datosFormulario.push({ name: 'costo_unitario',   value: $('#txtCostoUnitario').text().replace('$', '').replace('c/u', '').trim() });
-        datosFormulario.push({ name: 'materiales', value: JSON.stringify(window.carritoInsumos) });
+        
+        // Inyectamos los totales y la tabla
+        formData.append('costo_materiales', $('#txtCostoMateriales').text().replace('$', '').trim());
+        formData.append('costo_extras', $('#txtCostoManoObra').text().replace('$', '').trim());
+        formData.append('ganancia_fija', $('#txtGananciaFija').text().replace('$', '').trim());
+        formData.append('costo_total', $('#txtCostoTotal').text().replace('$', '').trim());
+        formData.append('costo_unitario', $('#txtCostoUnitario').text().replace('$', '').replace('c/u', '').trim());
+        formData.append('materiales', JSON.stringify(window.carritoInsumos));
 
         const csrfToken = $('meta[name="csrf-token"]').attr('content');
 
         $.ajax({
-            url:  '/cotizaciones/guardar',
+            url: '/cotizaciones/guardar',
             type: 'POST',
             headers: { 'X-CSRF-TOKEN': csrfToken },
-            data: datosFormulario,
+            data: formData, // Mandamos el FormData
+            processData: false, // CLAVE: Evita que jQuery transforme el archivo a string
+            contentType: false, // CLAVE: Evita que jQuery ponga encabezados que rompan el archivo
             success: function (response) {
-                // A. Ocultamos el modal de captura de cliente.
-                $('#modalDatosCliente').modal('hide');
-
-                // B. Imprimimos el ID del pedido en los modales de éxito.
+                // Ocultamos y mostramos usando la API nativa de Bootstrap 5 para evitar congelamientos
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDatosCliente')).hide();
+                
                 $('#modalNumCotizacion').text(response.id);
                 $('#txtNumeroCotizacionExport').text(response.id);
-
-                // C. Inyectamos el ID en los enlaces de descarga de PDF.
                 $('#btnPdfReceta').attr('href', '/pedidos/' + response.id + '/pdf-receta');
                 $('#btnPdfNota').attr('href', '/pedidos/' + response.id + '/pdf-nota');
-
-                // D. Mostramos el modal de éxito.
-                $('#modalExito').modal('show');
-
-                // E. Bloqueamos el botón principal (el que abre el modal) para que no
-                // se pueda reabrir y generar la misma cotización dos veces.
-                // Guardamos su texto original para restaurarlo solo en el reseteo.
+                
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('modalExito')).show();
+                
                 const btnPrincipal = $('#btnGuardarCotizacion');
                 if (!btnPrincipal.data('texto-original')) {
                     btnPrincipal.data('texto-original', btnPrincipal.html());
@@ -1150,15 +1156,9 @@ $(document).ready(function () {
                 btnPrincipal.prop('disabled', true).html('<i class="fa-solid fa-check"></i> Cotización guardada');
 
                 setTimeout(function () {
-                    if (document.activeElement) {
-                        document.activeElement.blur();
-                    }
-
-                    $('#modalExito').modal('hide');
+                    if (document.activeElement) document.activeElement.blur();
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalExito')).hide();
                     $('#panelExportar').removeClass('d-none').hide().slideDown();
-
-                    // NOTA: btnGuardar (el del modal) y btnGuardarCotizacion se quedan
-                    // deshabilitados a propósito. Solo resetearFormulario() los libera.
                 }, 1800);
             },
             error: function (xhr) {
@@ -1249,7 +1249,7 @@ $(document).ready(function () {
         let pedidoId = $('#txtNumeroCotizacionExport').text();
 
         if (!emailDestino) {
-            alert("Por favor, ingresa un correo electrónico.");
+            mostrarAlerta("Por favor, ingresa un correo electrónico válido.", "Falta el correo", "warning");
             return;
         }
 
@@ -1268,16 +1268,20 @@ $(document).ready(function () {
 
                 if (response.success) {
                     // Cerramos el modal de captura de correo y limpiamos el input.
-                    $('#modalEnviarCorreo').modal('hide');
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEnviarCorreo')).hide();
                     $('#emailCliente').val('');
 
                     // Mostramos el modal de confirmación de envío.
-                    $('#modalCorreoExito').modal('show');
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCorreoExito')).show();
                 }
             },
             error: function (xhr) {
-                alert("Hubo un error al enviar el correo. Revisa la consola.");
                 console.error(xhr.responseText);
+                mostrarAlerta(
+                    "No se pudo enviar el correo en este momento. Intenta de nuevo más tarde.", 
+                    "Error al enviar", 
+                    "danger"
+                );
             },
             complete: function () {
                 // Restauramos el botón a su estado original, haya éxito o error.
