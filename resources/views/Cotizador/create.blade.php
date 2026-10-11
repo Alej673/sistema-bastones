@@ -167,7 +167,8 @@
                                     <div class="border glass-border rounded p-2 mb-2">
                                         <div class="form-check form-switch">
                                             <input class="form-check-input glass-switch" type="checkbox" id="swLazoSimple">
-                                            <label class="form-check-label fw-bold" for="swLazoSimple">Lazo Simple (1.5m)</label>
+                                            {{-- DINÁMICO: Metros del lazo simple --}}
+                                            <label class="form-check-label fw-bold" for="swLazoSimple">Lazo Simple ({{ $configuraciones['deco_lazo_simple_m'] ?? 1.5 }}m)</label>
                                         </div>
                                         <div id="cajaLazoSimple" class="mt-2 d-none">
                                             <select class="form-select glass-select select2-ajax-cintas" name="cinta_lazo_simple">
@@ -197,7 +198,8 @@
                                     <div class="border glass-border rounded p-2 mb-2">
                                         <div class="form-check form-switch">
                                             <input class="form-check-input glass-switch" type="checkbox" id="swLazoNombre">
-                                            <label class="form-check-label fw-bold" for="swLazoNombre">Lazo c/ Nombre (1.0m + $0.70)</label>
+                                            {{-- DINÁMICO: Metros y Costo Extra del lazo con nombre --}}
+                                            <label class="form-check-label fw-bold" for="swLazoNombre">Lazo c/ Nombre ({{ $configuraciones['deco_lazo_nombre_m'] ?? 1.0 }}m + ${{ number_format((float)($configuraciones['deco_lazo_nombre_mo'] ?? 0.70), 2) }})</label>
                                         </div>
                                         <div id="cajaLazoNombre" class="mt-2 d-none">
                                             <select class="form-select glass-select select2-ajax-cintas" name="cinta_lazo_nombre">
@@ -211,7 +213,8 @@
                                     <div class="border glass-border rounded p-2 mb-2">
                                         <div class="form-check form-switch">
                                             <input class="form-check-input glass-switch" type="checkbox" id="swApliques">
-                                            <label class="form-check-label fw-bold" for="swApliques">Incluir Apliques ($0.50 c/u)</label>
+                                            {{-- DINÁMICO: Costo del aplique --}}
+                                            <label class="form-check-label fw-bold" for="swApliques">Incluir Apliques (${{ number_format((float)($configuraciones['deco_apliques_precio'] ?? 0.50), 2) }} c/u)</label>
                                         </div>
                                         <div id="cajaApliques" class="mt-2 d-none">
                                             <label class="form-label text-muted small mb-0">Cantidad de apliques por bastón</label>
@@ -220,7 +223,7 @@
                                     </div>  
 
                                 </div>  
-                            </div>  
+                            </div>
 
                             {{-- MÓDULO 5: DISEÑOS PERSONALIZADOS --}}
                             <div class="card glass-subcard mb-3 border-0 shadow-sm">
