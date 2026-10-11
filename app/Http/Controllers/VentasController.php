@@ -11,8 +11,10 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage; 
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Mail\NotaVentaMailable;
+
 
 class VentasController extends Controller
 {
@@ -168,13 +170,21 @@ class VentasController extends Controller
         $precioFinal = $pedido->costo_total ?? 0;
         $esManualidad = in_array(strtolower($pedido->categoria ?? ''), ['manualidad', 'manualidades']);
 
+        // 1. Obtenemos el margen dinámico de la base de datos (por defecto 0.60 si no existe)
+        $margenGanancia = (float) (\App\Models\Ajuste::where('llave', 'margen_ganancia')->value('valor') ?? 0.60);
+        
+        // 2. Calculamos el porcentaje restante para insumos matemáticamente
+        $porcentajeInsumos = 1.0 - $margenGanancia; // Ej: 1.0 - 0.60 = 0.40
+
         if ($esManualidad) {
-            $ganancia = $precioFinal * 0.60;
-            $insumos  = $precioFinal * 0.40;
+            // Repartición estimada basada en la configuración global
+            $ganancia = $precioFinal * $margenGanancia;
+            $insumos  = $precioFinal * $porcentajeInsumos;
         } else {
+            // Top-down: usamos el costo real, con respaldo matemático si falta
             $insumos = (!empty($pedido->costo_materiales) && $pedido->costo_materiales > 0)
                 ? $pedido->costo_materiales
-                : ($precioFinal * 0.40);
+                : ($precioFinal * $porcentajeInsumos);
 
             $ganancia = $precioFinal - $insumos;
         }
@@ -455,6 +465,62 @@ class VentasController extends Controller
         $pedido = Pedido::with('materiales')->findOrFail($id);
 
         return response()->json($pedido);
+    }
+
+    // =======================================================
+    // GESTIÓN DE IMAGEN A POSTERIORI (MÓDULO DE VENTAS)
+    // =======================================================
+    public function gestionarImagenPedido(Request $request, $id)
+    {
+        try {
+            $pedido = Pedido::findOrFail($id);
+
+            // ESCENARIO A: Eliminar la imagen actual
+            if ($request->input('accion') === 'eliminar') {
+                if ($pedido->imagen_referencia) {
+                    // 1. Borramos el archivo FÍSICO del disco duro para no dejar basura
+                    Storage::disk('public')->delete($pedido->imagen_referencia);
+                    
+                    // 2. Limpiamos la base de datos
+                    $pedido->imagen_referencia = null;
+                    $pedido->save();
+                }
+                
+                return response()->json([
+                    'success' => true, 
+                    'mensaje' => 'Imagen eliminada correctamente.'
+                ]);
+            }
+
+            // ESCENARIO B: Subir una imagen nueva (o reemplazar la existente)
+            if ($request->hasFile('nueva_imagen')) {
+                
+                // Si ya tenía una foto, la borramos del disco duro antes de subir la nueva
+                if ($pedido->imagen_referencia) {
+                    Storage::disk('public')->delete($pedido->imagen_referencia);
+                }
+
+                // Guardamos la nueva foto en el storage
+                $rutaImagen = $request->file('nueva_imagen')->store('cotizaciones_referencias', 'public');
+                
+                // Actualizamos la base de datos
+                $pedido->imagen_referencia = $rutaImagen;
+                $pedido->save();
+
+                return response()->json([
+                    'success' => true, 
+                    'mensaje' => 'Imagen agregada/actualizada exitosamente.'
+                ]);
+            }
+
+            return response()->json(['success' => false, 'mensaje' => 'No se detectó ninguna acción válida.'], 400);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error crítico al gestionar la imagen: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     // =======================================================

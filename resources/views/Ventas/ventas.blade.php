@@ -138,6 +138,32 @@
                         </select>
                     </div>
 
+                    {{-- GESTIÓN DE IMAGEN A POSTERIORI --}}
+                    <div class="mb-3 p-3 rounded" style="background-color: var(--bg-base); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); border-radius: 12px;">
+                        <span class="d-block mb-2" style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">
+                            <i class="fa-solid fa-image me-1"></i> Imagen de Referencia / Boceto
+                        </span>
+                        
+                        {{-- CAJA DE IMAGEN EXISTENTE (Se oculta/muestra con JS) --}}
+                        <div id="cajaIndicadorImagen" class="d-none mb-3 p-2 rounded d-flex justify-content-between align-items-center" style="background: rgba(147, 51, 234, 0.05); border: 1px solid rgba(147, 51, 234, 0.2);">
+                            <div>
+                                <i class="fa-solid fa-circle-check text-success me-1"></i>
+                                <span style="font-size: 0.8rem; font-weight: bold; color: var(--accent-purple);">Archivo guardado</span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="#" id="linkVerImagen" target="_blank" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size: 0.75rem; border-radius: 6px;">Ver archivo</a>
+                                <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2" id="btnEliminarImagenActual" title="Borrar" style="border-radius: 6px;">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- INPUT PARA SUBIR/REEMPLAZAR --}}
+                        <input type="file" class="form-control w-100" id="inputActualizarImagen" accept="image/jpeg,image/png,image/jpg,image/webp"
+                            style="background-color: #f3ebff; border: 1px solid rgba(var(--accent-purple-rgb), 0.15); border-radius: 8px; color: var(--text-main); font-size: 0.85rem;">
+                        <p class="mt-2 mb-0" style="color: var(--text-muted); font-size: 0.75rem;">Sube una foto para reemplazar la actual o agregar una nueva.</p>
+                    </div>
+
                     {{-- Opcional: Reenviar correo --}}
                     <div class="mb-3 p-3 rounded" style="background-color: var(--bg-base); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); border-radius: 12px;">
                         <span class="d-block mb-2" style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">

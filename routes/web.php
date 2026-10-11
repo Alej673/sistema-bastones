@@ -143,6 +143,8 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     });
     Route::get('/admin/solicitudes-pendientes', [CotizadorController::class, 'buscarSolicitudesPendientes'])
         ->name('admin.solicitudes.pendientes');
+    // Ruta para gestionar la imagen a posteriori desde el historial de ventas
+    Route::post('/pedidos/{id}/imagen', [CotizadorController::class, 'gestionarImagenPedido'])->name('pedidos.imagen.gestionar');
 
     // Ventas e Historial (KPIs)
     Route::get('/ventas', [VentasController::class, 'index'])->name('ventas.index');
@@ -150,6 +152,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('/buscar-clientes-historial', [VentasController::class, 'buscarClientesAjax'])->name('clientes.buscar_ajax');
     Route::get('/pedidos/{id}/detalles', [VentasController::class, 'obtenerDetalles'])->name('pedidos.detalles');
     Route::post('/pedidos/{id}/vincular', [VentasController::class, 'vincularPedido'])->name('pedidos.vincular');
+    Route::post('/pedidos/{id}/imagen', [VentasController::class, 'gestionarImagenPedido'])->name('pedidos.gestionar_imagen');
     // Reporte Mensual PDF
     Route::get('/ventas/reporte-mensual', [VentasController::class, 'generarReporteMensual'])->name('ventas.reporte_mensual');
 

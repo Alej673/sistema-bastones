@@ -67,11 +67,23 @@
         </div>
     </td>
     <td class="pe-4 text-end">
+        {{-- 1. Calculamos la ruta de la imagen para esta fila específica --}}
+        @php
+            $rutaImg = '';
+            if ($pedido->imagen_referencia) {
+                $rutaImg = asset('storage/' . $pedido->imagen_referencia);
+            } elseif ($pedido->quoteRequest && $pedido->quoteRequest->imagen_path) {
+                $rutaImg = asset('storage/' . $pedido->quoteRequest->imagen_path);
+            }
+        @endphp
+
+        {{-- 2. Tu botón original, pero con el data-imagen agregado --}}
         <button type="button" 
                 class="btn btn-sm btn-vincular-action ms-1 btn-vincular" 
                 data-id="{{ $pedido->id }}" 
                 data-estado="{{ $pedido->estado }}"
-                title="Vincular a cliente web o enviar por correo">
+                data-imagen="{{ $rutaImg }}"
+                title="Vincular a cliente web, enviar correo o gestionar imagen">
             <i class="fa-solid fa-link"></i>
         </button>
         

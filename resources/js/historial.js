@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const response = await fetch(`/pedidos/${pedidoId}/detalles`);
                     const data = await response.json();
 
-                let html = '';
+                    let html = '';
                     if(data.materiales && data.materiales.length > 0) {
                         data.materiales.forEach(mat => {
                             let nombreLower = mat.nombre_material.toLowerCase();
@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =======================================================
-    // MÓDULO: VINCULACIÓN WEB Y REENVÍO DE CORREOS
+    // MÓDULO: VINCULACIÓN WEB, REENVÍO DE CORREOS E IMAGEN
     // =======================================================
 
     // 1. Inicializar Select2 en el modal de vinculación
@@ -321,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
         placeholder: '-- Buscar solicitud pendiente --',
         allowClear: true,
         ajax: {
-            url: '/admin/solicitudes-pendientes', // Misma ruta JSON que usamos en el cotizador
+            url: '/admin/solicitudes-pendientes',
             dataType: 'json',
             delay: 300,
             data: function (params) {
@@ -344,6 +344,11 @@ document.addEventListener('DOMContentLoaded', () => {
     $(document).on('click', '.btn-vincular', function(e) {
         e.preventDefault();
         const pedidoId = $(this).data('id');
+
+        // IMPORTANTE: usamos .attr() y NO .data(). jQuery cachea el valor de
+        // data-* la primera vez que se lee, así que si luego cambiamos el
+        // atributo con .attr(), .data() seguiría devolviendo la imagen vieja.
+        const imagenAdjunta = $(this).attr('data-imagen');
         
         // Inyectamos el ID en el título y en el input oculto
         $('#txtVincularPedidoId').text(String(pedidoId).padStart(4, '0'));
@@ -351,27 +356,94 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Limpiamos los campos del modal de usos anteriores
         $('#inputReenviarCorreo').val('');
+        $('#inputActualizarImagen').val('');
         if ($('#selectVincularWeb').hasClass('select2-hidden-accessible')) {
             $('#selectVincularWeb').val(null).trigger('change');
         }
         
-        // Mostramos el modal
-        const modalVinculacion = new bootstrap.Modal(document.getElementById('modalVincularPedido'));
+        // --- LÓGICA VISUAL DE LA IMAGEN ---
+        if (imagenAdjunta && imagenAdjunta !== '') {
+            $('#linkVerImagen').attr('href', imagenAdjunta);
+            $('#cajaIndicadorImagen').removeClass('d-none'); // Muestra indicador, link y basurero
+        } else {
+            $('#linkVerImagen').attr('href', '#');
+            $('#cajaIndicadorImagen').addClass('d-none'); // Oculta todo
+        }
+        
+        // Mostramos el modal (reutilizando la instancia si ya existe)
+        const modalEl = document.getElementById('modalVincularPedido');
+        const modalVinculacion = bootstrap.Modal.getOrCreateInstance(modalEl);
         modalVinculacion.show();
     });
 
-    // 3. Procesar la actualización vía AJAX
+    // -------------------------------------------------------
+    // Funciones AJAX reutilizables (devuelven la promesa de jQuery)
+    // -------------------------------------------------------
+
+    // Vincular solicitud web y/o reenviar correo
+    function procesarVinculacion(pedidoId, quoteRequestId, correo) {
+        return $.ajax({
+            url: `/pedidos/${pedidoId}/vincular`,
+            type: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+            data: {
+                quote_request_id: quoteRequestId,
+                correo: correo
+            }
+        });
+    }
+
+    // Eliminar o actualizar la imagen de referencia
+    function procesarImagenPedido(pedidoId, accion) {
+        const formData = new FormData();
+        formData.append('accion', accion);
+
+        if (accion === 'actualizar') {
+            const inputFile = document.getElementById('inputActualizarImagen');
+            formData.append('nueva_imagen', inputFile.files[0]);
+        }
+
+        return $.ajax({
+            url: `/pedidos/${pedidoId}/imagen`,
+            type: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+            data: formData,
+            processData: false, // Fundamental para archivos
+            contentType: false  // Fundamental para archivos
+        });
+    }
+
+    // Extrae el mensaje de error del backend si existe
+    function mensajeDeError(xhr, porDefecto) {
+        if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+            return xhr.responseJSON.message;
+        }
+        return porDefecto;
+    }
+
+    // -------------------------------------------------------
+    // 3. Botón principal: "Actualizar Pedido"
+    //    Ejecuta vinculación/correo y/o subida de imagen,
+    //    y cuando TODO termina bien, refleja los cambios.
+    // -------------------------------------------------------
     $('#btnProcesarVinculacion').on('click', function(e) {
         e.preventDefault();
-        
+
         const pedidoId = $('#hiddenPedidoFisicoId').val();
         const quoteRequestId = $('#selectVincularWeb').val();
         const correo = $('#inputReenviarCorreo').val().trim();
-        
-        // Validación: debe querer hacer al menos una de las dos cosas
-        if (!quoteRequestId && correo === '') {
-            // Usa tu función de alertas predeterminada (SweetAlert2)
-            Swal.fire('¡Atención!', 'Debes seleccionar una solicitud web para vincular o ingresar un correo para reenviar.', 'warning');
+        const inputFile = document.getElementById('inputActualizarImagen');
+        const hayImagenNueva = inputFile.files && inputFile.files.length > 0;
+        const hayVinculacion = !!quoteRequestId || correo !== '';
+
+        if (!pedidoId) {
+            Swal.fire('Error', 'No se ha seleccionado un pedido válido.', 'error');
+            return;
+        }
+
+        // Validación: al menos una de las tres acciones
+        if (!hayVinculacion && !hayImagenNueva) {
+            Swal.fire('¡Atención!', 'Debes seleccionar una solicitud web para vincular, ingresar un correo para reenviar, o subir una imagen.', 'warning');
             return;
         }
 
@@ -379,31 +451,82 @@ document.addEventListener('DOMContentLoaded', () => {
         const textoOriginal = btn.html();
         btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Actualizando...');
 
-        $.ajax({
-            url: `/pedidos/${pedidoId}/vincular`, // Crearemos este endpoint ahora
-            type: 'POST', // Usamos POST o PATCH 
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // Tu config CSRF
-            },
-            data: {
-                quote_request_id: quoteRequestId,
-                correo: correo
-            },
-            success: function(response) {
+        // Armamos las peticiones necesarias
+        const peticiones = [];
+        if (hayVinculacion) peticiones.push(procesarVinculacion(pedidoId, quoteRequestId, correo));
+        if (hayImagenNueva) peticiones.push(procesarImagenPedido(pedidoId, 'actualizar'));
+
+        $.when.apply($, peticiones)
+            .done(function() {
                 $('#modalVincularPedido').modal('hide');
-                
+
                 Swal.fire('¡Éxito!', 'El pedido fue actualizado correctamente.', 'success').then(() => {
-                    // Opcional: Recargar la página para ver los cambios reflejados si modificaste algo visual
-                    // location.reload();
+                    if (hayImagenNueva) {
+                        // Recargamos para que el backend entregue la nueva ruta de la imagen
+                        // y el botón de la tabla quede con el data-imagen correcto.
+                        location.reload();
+                    }
                 });
-                
-                btn.prop('disabled', false).html(textoOriginal);
-            },
-            error: function(xhr) {
+            })
+            .fail(function(xhr) {
                 console.error(xhr.responseText);
-                Swal.fire('Error', 'Ocurrió un problema al procesar la solicitud.', 'error');
+                Swal.fire('Error', mensajeDeError(xhr, 'Ocurrió un problema al procesar la solicitud.'), 'error');
+            })
+            .always(function() {
                 btn.prop('disabled', false).html(textoOriginal);
-            }
+            });
+    });
+
+    // -------------------------------------------------------
+    // 4. Botón rojo (basurero): "Eliminar Imagen"
+    // -------------------------------------------------------
+    $(document).on('click', '#btnEliminarImagenActual', function(e) {
+        e.preventDefault();
+
+        const pedidoId = $('#hiddenPedidoFisicoId').val();
+        if (!pedidoId) {
+            Swal.fire('Error', 'No se ha seleccionado un pedido válido.', 'error');
+            return;
+        }
+
+        const btnEliminar = $(this);
+
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: 'Esta acción borrará la foto de referencia actual del servidor permanentemente.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar imagen',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+
+            const textoOriginal = btnEliminar.html();
+            btnEliminar.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+
+            procesarImagenPedido(pedidoId, 'eliminar')
+                .done(function(response) {
+                    // 1. Limpiamos el modal visualmente
+                    $('#inputActualizarImagen').val('');
+                    $('#cajaIndicadorImagen').addClass('d-none'); // Oculta indicador, enlace y basurero
+                    $('#linkVerImagen').attr('href', '#');
+
+                    // 2. LA CLAVE: borramos la foto de la "memoria" del botón de la tabla
+                    $(`.btn-vincular[data-id="${pedidoId}"]`)
+                        .attr('data-imagen', '')
+                        .removeData('imagen'); // limpia también la caché de jQuery
+
+                    Swal.fire('¡Éxito!', (response && response.mensaje) || 'Imagen eliminada correctamente.', 'success');
+                })
+                .fail(function(xhr) {
+                    console.error(xhr.responseText);
+                    Swal.fire('Error', mensajeDeError(xhr, 'Ocurrió un problema al procesar la imagen.'), 'error');
+                })
+                .always(function() {
+                    btnEliminar.prop('disabled', false).html(textoOriginal);
+                });
         });
     });
 });

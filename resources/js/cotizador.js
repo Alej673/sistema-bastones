@@ -1141,6 +1141,9 @@ $(document).ready(function () {
             success: function (response) {
                 // Ocultamos y mostramos usando la API nativa de Bootstrap 5 para evitar congelamientos
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDatosCliente')).hide();
+
+                // === NUEVO: CONGELAMOS EL FORMULARIO ===
+                alternarBloqueoCotizador(true);
                 
                 $('#modalNumCotizacion').text(response.id);
                 $('#txtNumeroCotizacionExport').text(response.id);
@@ -1182,6 +1185,9 @@ $(document).ready(function () {
         }
 
         resetearFormulario();
+        
+        // === NUEVO: DESCONGELAMOS EL FORMULARIO PARA EL NUEVO PEDIDO ===
+        alternarBloqueoCotizador(false);
     });
 
     // =======================================================
@@ -1289,5 +1295,30 @@ $(document).ready(function () {
             }
         });
     });
+
+    // =======================================================
+    // FUNCIÓN: CONGELAR/DESCONGELAR FORMULARIO
+    // =======================================================
+    function alternarBloqueoCotizador(bloquear) {
+        // 1. Bloquea (o desbloquea) todos los inputs, selects y textareas dentro del formulario
+        $('#formCotizador :input').prop('disabled', bloquear);
+        
+        // 2. Bloquea el switch global de la parte superior (Bastones vs Rápido)
+        $('#swModoCotizacion').prop('disabled', bloquear);
+
+        // 3. Feedback visual: Oscurece el formulario y desactiva los clics del mouse
+        if (bloquear) {
+            $('#formCotizador').css({
+                'opacity': '0.6', 
+                'pointer-events': 'none', 
+                'transition': 'all 0.3s ease'
+            });
+        } else {
+            $('#formCotizador').css({
+                'opacity': '1', 
+                'pointer-events': 'auto'
+            });
+        }
+    }
 
 });
