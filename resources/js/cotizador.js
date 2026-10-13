@@ -445,6 +445,7 @@ $(document).ready(function () {
         // ---------------------------------------------------
         const cfgBase = CONFIG_NEGOCIO.baseBaston;
         const esMayoreoBase = cantidadBastones >= cfgBase.umbralMayoreo;
+        const sinBaston = $('#swSinBaston').is(':checked'); // <-- NUEVO: Leemos el switch
 
         let precioBaseFantasma = 0;
         let nombreAcabado      = '';
@@ -458,48 +459,70 @@ $(document).ready(function () {
             precioBaseFantasma = esMayoreoBase ? cfgBase.plata.mayoreo : cfgBase.plata.normal;
         }
 
+        // IMPORTANTE: Esto se mantiene intacto para que la Fase 2 (lana/elástico) 
+        // sepa si es consumo grande o pequeño aunque el cliente traiga el bastón.
         let esGrande     = cfgBase.tamanosGrandes.includes(tamanoBase);
         let tamanoVisual = tamanoBase + ' cm';
 
-        // 2. Buscamos en el inventario real la base que coincide en color + tamaño
-        let baseEnKardex = INVENTARIO.find(item => {
-            if (item.categoria !== 'base_baston' || !item.nombre) return false;
-            let nombreBD      = item.nombre.toLowerCase();
-            let colorBuscado  = colorBase.toLowerCase();
-            let tamanoBuscado = tamanoBase.replace(/\D/g, ''); 
-            
-            return nombreBD.includes(colorBuscado) && nombreBD.includes(tamanoBuscado);
-        });
+        if (sinBaston) {
+            // ESCENARIO A: El cliente entrega sus propias bases (Costo $0 y sin descuento de stock)
+            filasHtml.push(`
+                <tr>
+                    <td class="fw-bold text-dark">Base (${tamanoVisual}) <span class="badge bg-secondary ms-1">Sin bastón</span></td>
+                    <td class="text-muted small">${cantidadBastones} u. &times; $0.00 c/u</td>
+                    <td class="fw-bold text-success">$0.00</td>
+                    <td class="text-end"><span class="text-muted">No descuenta stock</span></td>
+                </tr>
+            `);
 
-        // 3. LA MAGIA: Si existe en Kardex forzamos su precio real a número. Si no, usamos el fantasma.
-        let precioBaseUnitario = baseEnKardex ? parseFloat(baseEnKardex.costo_unitario) : precioBaseFantasma;
+            // Lo enviamos con insumo_id: null para que quede registrado en el PDF/Receta 
+            // que se trabajan X bastones de esa medida, pero el Backend NO descuente tubos del Kardex.
+            // Se guarda en la BD con insumo_id: null y la etiqueta clara "(Sin bastón)"
+            agregarAlCarrito({
+                insumo_id: null,
+                nombre_material: `Base (${tamanoVisual}) - Sin bastón`,
+                cantidad_requerida: cantidadBastones,
+                subtotal_calculado: 0,
+            });
 
-        // 4. Ahora sí, hacemos las matemáticas con el precio correcto
-        let costoTotalBases = precioBaseUnitario * cantidadBastones;
-        costoTotalMateriales += costoTotalBases;
+        } else {
+            // ESCENARIO B: Flujo normal (Se cobra la base y se descuenta de Kardex)
+            let baseEnKardex = INVENTARIO.find(item => {
+                if (item.categoria !== 'base_baston' || !item.nombre) return false;
+                let nombreBD      = item.nombre.toLowerCase();
+                let colorBuscado  = colorBase.toLowerCase();
+                let tamanoBuscado = tamanoBase.replace(/\D/g, ''); 
+                
+                return nombreBD.includes(colorBuscado) && nombreBD.includes(tamanoBuscado);
+            });
 
-        let alertaBase = (baseEnKardex && baseEnKardex.stock_actual >= cantidadBastones)
-            ? `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Stock Suficiente</span>`
-            : `<span class="text-danger fw-bold">- ${cantidadBastones} u. (Falta Comprar)</span>`;
+            let precioBaseUnitario = baseEnKardex ? parseFloat(baseEnKardex.costo_unitario) : precioBaseFantasma;
 
-        filasHtml.push(`
-            <tr>
-                <td class="fw-bold text-dark">Base ${nombreAcabado} (${tamanoVisual})</td>
-                <td class="text-muted small">${cantidadBastones} u. &times; $${precioBaseUnitario.toFixed(2)} c/u</td>
-                <td class="fw-bold text-muted">$${costoTotalBases.toFixed(2)}</td>
-                <td class="text-end">${alertaBase}</td>
-            </tr>
-        `);
+            let costoTotalBases = precioBaseUnitario * cantidadBastones;
+            costoTotalMateriales += costoTotalBases;
 
-        // Extraemos el ID sin operadores opcionales para evitar crashes
-        let idBase = baseEnKardex ? baseEnKardex.id : null;
+            let alertaBase = (baseEnKardex && baseEnKardex.stock_actual >= cantidadBastones)
+                ? `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Stock Suficiente</span>`
+                : `<span class="text-danger fw-bold">- ${cantidadBastones} u. (Falta Comprar)</span>`;
 
-        agregarAlCarrito({
-            insumo_id: idBase,
-            nombre_material: `Base ${nombreAcabado} (${tamanoVisual})`,
-            cantidad_requerida: cantidadBastones,
-            subtotal_calculado: costoTotalBases,
-        });
+            filasHtml.push(`
+                <tr>
+                    <td class="fw-bold text-dark">Base ${nombreAcabado} (${tamanoVisual})</td>
+                    <td class="text-muted small">${cantidadBastones} u. &times; $${precioBaseUnitario.toFixed(2)} c/u</td>
+                    <td class="fw-bold text-muted">$${costoTotalBases.toFixed(2)}</td>
+                    <td class="text-end">${alertaBase}</td>
+                </tr>
+            `);
+
+            let idBase = baseEnKardex ? baseEnKardex.id : null;
+
+            agregarAlCarrito({
+                insumo_id: idBase,
+                nombre_material: `Base ${nombreAcabado} (${tamanoVisual})`,
+                cantidad_requerida: cantidadBastones,
+                subtotal_calculado: costoTotalBases,
+            });
+        }
 
         // ---------------------------------------------------
         // FASE 2: INSUMOS FIJOS DE ENSAMBLAJE (cinchos + elástico)
@@ -977,7 +1000,7 @@ $(document).ready(function () {
     // delegado más abajo (para que también funcione con los selects que
     // los módulos crean dinámicamente, ej. al añadir más colores).
     const controlesSimples = [
-        '#inputCantidad',
+        '#inputCantidad', '#swSinBaston', // <-- NUEVO: Agregado aquí
         '#swCortinaLana', '#swCortinaFiesta',
         '#swLazoSimple', '#swLazoFlor', '#swLazoNombre',
         '#swApliques', '#cantApliques', '#swDisenoPersonalizado',
@@ -985,6 +1008,11 @@ $(document).ready(function () {
 
     $(controlesSimples).on('input change', recalcularConDebounce);
     $('body').on('change', 'select', recalcularConDebounce);
+
+    // Bloquea visualmente el selector de acabado (Plata/Dorado) si se marca "Sin bastón"
+    $('#swSinBaston').on('change', function () {
+        $('#selectAcabado').prop('disabled', $(this).is(':checked'));
+    });
 
     // Primer cálculo al cargar la página (deja la tabla en su estado "vacío").
     calcularCotizacion();
@@ -1184,10 +1212,10 @@ $(document).ready(function () {
             $('#selectSolicitudWeb').val(null).trigger('change');
         }
 
-        resetearFormulario();
-        
         // === NUEVO: DESCONGELAMOS EL FORMULARIO PARA EL NUEVO PEDIDO ===
         alternarBloqueoCotizador(false);
+
+        resetearFormulario();
     });
 
     // =======================================================
@@ -1208,8 +1236,9 @@ $(document).ready(function () {
             btnModal.prop('disabled', false).html('<i class="fa-solid fa-floppy-disk me-2"></i> Confirmar y Guardar Pedido');
         }
 
-        $('#inputCantidad').val('');
+        $('#inputCantidad').val('1'); // <-- Recomendado dejarlo en 1 como al inicio
         $('#selectTamano').val('').trigger('change');
+        $('#selectAcabado').val('plata').prop('disabled', false); // <-- Asegura que vuelva a Plata y habilitado
         $('#selectCantidadColores').val('1').trigger('change');
 
         $('#contenedorColoresLana .select2-ajax').each(function () {
@@ -1217,6 +1246,7 @@ $(document).ready(function () {
         });
 
         const switches = [
+            '#swSinBaston', // <-- NUEVO: Se apaga y dispara su 'change'
             '#swCortinaLana', '#swCortinaFiesta',
             '#swLazoSimple',  '#swLazoFlor', '#swLazoNombre',
             '#swApliques',    '#swDisenoPersonalizado',

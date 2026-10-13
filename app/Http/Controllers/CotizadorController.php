@@ -389,13 +389,26 @@ class CotizadorController extends Controller
             // 6. Insertar cada material del carrito ya validado
             foreach ($listaMateriales as $mat) {
                 
-                // --- INICIO: LÓGICA DE RECONOCIMIENTO AUTOMÁTICO DE INSUMOS ---
-                $insumoIdFinal = $mat['insumo_id'];
-                $nombreMaterialLimpiado = strtolower(trim($mat['nombre_material']));
+                $insumoIdFinal = $mat['insumo_id'] ?? null;
+                $nombreOriginal = trim($mat['nombre_material']);
+                $nombreMaterialLimpiado = mb_strtolower($nombreOriginal, 'UTF-8');
 
-                // Solo intentamos autocompletar si el JS no envió un ID
-                if (is_null($insumoIdFinal) || empty($insumoIdFinal)) {
-                    
+                // Detectar si es la estructura base provista por el cliente ("Sin bastón")
+                $esSinBaston = str_contains($nombreMaterialLimpiado, 'sin bastón') 
+                            || str_contains($nombreMaterialLimpiado, 'sin baston')
+                            || str_contains($nombreMaterialLimpiado, 'provista por cliente');
+
+                if ($esSinBaston) {
+                    // Forzamos insumo_id a NULL y costo $0 para que Kardex jamás lo toque
+                    $insumoIdFinal = null;
+                    $mat['subtotal_calculado'] = 0;
+
+                    // Estandarizamos el prefijo igual que en [COTI-RÁPIDA]
+                    if (!str_starts_with($nombreOriginal, '[SIN-BASTÓN]')) {
+                        $mat['nombre_material'] = '[SIN-BASTÓN] ' . $nombreOriginal;
+                    }
+                } elseif (empty($insumoIdFinal)) {
+                    // --- INICIO: LÓGICA DE RECONOCIMIENTO AUTOMÁTICO DE INSUMOS ---
                     // Lógica para interceptar "Cinchos"
                     if (str_contains($nombreMaterialLimpiado, 'cincho')) {
                         $insumoDetectado = \App\Models\Insumo::where('categoria', 'cinchos')->whereNull('deleted_at')->first();
@@ -411,8 +424,8 @@ class CotizadorController extends Controller
                             $insumoIdFinal = $insumoDetectado->id;
                         }
                     }
+                    // --- FIN: LÓGICA DE RECONOCIMIENTO ---
                 }
-                // --- FIN: LÓGICA DE RECONOCIMIENTO ---
 
                 // Insertamos cada fila en la tabla de detalles
                 DB::table('pedido_materiales')->insert([

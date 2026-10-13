@@ -36,6 +36,11 @@ class VentasController extends Controller
         'diseno',
         '[coti-rápida]',
         '[coti-rapida]',
+        '[sin-bastón]',
+        '[sin-baston]',
+        'sin bastón',
+        'sin baston',
+        'provista por cliente',
     ];
 
     /**

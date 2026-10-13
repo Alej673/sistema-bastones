@@ -67,13 +67,13 @@
                         Configuración del Pedido
                     </div>
                     <div class="card-body">
-                        <form id="formCotizador">
+                        <form id="formCotizador">   
                             
                             {{-- MÓDULO 1: ESTRUCTURA BASE --}}
                             <div class="card glass-subcard mb-3 border-0 shadow-sm">
                                 <div class="card-body p-3">
                                     <h6 class="text-secondary fw-bold mb-3 small">1. ESTRUCTURA BASE</h6>
-                                    <div class="row g-2">
+                                    <div class="row g-2 align-items-end">
                                         <div class="col-sm-4 col-12">
                                             <label class="form-label text-muted small mb-1">Cant. Bastones</label>
                                             <input type="number" id="inputCantidad" name="cantidad_total_bastones" class="form-control glass-input" value="1" min="1">
@@ -88,12 +88,24 @@
                                                 <option value="60">60 cm (Consumo Grande)</option>
                                             </select>
                                         </div>
-                                        <div class="col-12 mt-2">
+
+                                        {{-- Acabado (7 columnas) + Switch Sin Bastón al lado (5 columnas) --}}
+                                        <div class="col-sm-7 col-12 mt-2">
                                             <label class="form-label text-muted small mb-1">Acabado del Bastón</label>
                                             <select id="selectAcabado" class="form-select glass-select">
                                                 <option value="plata" selected>Plata</option>
                                                 <option value="dorado">Dorado</option>
                                             </select>
+                                        </div>
+                                        <div class="col-sm-5 col-12 mt-2">
+                                            <div class="glass-input d-flex align-items-center justify-content-between px-3" style="height: 38px; border-radius: 10px;">
+                                                <label class="form-check-label fw-semibold small text-secondary mb-0" for="swSinBaston" style="cursor: pointer;">
+                                                    Sin bastón
+                                                </label>
+                                                <div class="form-check form-switch mb-0 p-0">
+                                                    <input class="form-check-input glass-switch m-0" type="checkbox" id="swSinBaston" name="sin_baston" value="1" style="cursor: pointer;">
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
