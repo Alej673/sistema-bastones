@@ -458,12 +458,55 @@ class CotizadorController extends Controller
     }
 
     // =======================================================
+    // HELPER: resuelve la ruta ABSOLUTA de la imagen de referencia
+    // (la usan la receta y la nota de venta)
+    // =======================================================
+    private function resolverRutaImagenPedido($pedido): ?string
+    {
+        $relativa = null;
+
+        // 1. Prioridad alta: imagen subida manualmente en el cotizador
+        if ($pedido->imagen_referencia) {
+            $relativa = $pedido->imagen_referencia;
+        }
+        // 2. Prioridad baja: imagen proveniente de la solicitud web (BTO)
+        elseif ($pedido->quote_request_id) {
+            $solicitud = \App\Models\QuoteRequest::find($pedido->quote_request_id);
+            if ($solicitud && $solicitud->imagen_path) {
+                $relativa = $solicitud->imagen_path;
+            }
+        }
+
+        if (!$relativa) {
+            return null;
+        }
+
+        $relativa = ltrim($relativa, '/');
+
+        // Probamos primero el disco real y luego el symlink public/storage
+        $candidatas = [
+            storage_path('app/public/' . $relativa),
+            public_path('storage/' . $relativa),
+        ];
+
+        foreach ($candidatas as $ruta) {
+            if (is_file($ruta)) {
+                return $ruta;
+            }
+        }
+
+        // Si el archivo no existe, devolvemos null para que el PDF
+        // muestre "Sin imagen de referencia" en vez de fallar.
+        return null;
+    }
+
+    // =======================================================
     // GENERACIÓN DE REPORTES PDF (On-the-Fly)
     // =======================================================
     public function generarPdfReceta($id)
     {
         $pedido = \App\Models\Pedido::with('materiales')->findOrFail($id);
-        
+
         // Traemos los ajustes de la BD
         $config = \App\Models\Ajuste::pluck('valor', 'llave');
 
@@ -494,18 +537,18 @@ class CotizadorController extends Controller
                 }
             }
 
-            // CORRECCIÓN 1: Aplicamos abs() para eliminar signos negativos del frontend
+            // Aplicamos abs() para eliminar signos negativos del frontend
             $cantReqAbs = abs((float) $mat->cantidad_requerida);
-            
+
             $diferencia = $cantReqAbs - $stockActual;
             $faltaComprarNumerico = $diferencia > 0 ? $diferencia : 0;
 
             $nombreLower = strtolower($mat->nombre_material);
-            $cantReq = $cantReqAbs; 
+            $cantReq = $cantReqAbs;
             $stock = (float) $stockActual;
             $falta = (float) $faltaComprarNumerico;
 
-            // 1. OBTENCIÓN DEL PRECIO 
+            // 1. OBTENCIÓN DEL PRECIO
             if (!$esDiseno) {
                 if ($insumo && $insumo->costo_unitario > 0) {
                     $precioUnitario = $insumo->costo_unitario;
@@ -605,10 +648,11 @@ class CotizadorController extends Controller
 
                 $mat->precio_unitario_visual = "$" . number_format($precioUnitario, 4);
                 $mat->falta_comprar_num = $faltaComprarNumerico;
-                $mat->requerido_visual .= " <small>(+ $" . number_format($recargoBordado, 2) . " bordado)</small>";
+                // Texto plano: la vista usa {{ }} que escapa el HTML (<small> se vería literal)
+                $mat->requerido_visual .= " (+ $" . number_format($recargoBordado, 2) . " bordado)";
 
-                $costoTotalMateriales += $subtotalMaterial; 
-                $costoRecargoBordado  += $recargoBordado;   
+                $costoTotalMateriales += $subtotalMaterial;
+                $costoRecargoBordado  += $recargoBordado;
 
             } else {
                 $subtotal = $cantReq * $precioUnitario;
@@ -621,20 +665,17 @@ class CotizadorController extends Controller
             $mat->subtotal_visual = "$" . number_format($subtotal, 2);
         }
 
-        // 3. CÁLCULO DE MANO DE OBRA Y GRAN TOTAL (Extracción directa sin recalcular)
-        
+        // 3. MANO DE OBRA Y GRAN TOTAL (lectura directa de lo guardado en el pedido)
         $costoTotalMateriales = (float) $pedido->costo_materiales;
-        
-        // En lugar de multiplicar por el porcentaje y arriesgarnos al centavo de redondeo,
-        // leemos directamente el costo de mano de obra exacto que guardó el navegador en el pedido.
-        // (Si por alguna razón la columna está vacía, hacemos el respaldo con la fórmula).
+
         $costoManoObra = (float) ($pedido->costo_mano_obra ?? ($costoTotalMateriales * (float)($config['margen_ganancia'] ?? 0.60)));
 
-        // Extras puros guardados en el pedido
         $costoExtrasSinMargen = (float) $pedido->costo_extras;
 
-        // Gran Total de Producción exacto
         $costoTotalProduccion = (float) $pedido->costo_total;
+
+        // 4. IMAGEN DE REFERENCIA (misma lógica que la nota de venta)
+        $rutaImagenPdf = $this->resolverRutaImagenPedido($pedido);
 
         // Mandamos a generar el PDF
         $pdf = Pdf::loadView('reportes.receta', compact(
@@ -644,7 +685,8 @@ class CotizadorController extends Controller
             'costoTotalProduccion',
             'costoDisenoPersonalizado',
             'costoApliques',
-            'costoRecargoBordado'
+            'costoRecargoBordado',
+            'rutaImagenPdf'
         ));
 
         return $pdf->stream('Receta_Bodega_Pedido_' . $pedido->id . '.pdf');
@@ -673,39 +715,25 @@ class CotizadorController extends Controller
 
         // 4. DETECCIÓN INTELIGENTE DE COTIZACIÓN RÁPIDA
         $esCotizacionRapida = false;
-        
+
         // Si el pedido solo tiene 1 "material" y su nombre empieza con nuestro tag oculto
         if ($pedido->materiales->count() === 1 && str_starts_with($pedido->materiales->first()->nombre_material, '[COTI-RÁPIDA]')) {
             $esCotizacionRapida = true;
-            
+
             // Limpiamos el texto para borrar el tag técnico antes de que llegue a la vista Blade
             $nombreLimpio = str_replace('[COTI-RÁPIDA] ', '', $pedido->materiales->first()->nombre_material);
             $pedido->materiales->first()->nombre_material = $nombreLimpio;
         }
 
-        // === NUEVA LÓGICA DE IMAGEN CORREGIDA ===
-        $rutaImagenPdf = null;
+        // 5. IMAGEN DE REFERENCIA (helper compartido con la receta)
+        $rutaImagenPdf = $this->resolverRutaImagenPedido($pedido);
 
-        // 1. Prioridad Alta: Imagen subida manualmente en el cotizador
-        if ($pedido->imagen_referencia) {
-            $rutaImagenPdf = public_path('storage/' . $pedido->imagen_referencia);
-        } 
-        // 2. Prioridad Baja: Imagen proveniente de la solicitud web (BTO)
-        elseif ($pedido->quote_request_id) {
-            $solicitudOriginal = \App\Models\QuoteRequest::find($pedido->quote_request_id);
-            
-            // Usamos el nombre correcto de tu columna: imagen_path
-            if ($solicitudOriginal && $solicitudOriginal->imagen_path) {
-                $rutaImagenPdf = public_path('storage/' . $solicitudOriginal->imagen_path);
-            }
-        }
-        // ========================================
-
-        // 5. Generar el PDF enviando la nueva variable de estado y la ruta de la imagen
+        // 6. Generar el PDF
         $pdf = Pdf::loadView('reportes.nota', compact('pedido', 'esCotizacionRapida', 'rutaImagenPdf'));
 
         return $pdf->stream('Nota_Venta_Pedido_' . $pedido->id . '.pdf');
     }
+    
     // =======================================================
     // ENVÍO DE CORREOS
     // =======================================================

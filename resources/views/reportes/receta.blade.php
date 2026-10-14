@@ -65,9 +65,29 @@
             border-radius: 12px;
         }
 
-        .espacio { height: 16px; font-size: 1px; line-height: 16px; }
+        .espacio { height: 14px; font-size: 1px; line-height: 14px; }
 
-        /* ===== TARJETA DE MATERIALES ===== */
+        /* ===== TARJETAS DE DATOS (encabezado ampliado) ===== */
+        .dato {
+            background-color: #ffffff;
+            border: 1px solid #e3d3ef;
+            border-radius: 10px;
+            padding: 9px 12px;
+        }
+        .etiqueta {
+            display: block;
+            font-size: 8.5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7b3fa0;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .valor { display: block; font-size: 12px; color: #2b2733; }
+        .valor-alerta { color: #c0392b; font-weight: bold; }
+        .valor-ok { color: #1c7a3f; font-weight: bold; }
+
+        /* ===== TARJETAS GRANDES ===== */
         .tarjeta {
             border: 1px solid #e3d3ef;
             border-radius: 14px;
@@ -120,6 +140,11 @@
         .estado-ok { background-color: #e3f6ea; color: #1c7a3f; }
         .estado-falta { background-color: #fde6e6; color: #c0392b; }
 
+        /* ===== IMAGEN DE REFERENCIA ===== */
+        .imagen-wrap { text-align: center; padding: 10px; height: 200px; }
+        .imagen-wrap img { max-width: 100%; max-height: 195px; border-radius: 12px; }
+        .sin-imagen { padding-top: 80px; color: #a9a3b3; font-size: 11px; text-align: center; }
+
         /* ===== RESUMEN FINANCIERO ===== */
         .resumen-card {
             border: 1px solid #e3d3ef;
@@ -166,6 +191,12 @@
 </head>
 <body>
 
+    @php
+        // Materiales reales (sin los de diseño) y cuántos faltan por comprar
+        $materialesLista = $pedido->materiales->filter(fn($m) => !$m->es_diseno);
+        $faltantes = $materialesLista->filter(fn($m) => $m->falta_comprar_num > 0)->count();
+    @endphp
+
     <!-- ===== HEADER ===== -->
     <div class="header-banda">
         <table class="layout">
@@ -184,6 +215,42 @@
 
     <div class="espacio">&nbsp;</div>
 
+    <!-- ===== DATOS DEL PEDIDO (4 columnas) ===== -->
+    <table class="layout">
+        <tr>
+            <td style="width: 25%; padding-right: 6px;">
+                <div class="dato">
+                    <span class="etiqueta">Cliente / Institución</span>
+                    <span class="valor">{{ $pedido->cliente_nombre }}</span>
+                </div>
+            </td>
+            <td style="width: 25%; padding-left: 3px; padding-right: 3px;">
+                <div class="dato">
+                    <span class="etiqueta">Fecha del pedido</span>
+                    <span class="valor">{{ $pedido->created_at->format('d/m/Y') }}</span>
+                </div>
+            </td>
+            <td style="width: 25%; padding-left: 3px; padding-right: 3px;">
+                <div class="dato">
+                    <span class="etiqueta">Cantidad a producir</span>
+                    <span class="valor">{{ $pedido->cantidad_total_bastones }} {{ $pedido->cantidad_total_bastones == 1 ? 'bastón' : 'bastones' }}</span>
+                </div>
+            </td>
+            <td style="width: 25%; padding-left: 6px;">
+                <div class="dato">
+                    <span class="etiqueta">Estado de materiales</span>
+                    @if($faltantes > 0)
+                        <span class="valor valor-alerta">{{ $faltantes }} {{ $faltantes == 1 ? 'por comprar' : 'por comprar' }}</span>
+                    @else
+                        <span class="valor valor-ok">Stock completo</span>
+                    @endif
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="espacio">&nbsp;</div>
+
     <!-- ===== MATERIALES ===== -->
     <div class="tarjeta">
         <div class="tarjeta-titulo">Material Requerido</div>
@@ -199,11 +266,7 @@
                 </tr>
             </thead>
             <tbody>
-                @php $i = 0; @endphp
-                @foreach($pedido->materiales as $mat)
-                    @if($mat->es_diseno)
-                        @continue
-                    @endif
+                @foreach($materialesLista->values() as $i => $mat)
                     <tr class="{{ $i % 2 == 1 ? 'alterna' : '' }}">
                         <td class="nombre">{{ $mat->nombre_material }}</td>
                         <td>{{ $mat->precio_unitario_visual }}</td>
@@ -218,7 +281,6 @@
                             @endif
                         </td>
                     </tr>
-                    @php $i++; @endphp
                 @endforeach
             </tbody>
         </table>
@@ -226,10 +288,21 @@
 
     <div class="espacio">&nbsp;</div>
 
-    <!-- ===== RESUMEN FINANCIERO (alineado a la derecha) ===== -->
+    <!-- ===== IMAGEN DE REFERENCIA (izq.) + RESUMEN FINANCIERO (der.) ===== -->
     <table class="layout">
         <tr>
-            <td style="width: 45%;"></td>
+            <td style="width: 45%; padding-right: 7px;">
+                <div class="tarjeta">
+                    <div class="tarjeta-titulo">Referencia Visual</div>
+                    <div class="imagen-wrap">
+                        @if(isset($rutaImagenPdf) && $rutaImagenPdf)
+                            <img src="{{ $rutaImagenPdf }}" alt="Referencia">
+                        @else
+                            <div class="sin-imagen">Sin imagen de referencia</div>
+                        @endif
+                    </div>
+                </div>
+            </td>
             <td style="width: 55%; padding-left: 7px;">
                 <div class="resumen-card">
                     <table class="layout">
