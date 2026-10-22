@@ -8,6 +8,7 @@ use App\Models\Insumo;
 use App\Models\QuoteRequest;
 use App\Models\Movimiento;
 use Carbon\Carbon;
+use App\Support\MaterialesIgnorables;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -95,28 +96,19 @@ class DashboardController extends Controller
         $materialesHuerfanos = [];
         foreach ($pedidosProcesados as $pedido) {
             foreach ($pedido->materiales as $item) {
-                $nombreLower = strtolower($item->nombre_material ?? '');
 
-                // =======================================================
-                // ARQUITECTURA BYPASS: Omitir mano de obra, servicios y coti-rápidas
-                // =======================================================
-                    if (str_contains($nombreLower, 'aplique') || 
-                        str_contains($nombreLower, 'diseño') || 
-                        str_contains($nombreLower, 'diseno') ||
-                        str_contains($nombreLower, '[coti-rápida]') || 
-                        str_contains($nombreLower, '[coti-rapida]') || 
-                        str_contains($item->nombre_material, '[COTI-RÁPIDA]')) { 
-                        continue;
-                    }
+                // Omitir mano de obra, servicios y coti-rápidas (lista central)
+                if (MaterialesIgnorables::esIgnorable($item->nombre_material)) {
+                    continue;
+                }
 
                 $materialesHuerfanos[] = [
-                    'detalle_id'      => $item->id, 
+                    'detalle_id'      => $item->id,
                     'pedido_id'       => $pedido->id,
                     'nombre_material' => $item->nombre_material
                 ];
             }
         }
-
 
         // =========================================================
         // 5. ALERTAS TIPO C: STOCK BAJO / POR AGOTARSE (Celeste)

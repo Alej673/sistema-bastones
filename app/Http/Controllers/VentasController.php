@@ -7,59 +7,17 @@ use App\Models\Insumo;
 use App\Models\Movimiento;
 use App\Models\QuoteRequest;
 use App\Models\CatalogItem;
+use App\Support\MaterialesIgnorables;   // ← NUEVO
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage; 
+use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Mail\NotaVentaMailable;
 
-
 class VentasController extends Controller
 {
-    // =======================================================
-    // CONFIGURACIÓN CENTRAL: qué se considera "no es un insumo físico"
-    // =======================================================
-    // Cualquier línea del carrito cuyo nombre contenga uno de estos
-    // fragmentos es mano de obra, servicio o una cotización rápida ya
-    // facturada como bloque único. NUNCA se debe:
-    //   - buscar en el Kardex
-    //   - descontar stock
-    //   - reportar como "material fantasma" (no encontrado)
-    // Si mañana agregas una nueva categoría de "servicio" (ej. grabado,
-    // empaque especial, etc.) solo la agregas aquí y automáticamente
-    // queda blindada en TODO el controlador.
-    private const FRAGMENTOS_IGNORABLES = [
-        'aplique',
-        'diseño',
-        'diseno',
-        '[coti-rápida]',
-        '[coti-rapida]',
-        '[sin-bastón]',
-        '[sin-baston]',
-        'sin bastón',
-        'sin baston',
-        'provista por cliente',
-    ];
-
-    /**
-     * True si esta línea del carrito es un servicio / mano de obra / coti-rápida,
-     * y por lo tanto debe excluirse de descuentos de inventario y de auditorías
-     * de "material no encontrado".
-     */
-    private function esMaterialIgnorable(string $nombreMaterial): bool
-    {
-        $nombreLower = strtolower($nombreMaterial);
-
-        foreach (self::FRAGMENTOS_IGNORABLES as $fragmento) {
-            if (str_contains($nombreLower, strtolower($fragmento))) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     /**
      * Intenta resolver el Insumo real del Kardex correspondiente a una línea
@@ -365,7 +323,7 @@ class VentasController extends Controller
 
                     // Servicios / mano de obra / coti-rápida: nunca tocan inventario
                     // ni cuentan como "material no encontrado".
-                    if ($this->esMaterialIgnorable($item->nombre_material)) {
+                    if (MaterialesIgnorables::esIgnorable($item->nombre_material)) {
                         continue;
                     }
 
@@ -566,7 +524,7 @@ class VentasController extends Controller
             foreach ($pedido->materiales as $mat) {
                 // MISMA regla que actualizarEstado(): servicios, diseños,
                 // apliques y coti-rápida jamás son "material fantasma".
-                if ($this->esMaterialIgnorable($mat->nombre_material)) {
+                if (MaterialesIgnorables::esIgnorable($mat->nombre_material)) {
                     continue;
                 }
 
