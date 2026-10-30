@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Mail\NotaVentaMailable;
+use Illuminate\Support\Facades\Log;
 
 class VentasController extends Controller
 {
@@ -295,9 +296,16 @@ class VentasController extends Controller
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
             DB::rollBack();
+
+            // 1. Guardas el error real completo en storage/logs/laravel.log
+            Log::error('Error en la transacción: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // 2. Respuesta limpia y segura hacia el frontend
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => 'Ocurrió un error al procesar la solicitud. Intenta nuevamente.',
             ], 500);
         }
     }
@@ -392,9 +400,14 @@ class VentasController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
+            Log::error('Error crítico: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error crítico: ' . $e->getMessage(),
+                'message' => config('app.debug')
+                    ? 'Error crítico: ' . $e->getMessage()
+                    : 'Ocurrió un error en el servidor. Por favor, intente nuevamente más tarde.',
             ], 500);
         }
     }
@@ -479,9 +492,13 @@ class VentasController extends Controller
             return response()->json(['success' => false, 'mensaje' => 'No se detectó ninguna acción válida.'], 400);
 
         } catch (\Exception $e) {
+            Log::error('Error crítico al gestionar la imagen: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error crítico al gestionar la imagen: ' . $e->getMessage()
+                'message' => config('app.debug')
+                    ? 'Error crítico al gestionar la imagen: ' . $e->getMessage()
+                    : 'Ocurrió un error al procesar la imagen. Por favor, intente nuevamente.',
             ], 500);
         }
     }

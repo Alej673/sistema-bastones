@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\NotaVentaMailable;
 use App\Models\QuoteRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 
 class CotizadorController extends Controller
@@ -278,9 +279,14 @@ class CotizadorController extends Controller
 
             } catch (\Exception $e) {
                 DB::rollBack();
+
+                Log::error('Error crítico en el servidor: ' . $e->getMessage());
+
                 return response()->json([
                     'success' => false,
-                    'mensaje' => 'Error crítico en el servidor: ' . $e->getMessage()
+                    'mensaje' => config('app.debug')
+                        ? 'Error crítico en el servidor: ' . $e->getMessage()
+                        : 'Error al procesar la solicitud. Intente nuevamente más tarde.'
                 ], 500);
             }
         }
@@ -450,9 +456,14 @@ class CotizadorController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
+            Log::error('Error crítico en el servidor: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'mensaje' => 'Error crítico en el servidor: ' . $e->getMessage()
+                'mensaje' => config('app.debug')
+                    ? 'Error crítico en el servidor: ' . $e->getMessage()
+                    : 'Error crítico en el servidor. Por favor, intente más tarde.'
             ], 500);
         }
     }
@@ -760,9 +771,13 @@ class CotizadorController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Error al enviar el correo: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'mensaje' => 'Error al enviar el correo: ' . $e->getMessage()
+                'mensaje' => config('app.debug')
+                    ? 'Error al enviar el correo: ' . $e->getMessage()
+                    : 'Error al enviar el correo. Por favor, intente nuevamente más tarde.'
             ], 500);
         }
     }

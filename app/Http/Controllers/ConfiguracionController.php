@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Ajuste;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ConfiguracionController extends Controller
 {
@@ -127,12 +128,22 @@ class ConfiguracionController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
+            // 1. Registro silencioso del error real para tu auditoría
+            Log::error('Error en la operación: ' . $e->getMessage());
+
+            // 2. Mensaje dinámico (Técnico en local, Genérico en producción)
+            $mensajeSeguro = config('app.debug') 
+                ? $e->getMessage() 
+                : 'Ocurrió un error interno al procesar la solicitud. Por favor, intenta de nuevo.';
+
+            // 3. Despacho para peticiones AJAX / Axios / jQuery
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+                return response()->json(['success' => false, 'message' => $mensajeSeguro], 500);
             }
 
-            return redirect()->back()->with('error', 'Ocurrió un error al guardar: ' . $e->getMessage());
+            // 4. Despacho para peticiones web tradicionales (Blade)
+            return redirect()->back()->with('error', $mensajeSeguro);
         }
     }
 }
