@@ -38,7 +38,7 @@ class AppServiceProvider extends ServiceProvider
             URL::forceRootUrl(config('app.url')); // <-- AGREGAR ESTA LÍNEA
         }
 
-        // Verificamos que la tabla exista para evitar fallos en instalaciones limpias
+        //Verificamos que la tabla exista para evitar fallos en instalaciones limpias
         if (Schema::hasTable('ajuste_tallers')) {
             View::composer('layouts.public', function ($view) {
                 $ajustes = AjusteTaller::pluck('valor', 'clave')->toArray();

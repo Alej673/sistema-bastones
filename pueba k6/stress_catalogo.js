@@ -10,7 +10,7 @@ export const options = {
   ],
 };
 
-const BASE_URL = 'http://127.0.0.1:8000';
+const BASE_URL = 'http://localhost';
 
 export default function () {
   // 1. Visitantes entran masivamente a la Landing Page (carga de carrusel y destacados)
@@ -30,4 +30,4 @@ export default function () {
   check(resFiltro, { 'Filtro respondió 200': (r) => r.status === 200 });
   
   sleep(1);
-}z
+}
