@@ -13,6 +13,9 @@ use App\Mail\NotaVentaMailable;
 use App\Models\QuoteRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 
 class CotizadorController extends Controller
@@ -34,30 +37,27 @@ class CotizadorController extends Controller
         $elasticos = $insumos->where('categoria', 'elastico')->values();
         $cinchos = $insumos->where('categoria', 'cinchos')->values();
 
-        // Aquí cargamos las bases pre-cortadas (Bases Plata 45cm, Dorada 60cm, etc.) que estructuramos antes como insumos para que el cliente pueda elegirlas directamente
+        // Bases pre-cortadas (Bases Plata 45cm, Dorada 60cm, etc.)
         $bases = $insumos->where('categoria', 'base_baston')->values();
         $unidadesSimples = $insumos->where('categoria', 'unidad_simple')->values();
-        
-
 
         // 3. LA CLAVE DE LA REACTIVIDAD: Serializamos toda la colección a JSON
-        // Esto le permitirá a JavaScript conocer ID, costos exactos por gramo/metro y stocks en tiempo real
         $insumosJson = $insumos->keyBy('id')->toJson();
 
-        // NUEVO: Extraemos la configuración para el JS
+        // Configuración para el JS
         $configuraciones = Ajuste::pluck('valor', 'llave');
 
         // 4. Enviamos los datos empaquetados a la vista del cotizador
         return view('cotizador.create', compact(
             'insumos',
-            'lanas', 
-            'cintasGarza', 
+            'lanas',
+            'cintasGarza',
             'cintasSatin',
-            'cintasGross', 
-            'cortinas', 
-            'elasticos', 
-            'cinchos', 
-            'bases', 
+            'cintasGross',
+            'cortinas',
+            'elasticos',
+            'cinchos',
+            'bases',
             'unidadesSimples',
             'insumosJson',
             'configuraciones'
@@ -72,13 +72,39 @@ class CotizadorController extends Controller
         // Esto lo desarrollaremos cuando la matemática del Frontend esté 100% sólida
     }
 
+    // =======================================================
+    // HELPERS PRIVADOS
+    // =======================================================
+
+    /**
+     * Escapa los comodines de LIKE (%, _ y \) para que el término
+     * buscado se trate como texto literal.
+     */
+    private function escaparLike(?string $term): string
+    {
+        return addcslashes((string) $term, '%_\\');
+    }
+
+    /**
+     * Elimina del disco una imagen subida durante una operación que falló.
+     */
+    private function limpiarImagenHuerfana(?string $rutaImagen): void
+    {
+        if ($rutaImagen) {
+            try {
+                Storage::disk('public')->delete($rutaImagen);
+            } catch (\Throwable $e) {
+                Log::warning('No se pudo limpiar la imagen huérfana: ' . $e->getMessage());
+            }
+        }
+    }
+
     // Función para llamar a la base de datos de lanas
     public function buscarLanas(Request $request)
     {
         // Capturamos el término de búsqueda que envía Select2
-        $term = $request->input('q');
+        $term = $this->escaparLike(mb_substr((string) $request->input('q', ''), 0, 100));
 
-        // Buscamos en la base de datos lanas que coincidan con lo escrito
         $lanas = Insumo::where('categoria', 'lana')
             ->where('nombre', 'LIKE', '%' . $term . '%')
             ->get()
@@ -95,17 +121,15 @@ class CotizadorController extends Controller
     // Funcion para llamar a la base de datos de cortinas de fiesta
     public function buscarCortinas(Request $request)
     {
-        // Capturamos el término de búsqueda
-        $term = $request->input('q');
+        $term = $this->escaparLike(mb_substr((string) $request->input('q', ''), 0, 100));
 
-        // Filtramos específicamente por la categoría de la imagen: 'cortina_fiesta'
         $cortinas = Insumo::where('categoria', 'cortina_fiesta')
             ->where('nombre', 'LIKE', '%' . $term . '%')
             ->get()
             ->map(function ($cortina) {
                 return [
                     'id' => $cortina->id,
-                    'text' => $cortina->nombre 
+                    'text' => $cortina->nombre
                 ];
             });
 
@@ -115,18 +139,16 @@ class CotizadorController extends Controller
     // Función para llamar a la base de datos de cintas
     public function buscarCintas(Request $request)
     {
-        $term = $request->input('q');
+        $term = $this->escaparLike(mb_substr((string) $request->input('q', ''), 0, 100));
 
-        // 1. Definimos las 3 categorías donde el sistema tiene permiso para buscar
+        // Categorías donde el sistema tiene permiso para buscar
         $categorias = ['cinta_satin', 'cinta_garza', 'cinta_gross'];
 
-        // 2. Buscamos usando whereIn para abarcar todas esas familias
         $cintas = Insumo::whereIn('categoria', $categorias)
             ->where('nombre', 'LIKE', '%' . $term . '%')
             ->get()
             ->map(function ($cinta) {
-                
-                // Truco UX: Limpiamos la palabra "cinta_" para que se vea estético
+
                 // Ej: "cinta_satin" -> "SATIN"
                 $tipoVisual = strtoupper(str_replace('cinta_', '', $cinta->categoria));
 
@@ -144,27 +166,34 @@ class CotizadorController extends Controller
     {
         // Si la petición viene con un ID específico (para autocompletar)
         if ($request->has('id')) {
+            $request->validate(['id' => 'required|integer']);
+
             return response()->json(
-                QuoteRequest::with('user')->find($request->id)
+                QuoteRequest::with('user')
+                    ->where('estado', 'pendiente')
+                    ->find($request->id)
             );
         }
 
         // Búsqueda para el Select2
-        $term = $request->get('q');
+        $term = $this->escaparLike(mb_substr((string) $request->get('q', ''), 0, 100));
 
         $solicitudes = QuoteRequest::with('user')
             ->where('estado', 'pendiente')
-            ->when($term, function ($query, $term) {
-                $query->where('id', 'LIKE', "%{$term}%")
-                    ->orWhereHas('user', function ($userQuery) use ($term) {
-                        $userQuery->where('name', 'LIKE', "%{$term}%");
-                    });
+            ->when($term !== '', function ($query) use ($term) {
+                // Agrupamos el OR para que NO rompa el filtro estado = 'pendiente'
+                $query->where(function ($q) use ($term) {
+                    $q->where('id', 'LIKE', "%{$term}%")
+                      ->orWhereHas('user', function ($userQuery) use ($term) {
+                          $userQuery->where('name', 'LIKE', "%{$term}%");
+                      });
+                });
             })
             ->latest()
             ->take(10)
             ->get();
 
-        // PASO CLAVE: Formatear el texto a medida según el tipo de producto
+        // Formatear el texto a medida según el tipo de producto
         $resultados = $solicitudes->map(function ($solicitud) {
             $categoriaOriginal = strtolower($solicitud->categoria ?? 'general');
             $categoriaFormateada = ucfirst($solicitud->categoria ?? 'Varios');
@@ -174,31 +203,28 @@ class CotizadorController extends Controller
 
             if ($esBaston) {
                 // Extraemos medida y acabado (ignorando 'na')
-                $medida = (strtolower($solicitud->medida_cm) !== 'na' && $solicitud->medida_cm) 
+                $medida = (strtolower($solicitud->medida_cm) !== 'na' && $solicitud->medida_cm)
                             ? $solicitud->medida_cm . 'cm' : '';
-                $acabado = (strtolower($solicitud->acabado) !== 'na' && $solicitud->acabado) 
+                $acabado = (strtolower($solicitud->acabado) !== 'na' && $solicitud->acabado)
                             ? $solicitud->acabado : '';
-                
+
                 $detalles = trim("$medida $acabado");
-                
+
                 // Resultado visual: (Bastón - 60cm Plata)
                 $extra = $detalles ? "{$categoriaFormateada} - {$detalles}" : $categoriaFormateada;
             } else {
                 // Para Manualidades, Flores o Lazos, solo mostramos la categoría
-                // Resultado visual: (Manualidad)
                 $extra = $categoriaFormateada;
             }
 
-            // Armamos el texto final inyectando el $extra
             $texto = 'RQ-' . str_pad($solicitud->id, 4, '0', STR_PAD_LEFT) . ' | ' . $solicitud->nombre . ' (' . $extra . ')';
 
             // Inyectamos la propiedad 'text' al objeto para Select2
             $solicitud->text = $texto;
-            
+
             return $solicitud;
         });
 
-        // Devolvemos los resultados ya limpios
         return response()->json($resultados);
     }
 
@@ -208,13 +234,19 @@ class CotizadorController extends Controller
         // 1. EL BYPASS: MODO RÁPIDO (Manualidades, Lazos, Flores)
         // =======================================================
         if ($request->filled('modo_rapido') && $request->modo_rapido == 'true') {
-            
+
             // Validación exprés
             $request->validate([
-                'nombre_cliente'  => 'required|string|max:255',
-                'costo_total'     => 'required|numeric',
-                'concepto_rapido' => 'required|string|max:255',
+                'nombre_cliente'    => 'required|string|max:255',
+                'correo_cliente'    => 'nullable|email|max:255',
+                'quote_request_id'  => 'nullable|integer|exists:quote_requests,id',
+                'costo_total'       => 'required|numeric|min:0.01|max:99999',
+                'concepto_rapido'   => 'required|string|max:255',
+                'detalles_rapido'   => 'nullable|string|max:1000',
+                'imagen_referencia' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
             ]);
+
+            $rutaImagen = null;
 
             try {
                 DB::beginTransaction();
@@ -224,24 +256,23 @@ class CotizadorController extends Controller
                 $pedido->quote_request_id = $request->input('quote_request_id');
                 $pedido->cliente_nombre   = $request->input('nombre_cliente');
                 $pedido->correo_cliente   = $request->input('correo_cliente');
-                
+
                 // Llenamos con "ceros" la estructura de bastones para no romper la base de datos
-                $pedido->cantidad_total_bastones = 1; 
+                $pedido->cantidad_total_bastones = 1;
                 $pedido->costo_materiales = 0;
                 $pedido->costo_extras     = 0;
                 $pedido->ganancia_fija    = 0;
                 $pedido->costo_total      = (float) $request->input('costo_total');
                 $pedido->costo_unitario   = (float) $request->input('costo_total');
-                $pedido->estado           = 'pendiente'; 
+                $pedido->estado           = 'pendiente';
                 $pedido->save();
 
-                // === NUEVO: GUARDAR IMAGEN (Modo Rápido) ===
+                // GUARDAR IMAGEN (Modo Rápido)
                 if ($request->hasFile('imagen_referencia')) {
                     $rutaImagen = $request->file('imagen_referencia')->store('cotizaciones_referencias', 'public');
                     $pedido->imagen_referencia = $rutaImagen;
-                    $pedido->save(); // Guardamos de nuevo para que agarre la ruta
+                    $pedido->save();
                 }
-                // ============================================
 
                 // B. Sincronización BTO
                 if ($request->filled('quote_request_id')) {
@@ -253,16 +284,16 @@ class CotizadorController extends Controller
                     }
                 }
 
-                // C. TRUCO ARQUITECTÓNICO: Guardamos el concepto como un único "material".
+                // C. Guardamos el concepto como un único "material".
                 $detalle = $request->input('concepto_rapido');
                 if ($request->filled('detalles_rapido')) {
                     $detalle .= ' - ' . $request->input('detalles_rapido');
                 }
 
                 DB::table('pedido_materiales')->insert([
-                    'pedido_id'          => $pedido->id, 
-                    'insumo_id'          => null, 
-                    'nombre_material'    => '[COTI-RÁPIDA] ' . $detalle, 
+                    'pedido_id'          => $pedido->id,
+                    'insumo_id'          => null,
+                    'nombre_material'    => '[COTI-RÁPIDA] ' . $detalle,
                     'cantidad_requerida' => 1,
                     'subtotal_calculado' => (float) $request->input('costo_total'),
                     'created_at'         => now(),
@@ -279,6 +310,7 @@ class CotizadorController extends Controller
 
             } catch (\Exception $e) {
                 DB::rollBack();
+                $this->limpiarImagenHuerfana($rutaImagen);
 
                 Log::error('Error crítico en el servidor: ' . $e->getMessage());
 
@@ -294,14 +326,20 @@ class CotizadorController extends Controller
         // =======================================================
         // 2. FLUJO NORMAL: MODO BASTONES (La calculadora pesada)
         // =======================================================
-        
+
         // 1. Validación de estructura: campos base + materiales como arreglo obligatorio
         $request->validate([
-            'quote_request_id'        => 'nullable|exists:quote_requests,id',
-            'cantidad_total_bastones' => 'required|numeric|min:1',
-            'costo_total'             => 'required|numeric',
-            'correo_cliente'          => 'nullable|email',
-            'materiales'              => 'required|string',
+            'quote_request_id'        => 'nullable|integer|exists:quote_requests,id',
+            'nombre_cliente'          => 'nullable|string|max:255',
+            'correo_cliente'          => 'nullable|email|max:255',
+            'cantidad_total_bastones' => 'required|integer|min:1|max:10000',
+            'costo_materiales'        => 'nullable|numeric|min:0|max:99999',
+            'costo_extras'            => 'nullable|numeric|min:0|max:99999',
+            'ganancia_fija'           => 'nullable|numeric|min:0|max:99999',
+            'costo_unitario'          => 'nullable|numeric|min:0|max:99999',
+            'costo_total'             => 'required|numeric|min:0.01|max:99999',
+            'materiales'              => 'required|string|max:200000',
+            'imagen_referencia'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
 
         // 2. Decodificamos el carrito...
@@ -313,14 +351,26 @@ class CotizadorController extends Controller
                 'mensaje' => 'El detalle de materiales llegó vacío o corrupto. No se puede guardar un pedido sin materiales.'
             ], 422);
         }
-        
+
+        // Límite razonable de líneas para evitar payloads abusivos
+        if (count($listaMateriales) > 200) {
+            return response()->json([
+                'success' => false,
+                'mensaje' => 'El carrito tiene demasiadas líneas de materiales.'
+            ], 422);
+        }
+
         // 3. Validamos la estructura de CADA línea del carrito (defensa contra payloads manuales)
         foreach ($listaMateriales as $mat) {
-            if (!isset($mat['nombre_material'], $mat['cantidad_requerida'], $mat['subtotal_calculado'])
-                || trim($mat['nombre_material']) === ''
-                || !is_numeric($mat['cantidad_requerida'])
-                || !is_numeric($mat['subtotal_calculado'])
-            ) {
+            $v = Validator::make(is_array($mat) ? $mat : [], [
+                'nombre_material'    => 'required|string|max:255',
+                // Se permite signo negativo porque el frontend puede enviarlo (el PDF aplica abs())
+                'cantidad_requerida' => 'required|numeric|between:-100000,100000',
+                'subtotal_calculado' => 'required|numeric|min:0|max:99999',
+                'insumo_id'          => ['nullable', 'integer', Rule::exists('insumos', 'id')->whereNull('deleted_at')],
+            ]);
+
+            if ($v->fails() || trim((string) ($mat['nombre_material'] ?? '')) === '') {
                 return response()->json([
                     'success' => false,
                     'mensaje' => 'Uno de los materiales del carrito tiene datos inválidos o incompletos.'
@@ -329,16 +379,16 @@ class CotizadorController extends Controller
         }
 
         // 4. REGLA DE NEGOCIO: espejo de la validación del front (validarCintasNuevas en cotizador.js).
-        // Si un material es una cinta nueva (sin insumo_id, es decir aún no existe en inventario),
-        // su nombre debe incluir el tipo (Satín / Gross / Garza). Esto evita que alguien se salte
-        // el JS y guarde una cinta ambigua directo contra el endpoint.
+        // Si un material es una cinta nueva (sin insumo_id), su nombre debe incluir el tipo (Satín / Gross / Garza).
         foreach ($listaMateriales as $mat) {
+            $nombreCinta = mb_strtolower($mat['nombre_material'], 'UTF-8');
+
             $esCintaSinTipo = empty($mat['insumo_id'])
-                && str_contains(strtolower($mat['nombre_material']), 'cinta')
-                && !str_contains(strtolower($mat['nombre_material']), 'satin')
-                && !str_contains(strtolower($mat['nombre_material']), 'satín')
-                && !str_contains(strtolower($mat['nombre_material']), 'gross')
-                && !str_contains(strtolower($mat['nombre_material']), 'garza');
+                && str_contains($nombreCinta, 'cinta')
+                && !str_contains($nombreCinta, 'satin')
+                && !str_contains($nombreCinta, 'satín')
+                && !str_contains($nombreCinta, 'gross')
+                && !str_contains($nombreCinta, 'garza');
 
             if ($esCintaSinTipo) {
                 return response()->json([
@@ -348,44 +398,42 @@ class CotizadorController extends Controller
             }
         }
 
+        $rutaImagen = null;
+
         try {
             DB::beginTransaction();
 
             // 5. Guardar la cabecera del pedido (Maestro)
             $pedido = new \App\Models\Pedido();
-            // Asignamos el ID de la solicitud web si viene en la petición (null si es venta física)
             $pedido->quote_request_id = $request->input('quote_request_id');
-            // Datos del cliente mapeados exactamente a como los envía tu AJAX
-            $pedido->cliente_nombre = $request->input('nombre_cliente', 'Cliente de Mostrador'); 
-            $pedido->correo_cliente = $request->input('correo_cliente'); 
-            
-            $pedido->cantidad_total_bastones = $request->input('cantidad_total_bastones');
-            
+            $pedido->cliente_nombre = $request->input('nombre_cliente', 'Cliente de Mostrador');
+            $pedido->correo_cliente = $request->input('correo_cliente');
+
+            $pedido->cantidad_total_bastones = (int) $request->input('cantidad_total_bastones');
+
             // Desglose financiero
             $pedido->costo_materiales = (float) $request->input('costo_materiales');
             $pedido->costo_extras     = (float) $request->input('costo_extras');
             $pedido->ganancia_fija    = (float) $request->input('ganancia_fija');
             $pedido->costo_total      = (float) $request->input('costo_total');
             $pedido->costo_unitario   = (float) $request->input('costo_unitario');
-            
-            $pedido->estado = 'pendiente'; 
+
+            $pedido->estado = 'pendiente';
             $pedido->save();
 
-            // === NUEVO: GUARDAR IMAGEN (Modo Bastones) ===
+            // GUARDAR IMAGEN (Modo Bastones)
             if ($request->hasFile('imagen_referencia')) {
                 // Sube la imagen a storage/app/public/cotizaciones_referencias
                 $rutaImagen = $request->file('imagen_referencia')->store('cotizaciones_referencias', 'public');
                 $pedido->imagen_referencia = $rutaImagen;
-                $pedido->save(); 
+                $pedido->save();
             }
-            // ===============================================
 
             // Si el pedido tiene un ID web asociado, actualizamos la tabla del cliente
             if ($request->filled('quote_request_id')) {
                 $solicitudWeb = \App\Models\QuoteRequest::find($request->input('quote_request_id'));
-                
+
                 if ($solicitudWeb) {
-                    // Guardamos el costo calculado por tu mamá y lo pasamos a estado 'cotizado'
                     $solicitudWeb->precio_final = (float) $request->input('costo_total');
                     $solicitudWeb->estado = 'cotizado';
                     $solicitudWeb->save();
@@ -394,13 +442,13 @@ class CotizadorController extends Controller
 
             // 6. Insertar cada material del carrito ya validado
             foreach ($listaMateriales as $mat) {
-                
+
                 $insumoIdFinal = $mat['insumo_id'] ?? null;
                 $nombreOriginal = trim($mat['nombre_material']);
                 $nombreMaterialLimpiado = mb_strtolower($nombreOriginal, 'UTF-8');
 
                 // Detectar si es la estructura base provista por el cliente ("Sin bastón")
-                $esSinBaston = str_contains($nombreMaterialLimpiado, 'sin bastón') 
+                $esSinBaston = str_contains($nombreMaterialLimpiado, 'sin bastón')
                             || str_contains($nombreMaterialLimpiado, 'sin baston')
                             || str_contains($nombreMaterialLimpiado, 'provista por cliente');
 
@@ -422,7 +470,7 @@ class CotizadorController extends Controller
                             $insumoIdFinal = $insumoDetectado->id;
                         }
                     }
-                    
+
                     // Lógica para interceptar "Elástico"
                     if (str_contains($nombreMaterialLimpiado, 'elástico') || str_contains($nombreMaterialLimpiado, 'elastico')) {
                         $insumoDetectado = \App\Models\Insumo::where('categoria', 'elastico')->whereNull('deleted_at')->first();
@@ -435,8 +483,8 @@ class CotizadorController extends Controller
 
                 // Insertamos cada fila en la tabla de detalles
                 DB::table('pedido_materiales')->insert([
-                    'pedido_id'          => $pedido->id, 
-                    'insumo_id'          => $insumoIdFinal, 
+                    'pedido_id'          => $pedido->id,
+                    'insumo_id'          => $insumoIdFinal,
                     'nombre_material'    => $mat['nombre_material'],
                     'cantidad_requerida' => $mat['cantidad_requerida'],
                     'subtotal_calculado' => $mat['subtotal_calculado'],
@@ -456,6 +504,7 @@ class CotizadorController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            $this->limpiarImagenHuerfana($rutaImagen);
 
             Log::error('Error crítico en el servidor: ' . $e->getMessage());
 
@@ -494,6 +543,11 @@ class CotizadorController extends Controller
 
         $relativa = ltrim($relativa, '/');
 
+        // Defensa contra path traversal (../) y bytes nulos
+        if (str_contains($relativa, '..') || str_contains($relativa, "\0")) {
+            return null;
+        }
+
         // Probamos primero el disco real y luego el symlink public/storage
         $candidatas = [
             storage_path('app/public/' . $relativa),
@@ -526,15 +580,32 @@ class CotizadorController extends Controller
         $costoApliques            = 0;
         $costoRecargoBordado      = 0;
 
-        $esPedidoGrande = $pedido->cantidad_total_bastones >= (int)($config['base_umbral_mayoreo'] ?? 12);
+        // --- Parámetros desde ajustes (con respaldo si falta la llave) ---
+        $cantBastones = $pedido->cantidad_total_bastones;
+
+        $esPedidoGrande   = $cantBastones >= (int)($config['base_umbral_mayoreo'] ?? 12);
+        $esCortinaMayoreo = $cantBastones >= (int)($config['cortina_fiesta_umbral'] ?? 12);
+
         $recargoBordadoUnitario = (float)($config['deco_lazo_nombre_mo'] ?? 0.70);
+        $precioAplique          = (float)($config['deco_apliques_precio'] ?? 0.50);
+
+        $gramosMadeja     = (float)($config['lana_gramos_madeja'] ?? 90);
+        $cortinasPaquete  = (float)($config['cortina_unidades_paquete'] ?? 4);
+        $metrosLazoSimple = (float)($config['deco_lazo_simple_m'] ?? 1.5);
+        $metrosFlor       = (float)($config['deco_flor_m'] ?? 1.0);
+
+        $preciosDiseno = [
+            'basico'     => (float)($config['deco_diseno_basico'] ?? 1.50),
+            'intermedio' => (float)($config['deco_diseno_intermedio'] ?? 2.00),
+            'premium'    => (float)($config['deco_diseno_premium'] ?? 3.00),
+        ];
 
         foreach ($pedido->materiales as $mat) {
             $stockActual = 0;
             $precioUnitario = 0;
             $insumo = null;
-            $esDiseno = str_contains(strtolower($mat->nombre_material), 'diseño')
-                     || str_contains(strtolower($mat->nombre_material), 'diseno');
+            $nombreLower = mb_strtolower($mat->nombre_material, 'UTF-8');
+            $esDiseno = str_contains($nombreLower, 'diseño') || str_contains($nombreLower, 'diseno');
 
             if (!$esDiseno) {
                 if ($mat->insumo_id) {
@@ -549,14 +620,11 @@ class CotizadorController extends Controller
             }
 
             // Aplicamos abs() para eliminar signos negativos del frontend
-            $cantReqAbs = abs((float) $mat->cantidad_requerida);
+            $cantReq = abs((float) $mat->cantidad_requerida);
+            $stock   = (float) $stockActual;
 
-            $diferencia = $cantReqAbs - $stockActual;
+            $diferencia = $cantReq - $stock;
             $faltaComprarNumerico = $diferencia > 0 ? $diferencia : 0;
-
-            $nombreLower = strtolower($mat->nombre_material);
-            $cantReq = $cantReqAbs;
-            $stock = (float) $stockActual;
             $falta = (float) $faltaComprarNumerico;
 
             // 1. OBTENCIÓN DEL PRECIO
@@ -566,9 +634,13 @@ class CotizadorController extends Controller
                 } else {
                     if (str_contains($nombreLower, 'base')) {
                         if (str_contains($nombreLower, 'dorado')) {
-                            $precioUnitario = $esPedidoGrande ? (float)($config['base_dorado_mayoreo'] ?? 5.00) : (float)($config['base_dorado_normal'] ?? 5.50);
+                            $precioUnitario = $esPedidoGrande
+                                ? (float)($config['base_dorado_mayoreo'] ?? 5.00)
+                                : (float)($config['base_dorado_normal'] ?? 5.50);
                         } else {
-                            $precioUnitario = $esPedidoGrande ? (float)($config['base_plata_mayoreo'] ?? 4.50) : (float)($config['base_plata_normal'] ?? 5.00);
+                            $precioUnitario = $esPedidoGrande
+                                ? (float)($config['base_plata_mayoreo'] ?? 4.50)
+                                : (float)($config['base_plata_normal'] ?? 5.00);
                         }
                     } elseif (str_contains($nombreLower, 'lana')) {
                         $precioUnitario = (float)($config['pf_lana'] ?? 0.0127);
@@ -579,7 +651,9 @@ class CotizadorController extends Controller
                     } elseif (str_contains($nombreLower, 'gross')) {
                         $precioUnitario = (float)($config['pf_cinta_gross'] ?? 0.15);
                     } elseif (str_contains($nombreLower, 'cortina')) {
-                        $precioUnitario = $esPedidoGrande ? (float)($config['pf_cortina_mayor'] ?? 0.50) : (float)($config['pf_cortina_menor'] ?? 1.00);
+                        $precioUnitario = $esCortinaMayoreo
+                            ? (float)($config['pf_cortina_mayor'] ?? 0.50)
+                            : (float)($config['pf_cortina_menor'] ?? 1.00);
                     } elseif (str_contains($nombreLower, 'elástico') || str_contains($nombreLower, 'elastico')) {
                         $precioUnitario = (float)($config['pf_elastico'] ?? 0.09);
                     } elseif (str_contains($nombreLower, 'cincho')) {
@@ -595,20 +669,20 @@ class CotizadorController extends Controller
 
             // --- LÓGICA VISUAL DE BODEGA ---
             if (str_contains($nombreLower, 'flor') || str_contains($nombreLower, 'lazo')) {
-                $divisor = str_contains($nombreLower, 'lazo simple') ? 1.5 : 1.0;
+                $divisor = str_contains($nombreLower, 'lazo simple') ? $metrosLazoSimple : $metrosFlor;
                 $unidades = round($cantReq / $divisor);
                 $mat->requerido_visual = "{$unidades} unid. (" . number_format($cantReq, 1) . "m)";
                 $mat->stock_visual = number_format($stock, 1) . "m";
                 $mat->falta_visual = $falta > 0 ? number_format($falta, 1) . "m" : "0";
             } elseif (str_contains($nombreLower, 'lana')) {
-                $madejasReq = ceil($cantReq / 90);
-                $madejasFalta = ceil($falta / 90);
+                $madejasReq   = ceil($cantReq / $gramosMadeja);
+                $madejasFalta = ceil($falta / $gramosMadeja);
                 $mat->requerido_visual = "~{$madejasReq} madejas (" . round($cantReq) . "g)";
                 $mat->stock_visual = round($stock) . "g";
                 $mat->falta_visual = $falta > 0 ? "~{$madejasFalta} madejas (" . round($falta) . "g)" : "0";
             } elseif (str_contains($nombreLower, 'cortina')) {
-                $paquetesReq   = ceil($cantReq / 4);
-                $paquetesFalta = ceil($falta / 4);
+                $paquetesReq   = ceil($cantReq / $cortinasPaquete);
+                $paquetesFalta = ceil($falta / $cortinasPaquete);
                 $mat->requerido_visual = "~{$paquetesReq} paquetes (" . round($cantReq) . " unid.)";
                 $mat->stock_visual = round($stock) . " unid.";
                 $mat->falta_visual = $falta > 0 ? "~{$paquetesFalta} paquetes (" . round($falta) . " unid.)" : "0";
@@ -630,9 +704,9 @@ class CotizadorController extends Controller
             $subtotal = 0;
 
             if ($esDiseno) {
-                $precioDiseno = 1.50;
-                if (str_contains($nombreLower, 'intermedio')) $precioDiseno = 2.00;
-                if (str_contains($nombreLower, 'premium')) $precioDiseno = 3.00;
+                $precioDiseno = $preciosDiseno['basico'];
+                if (str_contains($nombreLower, 'intermedio')) $precioDiseno = $preciosDiseno['intermedio'];
+                if (str_contains($nombreLower, 'premium'))    $precioDiseno = $preciosDiseno['premium'];
 
                 $subtotal = $cantReq * $precioDiseno;
 
@@ -645,7 +719,7 @@ class CotizadorController extends Controller
                 $costoDisenoPersonalizado += $subtotal;
 
             } elseif (str_contains($nombreLower, 'aplique')) {
-                $precioUnitario = 0.50;
+                $precioUnitario = $precioAplique;
                 $subtotal = $cantReq * $precioUnitario;
                 $mat->precio_unitario_visual = "$" . number_format($precioUnitario, 2);
                 $mat->falta_comprar_num = $faltaComprarNumerico;
@@ -653,7 +727,7 @@ class CotizadorController extends Controller
                 $costoApliques += $subtotal;
 
             } elseif (str_contains($nombreLower, 'lazo') && str_contains($nombreLower, 'nombre')) {
-                $recargoBordado = $recargoBordadoUnitario * $pedido->cantidad_total_bastones;
+                $recargoBordado = $recargoBordadoUnitario * $cantBastones;
                 $subtotalMaterial = $cantReq * $precioUnitario;
                 $subtotal = $subtotalMaterial + $recargoBordado;
 
@@ -680,8 +754,6 @@ class CotizadorController extends Controller
         $costoTotalMateriales = (float) $pedido->costo_materiales;
 
         $costoManoObra = (float) ($pedido->costo_mano_obra ?? ($costoTotalMateriales * (float)($config['margen_ganancia'] ?? 0.60)));
-
-        $costoExtrasSinMargen = (float) $pedido->costo_extras;
 
         $costoTotalProduccion = (float) $pedido->costo_total;
 
@@ -744,7 +816,7 @@ class CotizadorController extends Controller
 
         return $pdf->stream('Nota_Venta_Pedido_' . $pedido->id . '.pdf');
     }
-    
+
     // =======================================================
     // ENVÍO DE CORREOS
     // =======================================================
@@ -753,15 +825,15 @@ class CotizadorController extends Controller
     {
         // 1. Validamos que nos llegue un ID válido y un correo con formato correcto
         $request->validate([
-            'pedido_id' => 'required|exists:pedidos,id',
-            'email'     => 'required|email'
+            'pedido_id' => 'required|integer|exists:pedidos,id',
+            'email'     => 'required|email|max:255'
         ]);
 
         try {
             // 2. Buscamos el pedido con todo su detalle (para el PDF)
             $pedido = Pedido::with('materiales')->findOrFail($request->pedido_id);
 
-            // 3. ¡La Magia! Enviamos el correo usando nuestra clase Mailable
+            // 3. Enviamos el correo usando nuestra clase Mailable
             Mail::to($request->email)->send(new NotaVentaMailable($pedido));
 
             // 4. Respondemos al Frontend que todo salió bien

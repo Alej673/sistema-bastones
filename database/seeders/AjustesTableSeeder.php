@@ -33,6 +33,14 @@ class AjustesTableSeeder extends Seeder
             ['llave' => 'lana_consumo_normal', 'valor' => '135', 'grupo' => 'recetas', 'descripcion' => 'Gramos de lana para tamaño normal'],
             ['llave' => 'lana_gramos_madeja', 'valor' => '90', 'grupo' => 'recetas', 'descripcion' => 'Gramos por madeja estándar'],
             ['llave' => 'cortina_lana_gramos', 'valor' => '30', 'grupo' => 'recetas', 'descripcion' => 'Gramos de lana por cada cortina'],
+            ['llave' => 'cortina_unidades_paquete', 'valor' => '4', 'grupo' => 'recetas', 'descripcion' => 'Cortinas de fiesta por paquete'],
+
+            // PRESENTACIÓN DE COMPRA DE INSUMOS (Kardex)
+            ['llave' => 'insumo_rollo_garza_m', 'valor' => '45.72', 'grupo' => 'insumos', 'descripcion' => 'Metros por rollo de cinta garza'],
+            ['llave' => 'insumo_rollo_satin_m', 'valor' => '18.28', 'grupo' => 'insumos', 'descripcion' => 'Metros por rollo de cinta satín'],
+            ['llave' => 'insumo_rollo_gross_m', 'valor' => '22.86', 'grupo' => 'insumos', 'descripcion' => 'Metros por rollo de cinta gross'],
+            ['llave' => 'insumo_paquete_elastico_m', 'valor' => '10', 'grupo' => 'insumos', 'descripcion' => 'Metros por paquete de elástico'],
+            ['llave' => 'insumo_paquete_cinchos_u', 'valor' => '100', 'grupo' => 'insumos', 'descripcion' => 'Cinchos por paquete'],
 
             // UMBRALES Y MAYOREO
             ['llave' => 'base_umbral_mayoreo', 'valor' => '12', 'grupo' => 'mayoreo', 'descripcion' => 'Cantidad mínima para mayoreo de bases'],
@@ -50,13 +58,16 @@ class AjustesTableSeeder extends Seeder
             ['llave' => 'deco_lazo_nombre_m', 'valor' => '1.0', 'grupo' => 'decoracion', 'descripcion' => 'Metros por lazo con nombre'],
             ['llave' => 'deco_lazo_nombre_mo', 'valor' => '0.70', 'grupo' => 'decoracion', 'descripcion' => 'Costo mano de obra bordado de nombre'],
             ['llave' => 'deco_apliques_precio', 'valor' => '0.50', 'grupo' => 'decoracion', 'descripcion' => 'Precio unitario apliques extra'],
-            
+            ['llave' => 'deco_diseno_basico', 'valor' => '1.50', 'grupo' => 'decoracion', 'descripcion' => 'Precio extra por diseño personalizado básico'],
+            ['llave' => 'deco_diseno_intermedio', 'valor' => '2.00', 'grupo' => 'decoracion', 'descripcion' => 'Precio extra por diseño personalizado intermedio'],
+            ['llave' => 'deco_diseno_premium', 'valor' => '3.00', 'grupo' => 'decoracion', 'descripcion' => 'Precio extra por diseño personalizado premium'],
+
             // REDES Y CONTACTO
             ['llave' => 'contacto_whatsapp', 'valor' => '+593900000000', 'grupo' => 'contacto', 'descripcion' => 'Número de WhatsApp de la administradora'],
             ['llave' => 'red_tiktok', 'valor' => 'https://www.tiktok.com/@titi_val_0905?lang=es-419', 'grupo' => 'contacto', 'descripcion' => 'Enlace del perfil de TikTok'],
             ['llave' => 'red_facebook', 'valor' => '', 'grupo' => 'contacto', 'descripcion' => 'Enlace de la página de Facebook'],
             ['llave' => 'red_instagram', 'valor' => '', 'grupo' => 'contacto', 'descripcion' => 'Enlace del perfil de Instagram'],
-            
+
             // SISTEMA
             ['llave' => 'taller_estado', 'valor' => 'abierto', 'grupo' => 'sistema', 'descripcion' => 'Estado del taller (abierto/cerrado para pedidos)'],
         ];
@@ -66,6 +77,7 @@ class AjustesTableSeeder extends Seeder
             $ajuste['created_at'] = $ahora;
             $ajuste['updated_at'] = $ahora;
         }
+        unset($ajuste);
 
         // Vaciar la tabla primero (por si ejecutas el seeder varias veces) y luego insertar
         DB::table('ajustes')->truncate();

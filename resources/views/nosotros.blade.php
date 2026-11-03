@@ -98,7 +98,7 @@
         </div>
         <div class="col-md-6 text-center scroll-hidden">
             <!-- Imagen de respaldo (idealmente la administradora trabajando o un detalle de los materiales) -->
-            <img src="{{ asset('image/Logotipo.png') }}" alt="Trabajo artesanal en el taller" class="img-fluid rounded shadow-lg" style="max-height: 400px; object-fit: cover; border: 3px solid var(--color-oro-claro);">
+            <img src="{{ asset('image/logo.png') }}" alt="Trabajo artesanal en el taller" class="img-fluid rounded shadow-lg" style="max-height: 400px; object-fit: cover; border: 3px solid var(--color-oro-claro);">
         </div>
     </div>
 
