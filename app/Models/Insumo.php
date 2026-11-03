@@ -14,6 +14,7 @@ class Insumo extends Model
         'nombre',
         'categoria', 
         'unidad_medida',
+        'precio_comercial',
         'costo_unitario',
         'stock_actual',
         'stock_minimo',

@@ -76,7 +76,10 @@ class InsumoController extends Controller
             ->take(15)
             ->get();
 
-        return view('insumos.index', compact('insumos', 'movimientos'));
+        // Extraer configuración global como arreglo asociativo
+        $config = \App\Models\Ajuste::pluck('valor', 'llave')->toArray();
+
+        return view('insumos.index', compact('insumos', 'movimientos', 'config'));
     }
 
     public function create()
@@ -129,6 +132,7 @@ class InsumoController extends Controller
                 $insumoEliminado->update([
                     'categoria'      => $request->categoria,
                     'unidad_medida'  => $unidad,
+                    'precio_comercial' => $request->precio_unitario,
                     'costo_unitario' => $costo_unitario_calculado,
                     'stock_actual'   => $stock_actual_calculado,
                     'stock_minimo'   => $stock_minimo_calculado,
@@ -152,6 +156,7 @@ class InsumoController extends Controller
                 'nombre'         => $request->nombre,
                 'categoria'      => $request->categoria,
                 'unidad_medida'  => $unidad,
+                'precio_comercial' => $request->precio_unitario,
                 'costo_unitario' => $costo_unitario_calculado,
                 'stock_actual'   => $stock_actual_calculado,
                 'stock_minimo'   => $stock_minimo_calculado,

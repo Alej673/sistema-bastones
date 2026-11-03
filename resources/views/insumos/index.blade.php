@@ -52,38 +52,22 @@
                                 </span>
                             </td>
                             <td>
-                                @if($insumo->categoria == 'lana')
-                                    <span class="text-dark fw-bold">$ {{ number_format($insumo->costo_unitario * 90, 2) }}</span>
-                                    <span class="text-muted small">/ Madeja</span>
-                                @elseif($insumo->categoria == 'cinta_garza')
-                                    <span class="text-dark fw-bold">$ {{ number_format($insumo->costo_unitario * 45.72, 2) }}</span>
-                                    <span class="text-muted small">/ Rollo (50 yardas)</span>
-                                @elseif($insumo->categoria == 'cinta_satin')
-                                    <span class="text-dark fw-bold">$ {{ number_format($insumo->costo_unitario * 18.28, 2) }}</span>
-                                    <span class="text-muted small">/ Rollo (20 yardas)</span>
-                                @elseif($insumo->categoria == 'cinta_gross')
-                                    <span class="text-dark fw-bold">$ {{ number_format($insumo->costo_unitario * 22.86, 2) }}</span>
-                                    <span class="text-muted small">/ Rollo (25 yardas)</span>
-                                @elseif($insumo->categoria == 'cortina_fiesta')
-                                    <span class="text-dark fw-bold">$ {{ number_format($insumo->costo_unitario * 4, 2) }}</span>
-                                    <span class="text-muted small">/ Paquete</span>
-                                @elseif($insumo->categoria == 'elastico')
-                                    <span class="text-dark fw-bold">$ {{ number_format($insumo->costo_unitario * 10, 2) }}</span>
-                                    <span class="text-muted small">/ Pieza (10m)</span>
-                                @elseif($insumo->categoria == 'cinchos')
-                                    <span class="text-dark fw-bold">$ {{ number_format($insumo->costo_unitario * 100, 2) }}</span>
-                                    <span class="text-muted small">/ Paquete (100u)</span>
-                                @else
-                                    <span class="text-dark fw-bold">$ {{ number_format($insumo->costo_unitario, 2) }}</span>
-                                    <span class="text-muted small">/ {{ $insumo->unidad_medida }}</span>
-                                @endif
+                                <span class="text-dark fw-bold">$ {{ number_format($insumo->precio_comercial, 2) }}</span>
+                                <span class="text-muted small">
+                                    / @if($insumo->categoria == 'lana') Madeja
+                                    @elseif(str_contains($insumo->categoria, 'cinta')) Rollo
+                                    @elseif($insumo->categoria == 'cortina_fiesta' || $insumo->categoria == 'cinchos') Paquete
+                                    @elseif($insumo->categoria == 'elastico') Pieza
+                                    @else {{ $insumo->unidad_medida }}
+                                    @endif
+                                </span>
                             </td>
                             <td>
                                 <span class="fw-bold fs-6 text-dark">{{ $insumo->stock_actual }} {{ $insumo->unidad_medida }}</span><br>
                                 @if($insumo->categoria == 'lana')
-                                    <small class="text-muted">({{ ceil($insumo->stock_actual / 90) }} Madejas aprox.)</small>
+                                    <small class="text-muted">({{ ceil($insumo->stock_actual / ($config['lana_gramos_madeja'] ?? 90)) }} Madejas aprox.)</small>
                                 @elseif($insumo->categoria == 'cortina_fiesta')
-                                    <small class="text-muted">({{ ceil($insumo->stock_actual / 4) }} Paquetes aprox.)</small>
+                                    <small class="text-muted">({{ ceil($insumo->stock_actual / ($config['cortina_unidades_paquete'] ?? 4)) }} Paquetes aprox.)</small>
                                 @endif
                             </td>
                             <td>
@@ -188,13 +172,13 @@
                                     <span class="custom-select-arrow">▾</span>
                                 </button>
                                 <ul class="custom-select-options" role="listbox">
-                                    <li data-value="lana">Lana (Madejas de 90g)</li>
-                                    <li data-value="cinta_garza">Cinta Garza (Rollos de 50 yardas)</li>
-                                    <li data-value="cinta_satin">Cinta Satín (Rollos de 20 yardas)</li>
-                                    <li data-value="cinta_gross">Cinta Gross (Rollos de 25 yardas)</li>
-                                    <li data-value="cortina_fiesta">Cortina de Fiesta (Paquetes de 4 u.)</li>
-                                    <li data-value="elastico">Elástico (Piezas de 10m)</li>
-                                    <li data-value="cinchos">Cinchos (Paquetes de 100 u.)</li>
+                                    <li data-value="lana">Lana (Madejas de {{ floatval($config['lana_gramos_madeja'] ?? 90) }}g)</li>
+                                    <li data-value="cinta_garza">Cinta Garza (Rollos de {{ floatval($config['insumo_rollo_garza_m'] ?? 45.72) }}m)</li>
+                                    <li data-value="cinta_satin">Cinta Satín (Rollos de {{ floatval($config['insumo_rollo_satin_m'] ?? 18.28) }}m)</li>
+                                    <li data-value="cinta_gross">Cinta Gross (Rollos de {{ floatval($config['insumo_rollo_gross_m'] ?? 22.86) }}m)</li>
+                                    <li data-value="cortina_fiesta">Cortina de Fiesta (Paquetes de {{ floatval($config['cortina_unidades_paquete'] ?? 4) }} u.)</li>
+                                    <li data-value="elastico">Elástico (Piezas de {{ floatval($config['insumo_paquete_elastico_m'] ?? 10) }}m)</li>
+                                    <li data-value="cinchos">Cinchos (Paquetes de {{ floatval($config['insumo_paquete_cinchos_u'] ?? 100) }} u.)</li>
                                     <li data-value="base_baston">Bases de Bastón</li>
                                     <li data-value="unidad_simple">Apliques, Taipe, Silicona (Unidad suelta)</li>
                                 </ul>
