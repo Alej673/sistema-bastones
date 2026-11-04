@@ -14,13 +14,24 @@ class ConfiguracionController extends Controller
      */
     public function index()
     {
-        // Traemos todos los ajustes de la BD
         $ajustes = Ajuste::all();
-
-        // Los agrupamos por la columna 'grupo' para armar las pestañas en la vista
         $grupos = $ajustes->groupBy('grupo');
+        
+        // Extraemos el mapa plano para armar las reglas de negocio
+        $mapaAjustes = $ajustes->pluck('valor', 'llave')->toArray();
 
-        return view('Configuracion.configuraciones', compact('grupos'));
+        // DICCIONARIO 100% DINÁMICO (Fin del hardcoding)
+        $traductores = [
+            'pf_lana'        => ['divisor' => (float)($mapaAjustes['lana_gramos_madeja'] ?? 90), 'unidad' => 'g'],
+            'pf_cinta_garza' => ['divisor' => (float)($mapaAjustes['insumo_rollo_garza_m'] ?? 45.72), 'unidad' => 'm'],
+            'pf_cinta_satin' => ['divisor' => (float)($mapaAjustes['insumo_rollo_satin_m'] ?? 18.28), 'unidad' => 'm'],
+            'pf_cinta_gross' => ['divisor' => (float)($mapaAjustes['insumo_rollo_gross_m'] ?? 22.86), 'unidad' => 'm'],
+            'pf_elastico'    => ['divisor' => (float)($mapaAjustes['insumo_paquete_elastico_m'] ?? 10), 'unidad' => 'm'],
+            'pf_cinchos'     => ['divisor' => (float)($mapaAjustes['insumo_paquete_cinchos_u'] ?? 100), 'unidad' => 'u'],
+        ];
+
+        // Enviamos los grupos y el traductor a la vista
+        return view('Configuracion.configuraciones', compact('grupos', 'traductores'));
     }
 
     /**
@@ -50,13 +61,17 @@ class ConfiguracionController extends Controller
 
             $atributos[$llave] = $info->descripcion ?? $llave;
 
-            if ($grupo && str_contains($grupo, 'contacto')) {
-                // Campos de contacto (whatsapp, redes, teléfono): no numéricos, pero no pueden ir vacíos
-                $reglas[$llave] = 'required|string|max:255';
-            } else {
-                // Todo lo demás son valores del cotizador: sin vacíos, sin negativos
-                $reglas[$llave] = 'required|numeric|min:0';
-            }
+        if ($grupo && str_contains($grupo, 'contacto')) {
+            // WhatsApp es obligatorio, pero las redes sociales (Facebook, Instagram, TikTok) son opcionales (nullable)
+            $reglas[$llave] = str_contains($llave, 'whatsapp')
+                ? 'required|string|max:255'
+                : 'nullable|string|max:255';
+        } elseif ($llave === 'taller_estado') {
+            $reglas[$llave] = 'required|in:abierto,cerrado,0,1';
+        } else {
+            // Todo lo demás son valores numéricos del cotizador e inventario
+            $reglas[$llave] = 'required|numeric|min:0';
+        }
         }
 
         $mensajes = [
@@ -89,11 +104,11 @@ class ConfiguracionController extends Controller
         // Leemos los divisores directamente de lo que el usuario acaba de enviar
         $divisores = [
             'pf_lana'        => (float)($datos['lana_gramos_madeja'] ?? 90),
-            'pf_cinta_garza' => 45.72,
-            'pf_cinta_satin' => 18.28,
-            'pf_cinta_gross' => 22.86,
-            'pf_elastico'    => 10,
-            'pf_cinchos'     => 100,
+            'pf_cinta_garza' => (float)($datos['insumo_rollo_garza_m'] ?? 45.72),
+            'pf_cinta_satin' => (float)($datos['insumo_rollo_satin_m'] ?? 18.28),
+            'pf_cinta_gross' => (float)($datos['insumo_rollo_gross_m'] ?? 22.86),
+            'pf_elastico'    => (float)($datos['insumo_paquete_elastico_m'] ?? 10),
+            'pf_cinchos'     => (float)($datos['insumo_paquete_cinchos_u'] ?? 100),
         ];
 
         foreach ($divisores as $llave => $divisor) {

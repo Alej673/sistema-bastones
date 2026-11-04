@@ -80,7 +80,18 @@ class AjustesTableSeeder extends Seeder
         unset($ajuste);
 
         // Vaciar la tabla primero (por si ejecutas el seeder varias veces) y luego insertar
-        DB::table('ajustes')->truncate();
-        DB::table('ajustes')->insert($ajustes);
+        foreach ($ajustes as $ajuste) {
+            // Si la llave ya existe, no se toca su valor; solo se inserta lo que falta.
+            if (!DB::table('ajustes')->where('llave', $ajuste['llave'])->exists()) {
+                DB::table('ajustes')->insert($ajuste);
+            } else {
+                // Opcional: mantener grupo y descripción al día sin tocar el valor
+                DB::table('ajustes')->where('llave', $ajuste['llave'])->update([
+                    'grupo'       => $ajuste['grupo'],
+                    'descripcion' => $ajuste['descripcion'],
+                    'updated_at'  => $ajuste['updated_at'],
+                ]);
+            }
+        }
     }
 }
