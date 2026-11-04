@@ -338,6 +338,11 @@
 @push('js')
     @vite(['resources/js/inventario.js'])
 
+    {{-- Inyectamos la configuración de la BD como un objeto global de JavaScript --}}
+    <script>
+        window.CONFIG_INVENTARIO = @json($config);
+    </script>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {

@@ -114,6 +114,55 @@ document.addEventListener('DOMContentLoaded', function () {
         'unidad_simple': { cant: 'Cant. de Unidades compradas', alert: 'Avisar cuando queden (Unidades):' }
     };
 
+    let prefijoActivo = ''; // Variable escudo para bloquear el input
+
+    // Escudo protector: Evita que el usuario borre el prefijo de la cinta
+    if (inputNombre) {
+        inputNombre.addEventListener('input', function (e) {
+            if (prefijoActivo && !this.value.startsWith(prefijoActivo)) {
+                this.value = prefijoActivo; // Restaura el prefijo si intentan borrarlo
+            }
+        });
+    }
+
+    if (selectorNuevo) {
+        selectorNuevo.addEventListener('change', function () {
+            const cat = this.value;
+            if (!textosNuevoInsumo[cat]) return;
+
+            labelCant.textContent = textosNuevoInsumo[cat].cant;
+            labelAlert.textContent = textosNuevoInsumo[cat].alert;
+
+            if (cat === 'base_baston') {
+                prefijoActivo = ''; // Apagamos el escudo
+                opcionesBaston.classList.remove('d-none');
+                inputNombre.readOnly = true;
+                inputNombre.classList.add('bg-secondary', 'bg-opacity-10', 'fw-bold', 'text-secondary');
+                actualizarNombreBaston();
+
+            } else if (cat === 'cinta_garza' || cat === 'cinta_satin' || cat === 'cinta_gross') {
+                opcionesBaston.classList.add('d-none');
+                inputNombre.readOnly = false;
+                inputNombre.classList.remove('bg-secondary', 'bg-opacity-10', 'fw-bold', 'text-secondary');
+
+                // Encendemos el escudo con el prefijo exacto
+                if (cat === 'cinta_garza') prefijoActivo = 'Cinta Garza ';
+                if (cat === 'cinta_satin') prefijoActivo = 'Cinta Satín ';
+                if (cat === 'cinta_gross') prefijoActivo = 'Cinta Gross ';
+
+                inputNombre.value = prefijoActivo;
+                setTimeout(() => inputNombre.focus(), 100);
+
+            } else {
+                prefijoActivo = ''; // Apagamos el escudo
+                opcionesBaston.classList.add('d-none');
+                inputNombre.readOnly = false;
+                inputNombre.classList.remove('bg-secondary', 'bg-opacity-10', 'fw-bold', 'text-secondary');
+                inputNombre.value = '';
+            }
+        });
+    }
+
     function actualizarNombreBaston() {
         if (selectorNuevo && selectorNuevo.value === 'base_baston') {
             // 1. Limpiamos el valor para quitarle el 'cm' pegado (ej. de '45cm' a '45')
@@ -193,14 +242,26 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 4. MODAL AJUSTE DE STOCK
+    // 4. MODAL AJUSTE DE STOCK (Dinámico desde la Base de Datos)
+    const db = window.CONFIG_INVENTARIO || {};
+    
+    // Extraemos valores con respaldos de seguridad (por si la BD está vacía)
+    const vLana = parseFloat(db['lana_gramos_madeja'] ?? 90);
+    const vGarza = parseFloat(db['insumo_rollo_garza_m'] ?? 45.72);
+    const vSatin = parseFloat(db['insumo_rollo_satin_m'] ?? 18.28);
+    const vGross = parseFloat(db['insumo_rollo_gross_m'] ?? 22.86);
+    const vCortina = parseFloat(db['cortina_unidades_paquete'] ?? 4);
+    const vElastico = parseFloat(db['insumo_paquete_elastico_m'] ?? 10);
+    const vCinchos = parseFloat(db['insumo_paquete_cinchos_u'] ?? 100);
+
     const textosEntrada = {
-        'lana': '¿Cuántas MADEJAS vas a ingresar?:',
-        'cinta_garza': '¿Cuántos ROLLOS (50yd) vas a ingresar?:',
-        'cinta_satin': '¿Cuántos ROLLOS (20yd) vas a ingresar?:',
-        'cortina_fiesta':'¿Cuántos PAQUETES (4u) vas a ingresar?:',
-        'elastico': '¿Cuántas PIEZAS (10m) vas a ingresar?:',
-        'cinchos': '¿Cuántos PAQUETES (100u) vas a ingresar?:',
+        'lana': `¿Cuántas MADEJAS (${vLana}g) vas a ingresar?:`,
+        'cinta_garza': `¿Cuántos ROLLOS (${vGarza}m) vas a ingresar?:`,
+        'cinta_satin': `¿Cuántos ROLLOS (${vSatin}m) vas a ingresar?:`,
+        'cinta_gross': `¿Cuántos ROLLOS (${vGross}m) vas a ingresar?:`,
+        'cortina_fiesta': `¿Cuántos PAQUETES (${vCortina}u) vas a ingresar?:`,
+        'elastico': `¿Cuántas PIEZAS (${vElastico}m) vas a ingresar?:`,
+        'cinchos': `¿Cuántos PAQUETES (${vCinchos}u) vas a ingresar?:`,
         'base_baston': '¿Cuántas BASES vas a ingresar?:',
         'unidad_simple': '¿Cuántas UNIDADES vas a ingresar?:'
     };
@@ -209,7 +270,8 @@ document.addEventListener('DOMContentLoaded', function () {
         'lana': '¿Cuántos GRAMOS vas a retirar (Desperdicio)?:',
         'cinta_garza': '¿Cuántos METROS vas a retirar (Desperdicio)?:',
         'cinta_satin': '¿Cuántos METROS vas a retirar (Desperdicio)?:',
-        'cortina_fiesta':'¿Cuántas CORTINAS SUELTAS vas a retirar?:',
+        'cinta_gross': '¿Cuántos METROS vas a retirar (Desperdicio)?:',
+        'cortina_fiesta': '¿Cuántas CORTINAS SUELTAS vas a retirar?:',
         'elastico': '¿Cuántos METROS vas a retirar?:',
         'cinchos': '¿Cuántos CINCHOS SUELTOS vas a retirar?:',
         'base_baston': '¿Cuántas BASES vas a retirar?:',
