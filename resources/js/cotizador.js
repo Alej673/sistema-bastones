@@ -1197,9 +1197,27 @@ $(document).ready(function () {
                 }, 1800);
             },
             error: function (xhr) {
-                console.error('Fallo al guardar:', xhr.responseText);
-                mostrarAlerta('No se pudo conectar con el servidor. Revisa tu conexión.', 'Error al guardar el pedido', 'danger');
+                // Restauramos el botón
                 btnGuardar.prop('disabled', false).html(textoOriginal);
+
+                // Verificamos si es un error de validación de Laravel (Status 422)
+                if (xhr.status === 422) {
+                    let errores = xhr.responseJSON.errors;
+                    let listaErrores = '<ul class="text-start mb-0 small">';
+                    
+                    // Recorremos los errores enviados por Laravel y los ponemos en una lista
+                    for (let campo in errores) {
+                        listaErrores += `<li>${errores[campo][0]}</li>`;
+                    }
+                    listaErrores += '</ul>';
+
+                    // Mostramos la alerta con los errores exactos
+                    mostrarAlerta(listaErrores, 'Faltan campos obligatorios', 'danger');
+                } else {
+                    // Si es un error 500 o el servidor realmente está caído
+                    console.error('Error del servidor:', xhr.responseText);
+                    mostrarAlerta('Ocurrió un error inesperado al intentar guardar. Revisa la consola.', 'Error en el Servidor', 'danger');
+                }
             }
         });
     });
