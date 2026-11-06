@@ -1152,7 +1152,9 @@ $(document).ready(function () {
         // Inyectamos los totales y la tabla
         formData.append('costo_materiales', $('#txtCostoMateriales').text().replace('$', '').trim());
         formData.append('costo_extras', $('#txtCostoManoObra').text().replace('$', '').trim());
-        formData.append('ganancia_fija', $('#txtGananciaFija').text().replace('$', '').trim());
+        // Tomamos el texto, le quitamos el $, lo cortamos donde empieza el paréntesis '(' y tomamos solo la primera parte (el número puro)
+        let gananciaLimpia = $('#txtGananciaFija').text().replace('$', '').split('(')[0].trim();
+        formData.append('ganancia_fija', gananciaLimpia);
         formData.append('costo_total', $('#txtCostoTotal').text().replace('$', '').trim());
         formData.append('costo_unitario', $('#txtCostoUnitario').text().replace('$', '').replace('c/u', '').trim());
         formData.append('materiales', JSON.stringify(window.carritoInsumos));
