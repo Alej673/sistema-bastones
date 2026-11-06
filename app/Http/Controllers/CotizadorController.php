@@ -228,15 +228,15 @@ class CotizadorController extends Controller
         return response()->json($resultados);
     }
 
-    public function guardar(Request $request)
+ public function guardar(Request $request)
     {
         // =======================================================
         // 1. EL BYPASS: MODO RÁPIDO (Manualidades, Lazos, Flores)
         // =======================================================
         if ($request->filled('modo_rapido') && $request->modo_rapido == 'true') {
 
-            // Validación exprés
-            $request->validate([
+            // NUEVO: Validación manual forzada a devolver JSON
+            $validadorRapido = \Illuminate\Support\Facades\Validator::make($request->all(), [
                 'nombre_cliente'    => 'required|string|max:255',
                 'correo_cliente'    => 'nullable|email|max:255',
                 'quote_request_id'  => 'nullable|integer|exists:quote_requests,id',
@@ -245,6 +245,14 @@ class CotizadorController extends Controller
                 'detalles_rapido'   => 'nullable|string|max:1000',
                 'imagen_referencia' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
             ]);
+
+            if ($validadorRapido->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'mensaje' => 'Revisa los campos del formulario.',
+                    'errors'  => $validadorRapido->errors()
+                ], 422);
+            }
 
             $rutaImagen = null;
 
@@ -310,7 +318,10 @@ class CotizadorController extends Controller
 
             } catch (\Exception $e) {
                 DB::rollBack();
-                $this->limpiarImagenHuerfana($rutaImagen);
+                // OJO: Asegúrate de que el método limpiarImagenHuerfana exista en este controlador, sino bórralo
+                if(method_exists($this, 'limpiarImagenHuerfana')){
+                    $this->limpiarImagenHuerfana($rutaImagen);
+                }
 
                 Log::error('Error crítico en el servidor: ' . $e->getMessage());
 
@@ -327,8 +338,8 @@ class CotizadorController extends Controller
         // 2. FLUJO NORMAL: MODO BASTONES (La calculadora pesada)
         // =======================================================
 
-        // 1. Validación de estructura: campos base + materiales como arreglo obligatorio
-        $request->validate([
+        // NUEVO: Validación manual forzada a devolver JSON
+        $validadorBaston = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'quote_request_id'        => 'nullable|integer|exists:quote_requests,id',
             'nombre_cliente'          => 'nullable|string|max:255',
             'correo_cliente'          => 'nullable|email|max:255',
@@ -342,13 +353,23 @@ class CotizadorController extends Controller
             'imagen_referencia'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
 
+        if ($validadorBaston->fails()) {
+            return response()->json([
+                'success' => false,
+                'mensaje' => 'Error de validación en la estructura base.',
+                'errors'  => $validadorBaston->errors()
+            ], 422);
+        }
+
         // 2. Decodificamos el carrito...
         $listaMateriales = json_decode($request->input('materiales'), true);
 
         if (json_last_error() !== JSON_ERROR_NONE || empty($listaMateriales) || !is_array($listaMateriales)) {
             return response()->json([
                 'success' => false,
-                'mensaje' => 'El detalle de materiales llegó vacío o corrupto. No se puede guardar un pedido sin materiales.'
+                'mensaje' => 'El detalle de materiales llegó vacío o corrupto. No se puede guardar un pedido sin materiales.',
+                // Hack para que tu JS lo lea correctamente en el bloque de errores:
+                'errors'  => ['materiales' => ['El detalle de materiales llegó vacío o corrupto.']] 
             ], 422);
         }
 
@@ -356,30 +377,30 @@ class CotizadorController extends Controller
         if (count($listaMateriales) > 200) {
             return response()->json([
                 'success' => false,
-                'mensaje' => 'El carrito tiene demasiadas líneas de materiales.'
+                'mensaje' => 'El carrito tiene demasiadas líneas de materiales.',
+                'errors'  => ['materiales' => ['El carrito supera el límite de 200 líneas.']]
             ], 422);
         }
 
         // 3. Validamos la estructura de CADA línea del carrito (defensa contra payloads manuales)
         foreach ($listaMateriales as $mat) {
-            $v = Validator::make(is_array($mat) ? $mat : [], [
+            $v = \Illuminate\Support\Facades\Validator::make(is_array($mat) ? $mat : [], [
                 'nombre_material'    => 'required|string|max:255',
-                // Se permite signo negativo porque el frontend puede enviarlo (el PDF aplica abs())
                 'cantidad_requerida' => 'required|numeric|between:-100000,100000',
                 'subtotal_calculado' => 'required|numeric|min:0|max:99999',
-                'insumo_id'          => ['nullable', 'integer', Rule::exists('insumos', 'id')->whereNull('deleted_at')],
+                'insumo_id'          => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('insumos', 'id')->whereNull('deleted_at')],
             ]);
 
             if ($v->fails() || trim((string) ($mat['nombre_material'] ?? '')) === '') {
                 return response()->json([
                     'success' => false,
-                    'mensaje' => 'Uno de los materiales del carrito tiene datos inválidos o incompletos.'
+                    'mensaje' => 'Datos inválidos en el carrito.',
+                    'errors'  => ['carrito' => ['Uno de los materiales tiene datos inválidos o su stock ha sido eliminado.']]
                 ], 422);
             }
         }
 
-        // 4. REGLA DE NEGOCIO: espejo de la validación del front (validarCintasNuevas en cotizador.js).
-        // Si un material es una cinta nueva (sin insumo_id), su nombre debe incluir el tipo (Satín / Gross / Garza).
+        // 4. REGLA DE NEGOCIO: espejo de la validación del front
         foreach ($listaMateriales as $mat) {
             $nombreCinta = mb_strtolower($mat['nombre_material'], 'UTF-8');
 
@@ -393,7 +414,8 @@ class CotizadorController extends Controller
             if ($esCintaSinTipo) {
                 return response()->json([
                     'success' => false,
-                    'mensaje' => 'El material "' . $mat['nombre_material'] . '" es una cinta nueva sin tipo especificado (Satín, Gross o Garza).'
+                    'mensaje' => 'Tipo de cinta inválido.',
+                    'errors'  => ['cinta' => ['El material "' . $mat['nombre_material'] . '" es una cinta nueva sin tipo (Satín, Gross o Garza).']]
                 ], 422);
             }
         }
@@ -504,7 +526,9 @@ class CotizadorController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->limpiarImagenHuerfana($rutaImagen);
+            if(method_exists($this, 'limpiarImagenHuerfana')){
+                $this->limpiarImagenHuerfana($rutaImagen);
+            }
 
             Log::error('Error crítico en el servidor: ' . $e->getMessage());
 
