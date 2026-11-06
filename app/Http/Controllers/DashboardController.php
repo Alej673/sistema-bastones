@@ -121,7 +121,7 @@ class DashboardController extends Controller
         // =========================================================
         // RETORNO A VISTA
         // =========================================================
-        return view('inicio.inicio', compact(
+        return view('Inicio.Inicio', compact(
             'ingresosMes', 
             'nombreMes',
             'manoObraEstimada',
