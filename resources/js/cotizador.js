@@ -1162,6 +1162,7 @@ $(document).ready(function () {
         $.ajax({
             url: '/cotizaciones/guardar',
             type: 'POST',
+            dataType: 'json',
             headers: { 
                     'X-CSRF-TOKEN': csrfToken,
                     'Accept': 'application/json' // <--- AÑADE ESTA LÍNEA AQUÍ
