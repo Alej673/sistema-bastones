@@ -125,7 +125,7 @@ class DashboardController extends Controller
             'ingresosMes', 
             'nombreMes',
             'manoObraEstimada',
-            'costoInsumosEstimado',
+            'costoInsumosEstimado', 
             'solicitudesWeb',
             'enProduccion', 
             'cotizacionesPendientes', 
