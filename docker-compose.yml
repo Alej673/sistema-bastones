@@ -20,7 +20,7 @@ services:
     depends_on:
       - app
 
-db:
+  db:
     image: mysql:8.4
     container_name: arte_titi_val_db
     restart: unless-stopped

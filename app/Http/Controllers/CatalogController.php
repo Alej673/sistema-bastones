@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CatalogItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class CatalogController extends Controller
 {
@@ -83,12 +84,12 @@ class CatalogController extends Controller
     {
         // Validar los datos
         $request->validate([
-            'titulo' => 'required|string|max:255',
-            'descripcion' => 'nullable|string',
-            'imagen' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'categoria' => 'required|string',
-            'medida_cm' => 'nullable|string',
-            'nivel_diseno' => 'nullable|string',
+            'titulo'           => 'required|string|max:255',
+            'descripcion'      => 'nullable|string',
+            'imagen'           => 'required|image|mimes:jpeg,png,jpg,webp|max:8192', // Máximo exacto de 8 MB
+            'categoria'        => 'required|string',
+            'medida_cm'        => 'nullable|string',
+            'nivel_diseno'     => 'nullable|string',
             'nivel_accesorios' => 'nullable|string',
         ]);
 
@@ -110,6 +111,78 @@ class CatalogController extends Controller
 
         return back()->with('success', '¡Artículo agregado al catálogo con éxito!');
     }
+
+    /**
+     * Redimensiona y comprime cualquier foto a formato WebP ligero.
+     */
+    private function comprimirYGuardarImagen($archivo, $directorio)
+    {
+        $rutaOrigen = $archivo->getRealPath();
+        $info = getimagesize($rutaOrigen);
+        $mime = $info['mime'] ?? '';
+
+        // Cargar imagen según su tipo
+        switch ($mime) {
+            case 'image/jpeg':
+                $imagenOriginal = imagecreatefromjpeg($rutaOrigen);
+                break;
+            case 'image/png':
+                $imagenOriginal = imagecreatefrompng($rutaOrigen);
+                break;
+            case 'image/webp':
+                $imagenOriginal = imagecreatefromwebp($rutaOrigen);
+                break;
+            default:
+                // Si el formato no coincide, se guarda el archivo original directamente
+                return $archivo->store($directorio, 'public');
+        }
+
+        $anchoOriginal = imagesx($imagenOriginal);
+        $altoOriginal  = imagesy($imagenOriginal);
+
+        // Ajustar resolución máxima conservando la proporción
+        $anchoMaximo = 1200;
+        if ($anchoOriginal > $anchoMaximo) {
+            $nuevoAncho = $anchoMaximo;
+            $nuevoAlto  = (int) (($altoOriginal / $anchoOriginal) * $anchoMaximo);
+        } else {
+            $nuevoAncho = $anchoOriginal;
+            $nuevoAlto  = $altoOriginal;
+        }
+
+        // Crear lienzo con las nuevas dimensiones
+        $lienzo = imagecreatetruecolor($nuevoAncho, $nuevoAlto);
+
+        // Preservar transparencias si la imagen proviene de un PNG/WebP
+        imagealphablending($lienzo, false);
+        imagesavealpha($lienzo, true);
+
+        imagecopyresampled(
+            $lienzo, $imagenOriginal,
+            0, 0, 0, 0,
+            $nuevoAncho, $nuevoAlto,
+            $anchoOriginal, $altoOriginal
+        );
+
+        // Generar nombre único en formato .webp
+        $nombreArchivo = Str::random(40) . '.webp';
+        $rutaAlmacenamiento = $directorio . '/' . $nombreArchivo;
+
+        // Capturar el stream en memoria con compresión al 80% de calidad
+        ob_start();
+        imagewebp($lienzo, null, 80);
+        $contenidoComprimido = ob_get_clean();
+
+        // Guardar en el disco público de Laravel
+        Storage::disk('public')->put($rutaAlmacenamiento, $contenidoComprimido);
+
+        // Liberar memoria del servidor
+        imagedestroy($imagenOriginal);
+        imagedestroy($lienzo);
+
+        return $rutaAlmacenamiento;
+    }
+
     // 3. Activar/Desactivar un bastón (Ocultarlo de la landing page)
     public function toggleActivo($id)
     {
