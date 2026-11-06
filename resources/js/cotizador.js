@@ -1162,7 +1162,10 @@ $(document).ready(function () {
         $.ajax({
             url: '/cotizaciones/guardar',
             type: 'POST',
-            headers: { 'X-CSRF-TOKEN': csrfToken },
+            headers: { 
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json' // <--- AÑADE ESTA LÍNEA AQUÍ
+                },
             data: formData, // Mandamos el FormData
             processData: false, // CLAVE: Evita que jQuery transforme el archivo a string
             contentType: false, // CLAVE: Evita que jQuery ponga encabezados que rompan el archivo
