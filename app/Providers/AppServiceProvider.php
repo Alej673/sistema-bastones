@@ -38,12 +38,18 @@ class AppServiceProvider extends ServiceProvider
             URL::forceRootUrl(config('app.url')); // <-- AGREGAR ESTA LÍNEA
         }
 
-        //Verificamos que la tabla exista para evitar fallos en instalaciones limpias
-        if (Schema::hasTable('ajuste_tallers')) {
-            View::composer('layouts.public', function ($view) {
+        // En app/Providers/AppServiceProvider.php (dentro del método boot())
+
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('ajuste_tallers')) {
+                // Tu lógica actual aquí (compartir variables a vistas, configuraciones, etc.)
+                View::composer('layouts.public', function ($view) {
                 $ajustes = AjusteTaller::pluck('valor', 'clave')->toArray();
                 $view->with('ajustesTaller', $ajustes);
             });
+            }
+        } catch (\Throwable $e) {
+            // Evita que falle composer install o artisan en entornos CLI
         }
 
         // ==========================================

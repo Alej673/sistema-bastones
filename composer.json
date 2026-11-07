@@ -11,7 +11,8 @@
         "laravel-lang/common": "^6.8",
         "laravel/framework": "^13.8",
         "laravel/socialite": "^5.29",
-        "laravel/tinker": "^3.0"
+        "laravel/tinker": "^3.0",
+        "spatie/laravel-sitemap": "^8.0"
     },
     "require-dev": {
         "beyondcode/laravel-er-diagram-generator": "^6.0",
