@@ -44,7 +44,7 @@
                         <label for="imagen" class="form-label" style="color: var(--text-main);">Fotografía del Producto</label>
                         <input type="file" name="imagen" id="imagen" required accept="image/jpeg,image/png,image/jpg,image/webp"
                                class="form-control form-control-dark">
-                        <div class="form-text" style="color: var(--text-muted);">Formatos: JPG, PNG, WEBP. Máx: 2MB.</div>
+                        <div class="form-text" style="color: var(--text-muted);">Formatos: JPG, PNG, WEBP. Máx: 8MB.</div>
                         @error('imagen') <span class="text-danger small">{{ $message }}</span> @enderror
                     </div>
 
@@ -74,7 +74,6 @@
                             <option value="45">45 cm</option>
                             <option value="55">55 cm</option>
                             <option value="60">60 cm</option>
-                            <option value="na" class="d-none">N/A</option>
                         </select>
                         @error('medida_cm') <span class="text-danger small">{{ $message }}</span> @enderror
                     </div>
