@@ -170,11 +170,16 @@
                 
                 <!-- Columna 1: Marca y Descripción -->
                 <div class="col-lg-4 col-md-6">
-                    <h4 style="color: var(--color-oro); font-family: 'Playfair Display', serif; margin-bottom: 20px;">
-                        <i class="fa-solid fa-leaf"></i> Arte Titi_Val
-                    </h4>
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{{ asset('image/logo-nav.png') }}" 
+                             alt="Logo Arte Titi_Val - Taller de Bastones en Quito" 
+                             style="height: 45px; width: auto; object-fit: contain; margin-right: 12px;">
+                        <h4 style="color: var(--color-oro); font-family: 'Playfair Display', serif; margin: 0;">
+                            Arte Titi_Val
+                        </h4>
+                    </div>
                     <p style="color: #adb5bd; font-size: 0.95rem; line-height: 1.6;">
-                        Confección artesanal de bastones especializados para bastoneras. Diseños únicos, elaborados con dedicación y adaptados a los colores de tu institución.
+                        Taller artesanal en <strong>Quito, Ecuador</strong>, especializado en la confección a mano de bastones de mando para bastoneras y cachiporreras. Diseñamos lazos, manualidades y accesorios premium, 100% personalizados con los colores de tu institución para destacar en cualquier banda de paz.
                     </p>
                 </div>
 
