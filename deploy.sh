@@ -56,15 +56,10 @@ echo "--> Ajustando permisos de storage y cache..."
 docker exec arte_titival-app-1 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 docker exec arte_titival-app-1 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Validar sintaxis de Nginx antes de reiniciar
+# 8. Validar sintaxis y reiniciar contenedores
 echo "--> Probando configuración de Nginx..."
 docker exec arte_titival-web-1 nginx -t
 
-# Si pasa el test, procede al reinicio seguro
-echo "--> Reiniciando contenedores web y app..."
-docker restart arte_titival-app-1 arte_titival-web-1
-
-# 8. Reiniciar contenedores para vaciar OPcache y aplicar cambios de Nginx
 echo "--> Reiniciando contenedores web y app..."
 docker restart arte_titival-app-1 arte_titival-web-1
 
