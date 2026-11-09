@@ -1,13 +1,20 @@
 @extends('layouts.public')
 
+{{-- SEO DINÁMICO: Cambia según la categoría que el cliente esté viendo --}}
+@section('title', $tituloCategoria . ' Personalizados en Quito | Arte Titi_Val')
+@section('meta_description', 'Explora nuestro catálogo de ' . strtolower($tituloCategoria) . ' elaborados a mano en Quito. Modelos básicos, intermedios y premium para bandas de paz.')
+
 @section('content')
+
 <div class="container py-5">
     <div class="mb-4 d-flex align-items-center">
         <a href="{{ route('catalogo.index') }}" class="btn-volver me-3">
             &larr; Volver al Catálogo
         </a>
         <h1 style="font-family: 'Playfair Display', serif; color: var(--color-lila-fuerte); margin: 0;">
-            {{ $tituloCategoria }}
+            {{ $tituloCategoria }} 
+            {{-- Añadido para SEO Local (Se lee sutil y elegante) --}}
+            <span style="font-size: 0.5em; color: #6c757d; font-family: 'Inter', sans-serif; vertical-align: middle; margin-left: 10px;">en Quito</span>
         </h1>
     </div>
 

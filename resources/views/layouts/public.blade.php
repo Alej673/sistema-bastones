@@ -29,15 +29,16 @@
     {{-- 2. DESCRIPCIÓN DINÁMICA (Lo que lee Google para el resumen) --}}
     <meta name="description" content="@yield('meta_description', 'Confección artesanal de bastones de mando, artículos para cachiporreras y bandas de paz en Quito. Personalización total a medida de tu institución.')">
 
-    {{-- 3. URL CANÓNICA (Evita que Google te penalice si se accede con o sin www/parametros) --}}
+    {{-- 3. URL CANÓNICA (Evita penalizaciones por contenido duplicado) --}}
     <link rel="canonical" href="@yield('canonical', url()->current())">
 
-    {{-- 4. OPEN GRAPH (Para que cuando compartan tu link en WhatsApp o Facebook salga bonito y atraiga clics) --}}
+    {{-- 4. OPEN GRAPH (Para compartir en WhatsApp/Facebook) --}}
     <meta property="og:title" content="@yield('title', 'Bastones para Bastoneras en Quito | Arte Titi_Val')">
     <meta property="og:description" content="@yield('meta_description', 'Confección artesanal de bastones de mando y cachiporreras en Quito. Diseños personalizados.')">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:type" content="@yield('og_type', 'website')">
-    <meta property="og:image" content="@yield('og_image', asset('img/portada-bastones-default.jpg'))"> {{-- Asegúrate de tener una imagen general bonita en esta ruta --}}
+    {{-- Asegúrate de que og:image apunte a un asset válido. Si no tienes 'portada-bastones-default.jpg', usa el logo nuevo --}}
+    <meta property="og:image" content="@yield('og_image', asset('image/logo-nav.png'))">
 
     <!-- Fuentes e Iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -49,6 +50,11 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
+    <!-- Favicon oficial Arte Titi_Val -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('image/logo-nav.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('image/logo-nav.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('image/logo-nav.png') }}">
+
     <!-- Tu CSS Personalizado -->
     @vite(['resources/css/welcome.css'])
     @stack('css')
@@ -59,8 +65,12 @@
 
     <!-- NAVBAR -->
     <nav class="navbar">
-        <a href="{{ route('home') }}" class="nav-brand">
-            <i class="fa-solid fa-leaf"></i> Arte Titi_Vals
+        <!-- AHORA: Logotipo real con alt enriquecido para SEO -->
+        <a href="{{ route('home') }}" class="nav-brand d-flex align-items-center gap-2 text-decoration-none">
+            <img src="{{ asset('image/logo-nav.png') }}" 
+                alt="Arte Titi_Val - Taller Artesanal de Bastones en Quito" 
+                style="height: 40px; width: auto; object-fit: contain;">
+            <span class="brand-text">Arte Titi_Val</span>
         </a>
 
         <button type="button" class="nav-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="navCollapse">

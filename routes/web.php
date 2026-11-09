@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 
 // Controladores
@@ -18,9 +16,9 @@ use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\CotizacionController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\ContactoController; // <-- nuevo, mueve la lógica del envío aquí
+use App\Http\Controllers\ContactoController;
+use App\Http\Controllers\ConfiguracionController;
 use App\Http\Controllers\Auth\GoogleController;
-use App\Mail\MensajeContactoMail;
 
 // Modelos
 use App\Models\CatalogItem;
@@ -55,6 +53,23 @@ Route::get('/', function (Request $request) {
 })->name('home');
 
 // ==========================================
+// 1.1. SEO: SITEMAP (público, sin middleware)
+// ==========================================
+Route::get('/sitemap.xml', function () {
+    // Categorías activas del catálogo (cada una tiene su URL pública en /catalogo/{categoria})
+    $categorias = CatalogItem::where('activo', true)
+        ->whereNotNull('categoria')
+        ->distinct()
+        ->pluck('categoria');
+
+    $ultimaActualizacion = CatalogItem::where('activo', true)->max('updated_at');
+
+    return response()
+        ->view('seo.sitemap', compact('categorias', 'ultimaActualizacion'))
+        ->header('Content-Type', 'application/xml');
+})->name('sitemap');
+
+// ==========================================
 // 1.5. CATÁLOGO PÚBLICO
 // ==========================================
 Route::prefix('catalogo')->name('catalogo.')->group(function () {
@@ -71,9 +86,13 @@ Route::view('/politica-privacidad', 'legal.privacidad')->name('legal.privacidad'
 Route::view('/terminos-y-condiciones', 'legal.terminos')->name('legal.terminos');
 
 // Contacto: la lógica pesada vive en el controller, la ruta queda limpia
-Route::post('/contacto/enviar', [ContactoController::class, 'enviar'])->name('contacto.enviar');
+Route::post('/contacto/enviar', [ContactoController::class, 'enviar'])
+    ->middleware('throttle:5,1')
+    ->name('contacto.enviar');
 
-Route::post('/productos/{id}/consultar', [CatalogController::class, 'registrarConsulta'])->name('productos.registrar_consulta');
+Route::post('/productos/{id}/consultar', [CatalogController::class, 'registrarConsulta'])
+    ->middleware('throttle:20,1')
+    ->name('productos.registrar_consulta');
 
 // Autenticación con Google (Socialite)
 Route::prefix('auth/google')->name('google.')->group(function () {
@@ -86,7 +105,9 @@ Route::prefix('auth/google')->name('google.')->group(function () {
 // ==========================================
 
 // 2.0 Públicas (sin login) — generar link de WhatsApp
-Route::post('/cotizacion/whatsapp', [CotizacionController::class, 'generarLinkWhatsapp'])->name('cotizacion.whatsapp');
+Route::post('/cotizacion/whatsapp', [CotizacionController::class, 'generarLinkWhatsapp'])
+    ->middleware('throttle:10,1')
+    ->name('cotizacion.whatsapp');
 
 // 2.1 Solo requieren estar logueado (sin exigir correo verificado)
 Route::middleware('auth')->group(function () {
@@ -175,8 +196,8 @@ Route::middleware(['auth', 'verified', 'super_admin'])->group(function () {
     Route::get('/super-admin/usuarios', [UserController::class, 'index'])->name('super.usuarios.index');
     Route::patch('/super-admin/usuarios/{id}/rol', [UserController::class, 'updateRole'])->name('super.usuarios.rol');
     Route::patch('/super-admin/usuarios/{id}/ban', [UserController::class, 'toggleBan'])->name('super.usuarios.ban');
-    Route::get('/configuraciones', [App\Http\Controllers\ConfiguracionController::class, 'index'])->name('configuraciones.index');
-    Route::post('/configuraciones', [App\Http\Controllers\ConfiguracionController::class, 'update'])->name('configuraciones.update');
+    Route::get('/configuraciones', [ConfiguracionController::class, 'index'])->name('configuraciones.index');
+    Route::post('/configuraciones', [ConfiguracionController::class, 'update'])->name('configuraciones.update');
 });
 
 require __DIR__.'/auth.php';

@@ -20,8 +20,8 @@
                                 <!-- Fondo desenfocado: rellena el marco sin importar la orientación de la foto -->
                                 <div class="hero-slide-bg" style="background-image: url('{{ asset('storage/' . $item->imagen_path) }}');"></div>
 
-                                <!-- Foto real, completa, sin recortes -->
-                                <img src="{{ asset('storage/' . $item->imagen_path) }}" alt="{{ $item->titulo }}" class="hero-slide-img">
+                                <!-- Foto real, completa, sin recortes --> 
+                                <img src="{{ asset('storage/' . $item->imagen_path) }}" alt="Bastón para cachiporrera modelo {{ $item->titulo }} elaborado en Quito" class="hero-slide-img">
 
                                 <!-- Degradado para que el texto siempre se lea bien -->
                                 <div class="hero-slide-scrim"></div>
@@ -125,6 +125,24 @@
                         <p style="color: #4a148c; font-family: 'Inter', sans-serif;">Nuevos diseños se publicarán muy pronto.</p>
                     </div>
                 @endforelse
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- SECCIÓN: CONFECCIÓN ARTESANAL (Optimización SEO / AI Overviews) -->
+    <!-- ============================================== -->
+    <section id="confeccion-artesanal" style="padding: 60px 0; background-color: #f8f9fa;">
+        <div class="container text-center">
+            <h2 class="section-title mb-4" style="font-family: 'Playfair Display', serif; color: #4a148c;">
+                Confección Artesanal en Quito
+            </h2>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <p style="font-family: 'Inter', sans-serif; color: #333; line-height: 1.8; font-size: 1.1rem;">
+                        En Arte Titi_Val, somos especialistas en la elaboración de bastones para cachiporreras y bandas de paz en Quito. Cada bastón de mando es confeccionado a mano, utilizando materiales de primera calidad que garantizan durabilidad y un balance perfecto. Nos enorgullece ofrecer opciones personalizadas con acabados en tonos plata y oro, y una amplia variedad de colores en nuestras madejas de hilo para que el lazo represente fielmente a tu institución. Nuestro compromiso es entregar un artículo artesanal que haga brillar cada presentación.
+                    </p>
+                </div>
             </div>
         </div>
     </section>

@@ -1,2 +1,10 @@
 User-agent: *
-Disallow:
+Disallow: /login
+Disallow: /register
+Disallow: /password/
+Disallow: /dashboard/
+Disallow: /cliente/
+Disallow: /cotizacion/
+Disallow: /kardex/
+
+Sitemap: https://artetitival.com/sitemap.xml

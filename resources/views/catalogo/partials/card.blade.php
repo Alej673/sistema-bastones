@@ -19,7 +19,10 @@
                 @endguest
             </div>
 
-            <img src="{{ asset('storage/' . $item->imagen_path) }}" class="img-fluid shadow-sm titi-card-img" alt="{{ $item->titulo }}" style="height: 220px; width: 100%; object-fit: contain; padding: 15px;">
+            <img src="{{ asset('storage/' . $item->imagen_path) }}" 
+                class="img-fluid shadow-sm titi-card-img" 
+                alt="{{ $item->titulo }} - {{ ucfirst($item->categoria ?? 'Accesorio') }} para bastoneras en Quito" 
+                style="height: 220px; width: 100%; object-fit: contain; padding: 15px;">
         </div>
 
         <hr style="margin: 0; border-top: 2px solid #d4af37; opacity: 1;">

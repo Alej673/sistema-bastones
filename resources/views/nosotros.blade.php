@@ -1,8 +1,12 @@
 @extends('layouts.public')
 
-@section('title', 'Nosotros - Arte Titi_Val')
+{{-- OPTIMIZACIÓN SEO: Título específico y Meta Descripción --}}
+@section('title', 'Nuestra Historia | Confección de Bastones en Quito | Arte Titi_Val')
+@section('meta_description', 'Conoce la historia de Arte Titi_Val, taller artesanal en Quito dedicado a la confección a mano de bastones para cachiporreras, lazos y accesorios personalizados.')
 
 @push('css')
+<style>
+/* ... (mantén tus estilos CSS exactos aquí) ... */
 <style>
     /* Estilos exclusivos para el Hero con Video */
     .hero-video-container {
