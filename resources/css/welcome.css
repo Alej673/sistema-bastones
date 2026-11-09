@@ -1825,3 +1825,29 @@ body {
     font-style: italic;
     margin: 0;
 }
+
+/* Botón de cotización integrado a la estética Arte Titi_Val */
+.btn-cotizar-nav {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 18px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: #f7e7ce;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.18), rgba(188, 19, 254, 0.15));
+    border: 1px solid rgba(212, 175, 55, 0.6);
+    border-radius: 50px;
+    backdrop-filter: blur(4px);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.15);
+}
+
+.btn-cotizar-nav:hover {
+    color: #ffffff;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.35), rgba(188, 19, 254, 0.3));
+    border-color: #d4af37;
+    box-shadow: 0 0 18px rgba(212, 175, 55, 0.4), 0 0 8px rgba(188, 19, 254, 0.3);
+    transform: translateY(-1px);
+}

@@ -29,11 +29,19 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        // 1. Definimos las reglas base que siempre se usan
+        $rules = [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
-            'recaptcha_token' => ['required', 'string', new RecaptchaV3()],
         ];
+
+        // 2. Solo si estamos en el VPS, agregamos la regla del reCAPTCHA
+        if (app()->environment('production')) {
+            $rules['recaptcha_token'] = ['required', 'string', new RecaptchaV3()];
+        }
+
+        // 3. Retornamos el arreglo final
+        return $rules;
     }
 
     /**
@@ -48,9 +56,19 @@ class LoginRequest extends FormRequest
         // 1. Buscamos al usuario (incluso en papelera)
         $user = User::withTrashed()->where('email', $this->email)->first();
 
+  
         if ($user && $user->trashed()) {
-            // Número oficial del taller (en formato internacional sin el +)
-            $telefono = '593984922541'; // Reemplaza por el número de tu mamá/taller
+                // 1. Obtenemos el número desde la base de datos (o usamos el de tu mamá por defecto)
+                $telefonoBruto = \App\Models\Ajuste::where('llave', 'contacto_whatsapp')->value('valor') ?? '0984922541';
+                
+                // 2. Limpiamos cualquier guion o espacio accidental
+                $numeroSoloDigitos = preg_replace('/[^0-9]/', '', $telefonoBruto);
+                
+                // 3. Aseguramos el prefijo 593 si el número empieza con 0
+                $telefono = str_starts_with($numeroSoloDigitos, '0') 
+                            ? '593' . substr($numeroSoloDigitos, 1) 
+                            : $numeroSoloDigitos;
+
             
             // Mensaje predeterminado para el chat
             $textoWS = urlencode("Hola Arte Titi_Val, mi cuenta (" . $user->email . ") aparece suspendida en el portal y deseo consultar mi estado.");

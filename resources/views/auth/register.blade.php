@@ -7,8 +7,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     @vite(['resources/css/auth-neumorphism.css'])
-    <!-- Script de Google reCAPTCHA v3 -->
-    <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}" async defer></script>
+    {{-- reCAPTCHA v3: solo se carga en producción --}}
+    @if(app()->environment('production'))
+        <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}" async defer></script>
+    @endif
 </head>
 <body>
 
@@ -110,33 +112,62 @@
     </script>
 
     <script>
-        document.getElementById('register-form').addEventListener('submit', function(event) {
+        const registerForm = document.getElementById('register-form');
+        const submitBtn = registerForm.querySelector('.btn-submit');
+        const submitBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+
+        // Restaura el botón si el usuario vuelve atrás con el navegador
+        window.addEventListener('pageshow', function (e) {
+            if (e.persisted && submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = submitBtnHtml;
+                registerForm.dataset.submitting = '';
+            }
+        });
+
+        registerForm.addEventListener('submit', function (event) {
             event.preventDefault();
             const form = this;
-            const submitBtn = form.querySelector('.btn-submit');
+
+            // Evita envíos duplicados (clic doble o Enter repetido)
+            if (form.dataset.submitting === '1') return;
+            form.dataset.submitting = '1';
 
             if (submitBtn) {
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = 'Verificando... <i class="fa-solid fa-spinner fa-spin"></i>';
             }
 
-            const siteKey = "{{ config('services.recaptcha.site_key') }}";
+            @if(app()->environment('production'))
+                // ===== PRODUCCIÓN: validar con Google =====
+                const siteKey = "{{ config('services.recaptcha.site_key') }}";
 
-            if (typeof grecaptcha === 'undefined') {
-                console.warn('reCAPTCHA no cargó a tiempo. Procediendo al envío.');
-                form.submit();
-                return;
-            }
+                if (typeof grecaptcha === 'undefined') {
+                    console.warn('reCAPTCHA no cargó a tiempo. Procediendo al envío.');
+                    form.submit();
+                    return;
+                }
 
-            grecaptcha.ready(function() {
-                grecaptcha.execute(siteKey, {action: 'register'}).then(function(token) {
-                    document.getElementById('recaptcha_token').value = token;
-                    form.submit();
-                }).catch(function(error) {
-                    console.error('Error al ejecutar reCAPTCHA:', error);
-                    form.submit();
+                grecaptcha.ready(function () {
+                    try {
+                        grecaptcha.execute(siteKey, { action: 'register' })
+                            .then(function (token) {
+                                document.getElementById('recaptcha_token').value = token;
+                                form.submit();
+                            })
+                            .catch(function (error) {
+                                console.error('Error al ejecutar reCAPTCHA:', error);
+                                form.submit();
+                            });
+                    } catch (e) {
+                        console.warn('reCAPTCHA error síncrono:', e);
+                        form.submit();
+                    }
                 });
-            });
+            @else
+                // ===== LOCAL / LARAGON: bypass =====
+                setTimeout(() => form.submit(), 300);
+            @endif
         });
     </script>
 </body>

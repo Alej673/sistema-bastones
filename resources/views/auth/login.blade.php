@@ -97,48 +97,81 @@
         </form>
     </div>
 
-    <script>
-        function togglePassword() {
-            const input = document.getElementById('password');
-            const icon = document.getElementById('toggle-icon');
-            const isPassword = input.type === 'password';
-            input.type = isPassword ? 'text' : 'password';
-            icon.classList.toggle('fa-eye');
-            icon.classList.toggle('fa-eye-slash');
+{{-- reCAPTCHA v3: solo se carga en producción --}}
+@if(app()->environment('production'))
+    <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}" async defer></script>
+@endif
+
+<script>
+    function togglePassword() {
+        const input = document.getElementById('password');
+        const icon = document.getElementById('toggle-icon');
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        icon.classList.toggle('fa-eye');
+        icon.classList.toggle('fa-eye-slash');
+    }
+</script>
+
+<script>
+    const loginForm = document.getElementById('login-form');
+    const submitBtn = loginForm.querySelector('.btn-submit');
+    const submitBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+
+    // Restaura el botón si el usuario vuelve atrás con el navegador
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted && submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = submitBtnHtml;
+            loginForm.dataset.submitting = '';
         }
-    </script>
+    });
 
-    <script>
-        document.getElementById('login-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const form = this;
-            const submitBtn = form.querySelector('.btn-submit');
+    loginForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const form = this;
 
-            // Prevenir doble clic
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = 'Verificando... <i class="fa-solid fa-spinner fa-spin"></i>';
-            }
+        // Evita envíos duplicados (clic doble o Enter repetido)
+        if (form.dataset.submitting === '1') return;
+        form.dataset.submitting = '1';
 
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Verificando... <i class="fa-solid fa-spinner fa-spin"></i>';
+        }
+
+        @if(app()->environment('production'))
+            // ===== PRODUCCIÓN: validar con Google =====
             const siteKey = "{{ config('services.recaptcha.site_key') }}";
 
-            // Fallback si Google no carga
             if (typeof grecaptcha === 'undefined') {
+                console.warn('reCAPTCHA no cargó; se envía sin token.');
                 form.submit();
                 return;
             }
 
-            grecaptcha.ready(function() {
-                // Ojo: action ahora es 'login'
-                grecaptcha.execute(siteKey, {action: 'login'}).then(function(token) {
-                    document.getElementById('recaptcha_token').value = token;
+            grecaptcha.ready(function () {
+                try {
+                    grecaptcha.execute(siteKey, { action: 'login' })
+                        .then(function (token) {
+                            document.getElementById('recaptcha_token').value = token;
+                            form.submit();
+                        })
+                        .catch(function (error) {
+                            console.warn('reCAPTCHA falló:', error);
+                            form.submit();
+                        });
+                } catch (e) {
+                    console.warn('reCAPTCHA error síncrono:', e);
                     form.submit();
-                }).catch(function(error) {
-                    form.submit();
-                });
+                }
             });
-        });
-    </script>
+        @else
+            // ===== LOCAL / LARAGON: bypass =====
+            setTimeout(() => form.submit(), 300);
+        @endif
+    });
+</script>
 
 </body>
 </html>

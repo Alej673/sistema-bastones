@@ -29,14 +29,18 @@ class RegisteredUserController extends Controller
      *
      * @throws ValidationException
      */
-    public function store(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
-            'recaptcha_token' => ['required', 'string', new RecaptchaV3()], // <-- ¡Mira qué limpio queda!
-        ]);
+        public function store(Request $request): RedirectResponse
+        {
+            $recaptchaRules = app()->environment('production')
+                ? ['required', 'string', new RecaptchaV3()]
+                : ['nullable'];
+
+            $request->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+                'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
+                'recaptcha_token' => $recaptchaRules,
+            ]);
 
         $user = User::create([
             'name' => $request->name,

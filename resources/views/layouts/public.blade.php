@@ -22,8 +22,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Arte Titi_Val - Catálogo Oficial')</title>
-    
+
+    {{-- 1. TÍTULO DINÁMICO CON KEYWORD FUERTE POR DEFECTO --}}
+    <title>@yield('title', 'Fábrica de Bastones para Bastoneras en Quito | Arte Titi_Val')</title>
+
+    {{-- 2. DESCRIPCIÓN DINÁMICA (Lo que lee Google para el resumen) --}}
+    <meta name="description" content="@yield('meta_description', 'Confección artesanal de bastones de mando, artículos para cachiporreras y bandas de paz en Quito. Personalización total a medida de tu institución.')">
+
+    {{-- 3. URL CANÓNICA (Evita que Google te penalice si se accede con o sin www/parametros) --}}
+    <link rel="canonical" href="@yield('canonical', url()->current())">
+
+    {{-- 4. OPEN GRAPH (Para que cuando compartan tu link en WhatsApp o Facebook salga bonito y atraiga clics) --}}
+    <meta property="og:title" content="@yield('title', 'Bastones para Bastoneras en Quito | Arte Titi_Val')">
+    <meta property="og:description" content="@yield('meta_description', 'Confección artesanal de bastones de mando y cachiporreras en Quito. Diseños personalizados.')">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:type" content="@yield('og_type', 'website')">
+    <meta property="og:image" content="@yield('og_image', asset('img/portada-bastones-default.jpg'))"> {{-- Asegúrate de tener una imagen general bonita en esta ruta --}}
+
     <!-- Fuentes e Iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
@@ -83,31 +98,53 @@
                 </ul>
             </div>
 
-            <div class="nav-actions">
+            <div class="nav-actions d-flex align-items-center gap-2">
+                
+                {{-- 1. ACCESO A FAVORITOS: Solo clientes autenticados (ANTES de cotizar) --}}
+                @auth
+                    @if(!in_array(auth()->user()->role, ['admin', 'super_admin']))
+                        <a href="{{ route('cliente.favoritos') }}" 
+                           class="btn btn-outline p-2 d-flex align-items-center justify-content-center" 
+                           style="border-color: rgba(220, 53, 69, 0.35); background-color: rgba(220, 53, 69, 0.08); width: 38px; height: 38px; border-radius: 50%;" 
+                           title="Mis Favoritos">
+                            <i class="fa-solid fa-heart text-danger"></i>
+                        </a>
+                    @endif
+                @endauth
+
+                {{-- 2. BOTÓN COTIZAR: Invitados y Clientes (Oculto para Admins) --}}
+                @if(auth()->guest() || !in_array(auth()->user()->role, ['admin', 'super_admin']))
+                    <a href="{{ route('cotizacion.crear') }}" class="btn btn-cotizar-nav">
+                        <i class="fa-solid fa-wand-magic-sparkles me-1 text-warning"></i> Cotizar Pedido
+                    </a>
+                @endif
+
+                {{-- 3. INVITADOS (No logueados) --}}
                 @guest
                     <a href="{{ route('login') }}" class="btn btn-outline">Ingresar</a>
                     <a href="{{ route('register') }}" class="btn btn-solid">Registrarse</a>
                 @endguest
 
+                {{-- 4. PANELES Y CUENTA --}}
                 @auth
-                    <!-- NUEVO BOTÓN: Mis Favoritos (Solo visible si hay sesión) -->
-                    <a href="{{ route('cliente.favoritos') }}" class="btn btn-outline" style="padding: 10px 15px; border-color: rgba(157, 92, 224, 0.2);" title="Mis Favoritos">
-                        <i class="fa-solid fa-heart text-danger fs-5"></i>
-                    </a>
-
                     @if(auth()->user()->role === 'admin' || auth()->user()->role === 'super_admin')
                         <a href="{{ route('dashboard') }}" class="btn btn-solid">Panel Taller</a>
                     @else
                         <a href="{{ route('cliente.dashboard') }}" class="btn btn-outline">Mis Pedidos</a>
                     @endif
 
-                    <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                    {{-- 5. CERRAR SESIÓN --}}
+                    <form method="POST" action="{{ route('logout') }}" class="d-inline m-0">
                         @csrf
-                        <button type="submit" class="btn btn-outline nav-logout-btn" style="padding: 10px 15px;" title="Cerrar Sesión">
+                        <button type="submit" 
+                                class="btn btn-outline nav-logout-btn p-2 d-flex align-items-center justify-content-center" 
+                                style="width: 38px; height: 38px; border-radius: 50%;" 
+                                title="Cerrar Sesión">
                             <i class="fa-solid fa-arrow-right-from-bracket"></i>
                         </button>
                     </form>
                 @endauth
+
             </div>
         </div>
     </nav>
