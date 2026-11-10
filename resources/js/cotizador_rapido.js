@@ -94,18 +94,36 @@ document.addEventListener('DOMContentLoaded', function () {
         // Validación básica
         const precioNum = parseFloat(precio);
         if (!cliente || !concepto || isNaN(precioNum) || precioNum <= 0) {
-            Swal.fire('Atención', 'Por favor llena los campos obligatorios con valores válidos.', 'warning');
+            mostrarAlerta('Por favor llena los campos obligatorios con valores válidos.', 'Faltan campos', 'warning');
             return;
         }
 
-        // Bloqueamos el botón
+        // 1. CAPTURAMOS Y VALIDAMOS EL ARCHIVO ANTES DE BLOQUEAR
+        const inputFileRapido = document.getElementById('inputImagenReferenciaRapido');
+        let file = null;
+
+        if (inputFileRapido && inputFileRapido.files[0]) {
+            file = inputFileRapido.files[0];
+            const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+            const maxMb = 8; // Elevado a 8MB
+
+            if (!tiposPermitidos.includes(file.type)) {
+                mostrarAlerta('Solo se permiten imágenes en formato JPG, PNG o WEBP.', 'Formato no permitido', 'warning');
+                return;
+            }
+
+            if (file.size > maxMb * 1024 * 1024) {
+                mostrarAlerta(`La imagen seleccionada pesa ${(file.size / (1024 * 1024)).toFixed(2)} MB. El límite máximo permitido es de ${maxMb} MB.`, 'Archivo demasiado pesado', 'warning');
+                return;
+            }
+        }
+
+        // 2. TODO ESTÁ PERFECTO: AHORA SÍ BLOQUEAMOS EL BOTÓN
         const btn = $(this);
         const textoOriginal = btn.html();
         btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-2"></i> Guardando...');
 
-        // ==========================================
-        // NUEVA FORMA: Usando FormData nativo
-        // ==========================================
+        // 3. ARMAMOS EL PAYLOAD
         let formData = new FormData();
         formData.append('modo_rapido', true);
         if (quoteId) formData.append('quote_request_id', quoteId);
@@ -115,23 +133,8 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append('detalles_rapido', detalles);
         formData.append('costo_total', precio);
         
-        // Capturamos el archivo de la imagen (NUEVO)
-        const inputFileRapido = document.getElementById('inputImagenReferenciaRapido');
-        if (inputFileRapido && inputFileRapido.files[0]) {
-            const file = inputFileRapido.files[0];
-            const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
-            const maxMb = 5;
-
-            if (!tiposPermitidos.includes(file.type)) {
-                Swal.fire('Formato inválido', 'Solo se permiten imágenes JPG, PNG o WEBP.', 'warning');
-                return;
-            }
-
-            if (file.size > maxMb * 1024 * 1024) {
-                Swal.fire('Archivo muy pesado', `La imagen no puede pesar más de ${maxMb}MB.`, 'warning');
-                return;
-            }
-
+        // Adjuntamos la imagen ya validada
+        if (file) {
             formData.append('imagen_referencia', file);
         }
 

@@ -244,7 +244,14 @@
             <td style="width: 25%; padding-left: 6px;">
                 <div class="dato">
                     <span class="etiqueta">Cantidad total</span>
-                    <span class="valor">{{ $pedido->cantidad_total_bastones }} {{ $pedido->cantidad_total_bastones == 1 ? 'bastón' : 'bastones' }}</span>
+                    <span class="valor">
+                        {{ $pedido->cantidad_total_bastones }} 
+                        @if(isset($esCotizacionRapida) && $esCotizacionRapida)
+                            {{ $pedido->cantidad_total_bastones == 1 ? 'manualidad / encargo' : 'manualidades / encargos' }}
+                        @else
+                            {{ $pedido->cantidad_total_bastones == 1 ? 'bastón' : 'bastones' }}
+                        @endif
+                    </span>
                 </div>
             </td>
         </tr>
@@ -262,11 +269,15 @@
                         <ul class="materiales">
                             @foreach($pedido->materiales as $mat)
                                 @if(stripos($mat->nombre_material, 'cincho') === false && stripos($mat->nombre_material, 'elástico') === false && stripos($mat->nombre_material, 'elastico') === false)
-                                    <li>{{ $mat->nombre_material }}</li>
+                                    <li>{!! $mat->nombre_material !!}</li>
                                 @endif
                             @endforeach
                         </ul>
-                        <p class="nota-materiales">* Incluye ensamblaje profesional y materiales estructurales internos.</p>
+                        @if(isset($esCotizacionRapida) && $esCotizacionRapida)
+                            <p class="nota-materiales">* Diseño personalizado según las especificaciones acordadas.</p>
+                        @else
+                            <p class="nota-materiales">* Incluye ensamblaje profesional y materiales estructurales internos.</p>
+                        @endif
                     </div>
                 </div>
             </td>

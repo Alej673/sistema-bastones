@@ -228,319 +228,6 @@ class CotizadorController extends Controller
         return response()->json($resultados);
     }
 
- public function guardar(Request $request)
-    {
-        // =======================================================
-        // 1. EL BYPASS: MODO RÁPIDO (Manualidades, Lazos, Flores)
-        // =======================================================
-        if ($request->filled('modo_rapido') && $request->modo_rapido == 'true') {
-
-            // NUEVO: Validación manual forzada a devolver JSON
-            $validadorRapido = \Illuminate\Support\Facades\Validator::make($request->all(), [
-                'nombre_cliente'    => 'required|string|max:255',
-                'correo_cliente'    => 'nullable|email|max:255',
-                'quote_request_id'  => 'nullable|integer|exists:quote_requests,id',
-                'costo_total'       => 'required|numeric|min:0.01|max:99999',
-                'concepto_rapido'   => 'required|string|max:255',
-                'detalles_rapido'   => 'nullable|string|max:1000',
-                'imagen_referencia' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
-            ]);
-
-            if ($validadorRapido->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'mensaje' => 'Revisa los campos del formulario.',
-                    'errors'  => $validadorRapido->errors()
-                ], 422);
-            }
-
-            $rutaImagen = null;
-
-            try {
-                DB::beginTransaction();
-
-                // A. Creamos el registro maestro del pedido
-                $pedido = new \App\Models\Pedido();
-                $pedido->quote_request_id = $request->input('quote_request_id');
-                $pedido->cliente_nombre   = $request->input('nombre_cliente');
-                $pedido->correo_cliente   = $request->input('correo_cliente');
-
-                // Llenamos con "ceros" la estructura de bastones para no romper la base de datos
-                $pedido->cantidad_total_bastones = 1;
-                $pedido->costo_materiales = 0;
-                $pedido->costo_extras     = 0;
-                $pedido->ganancia_fija    = 0;
-                $pedido->costo_total      = (float) $request->input('costo_total');
-                $pedido->costo_unitario   = (float) $request->input('costo_total');
-                $pedido->estado           = 'pendiente';
-                $pedido->save();
-
-                // GUARDAR IMAGEN (Modo Rápido)
-                if ($request->hasFile('imagen_referencia')) {
-                    $rutaImagen = $request->file('imagen_referencia')->store('cotizaciones_referencias', 'public');
-                    $pedido->imagen_referencia = $rutaImagen;
-                    $pedido->save();
-                }
-
-                // B. Sincronización BTO
-                if ($request->filled('quote_request_id')) {
-                    $solicitudWeb = \App\Models\QuoteRequest::find($request->input('quote_request_id'));
-                    if ($solicitudWeb) {
-                        $solicitudWeb->precio_final = (float) $request->input('costo_total');
-                        $solicitudWeb->estado = 'cotizado';
-                        $solicitudWeb->save();
-                    }
-                }
-
-                // C. Guardamos el concepto como un único "material".
-                $detalle = $request->input('concepto_rapido');
-                if ($request->filled('detalles_rapido')) {
-                    $detalle .= ' - ' . $request->input('detalles_rapido');
-                }
-
-                DB::table('pedido_materiales')->insert([
-                    'pedido_id'          => $pedido->id,
-                    'insumo_id'          => null,
-                    'nombre_material'    => '[COTI-RÁPIDA] ' . $detalle,
-                    'cantidad_requerida' => 1,
-                    'subtotal_calculado' => (float) $request->input('costo_total'),
-                    'created_at'         => now(),
-                    'updated_at'         => now(),
-                ]);
-
-                DB::commit();
-
-                return response()->json([
-                    'success' => true,
-                    'mensaje' => 'Cotización rápida guardada con éxito.',
-                    'id'      => $pedido->id
-                ]);
-
-            } catch (\Exception $e) {
-                DB::rollBack();
-                // OJO: Asegúrate de que el método limpiarImagenHuerfana exista en este controlador, sino bórralo
-                if(method_exists($this, 'limpiarImagenHuerfana')){
-                    $this->limpiarImagenHuerfana($rutaImagen);
-                }
-
-                Log::error('Error crítico en el servidor: ' . $e->getMessage());
-
-                return response()->json([
-                    'success' => false,
-                    'mensaje' => config('app.debug')
-                        ? 'Error crítico en el servidor: ' . $e->getMessage()
-                        : 'Error al procesar la solicitud. Intente nuevamente más tarde.'
-                ], 500);
-            }
-        }
-
-        // =======================================================
-        // 2. FLUJO NORMAL: MODO BASTONES (La calculadora pesada)
-        // =======================================================
-
-        // NUEVO: Validación manual forzada a devolver JSON
-        $validadorBaston = \Illuminate\Support\Facades\Validator::make($request->all(), [
-            'quote_request_id'        => 'nullable|integer|exists:quote_requests,id',
-            'nombre_cliente'          => 'nullable|string|max:255',
-            'correo_cliente'          => 'nullable|email|max:255',
-            'cantidad_total_bastones' => 'required|integer|min:1|max:10000',
-            'costo_materiales'        => 'nullable|numeric|min:0|max:99999',
-            'costo_extras'            => 'nullable|numeric|min:0|max:99999',
-            'ganancia_fija'           => 'nullable|numeric|min:0|max:99999',
-            'costo_unitario'          => 'nullable|numeric|min:0|max:99999',
-            'costo_total'             => 'required|numeric|min:0.01|max:99999',
-            'materiales'              => 'required|string|max:200000',
-            'imagen_referencia'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
-        ]);
-
-        if ($validadorBaston->fails()) {
-            return response()->json([
-                'success' => false,
-                'mensaje' => 'Error de validación en la estructura base.',
-                'errors'  => $validadorBaston->errors()
-            ], 422);
-        }
-
-        // 2. Decodificamos el carrito...
-        $listaMateriales = json_decode($request->input('materiales'), true);
-
-        if (json_last_error() !== JSON_ERROR_NONE || empty($listaMateriales) || !is_array($listaMateriales)) {
-            return response()->json([
-                'success' => false,
-                'mensaje' => 'El detalle de materiales llegó vacío o corrupto. No se puede guardar un pedido sin materiales.',
-                // Hack para que tu JS lo lea correctamente en el bloque de errores:
-                'errors'  => ['materiales' => ['El detalle de materiales llegó vacío o corrupto.']] 
-            ], 422);
-        }
-
-        // Límite razonable de líneas para evitar payloads abusivos
-        if (count($listaMateriales) > 200) {
-            return response()->json([
-                'success' => false,
-                'mensaje' => 'El carrito tiene demasiadas líneas de materiales.',
-                'errors'  => ['materiales' => ['El carrito supera el límite de 200 líneas.']]
-            ], 422);
-        }
-
-        // 3. Validamos la estructura de CADA línea del carrito (defensa contra payloads manuales)
-        foreach ($listaMateriales as $mat) {
-            $v = \Illuminate\Support\Facades\Validator::make(is_array($mat) ? $mat : [], [
-                'nombre_material'    => 'required|string|max:255',
-                'cantidad_requerida' => 'required|numeric|between:-100000,100000',
-                'subtotal_calculado' => 'required|numeric|min:0|max:99999',
-                'insumo_id'          => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('insumos', 'id')->whereNull('deleted_at')],
-            ]);
-
-            if ($v->fails() || trim((string) ($mat['nombre_material'] ?? '')) === '') {
-                return response()->json([
-                    'success' => false,
-                    'mensaje' => 'Datos inválidos en el carrito.',
-                    'errors'  => ['carrito' => ['Uno de los materiales tiene datos inválidos o su stock ha sido eliminado.']]
-                ], 422);
-            }
-        }
-
-        // 4. REGLA DE NEGOCIO: espejo de la validación del front
-        foreach ($listaMateriales as $mat) {
-            $nombreCinta = mb_strtolower($mat['nombre_material'], 'UTF-8');
-
-            $esCintaSinTipo = empty($mat['insumo_id'])
-                && str_contains($nombreCinta, 'cinta')
-                && !str_contains($nombreCinta, 'satin')
-                && !str_contains($nombreCinta, 'satín')
-                && !str_contains($nombreCinta, 'gross')
-                && !str_contains($nombreCinta, 'garza');
-
-            if ($esCintaSinTipo) {
-                return response()->json([
-                    'success' => false,
-                    'mensaje' => 'Tipo de cinta inválido.',
-                    'errors'  => ['cinta' => ['El material "' . $mat['nombre_material'] . '" es una cinta nueva sin tipo (Satín, Gross o Garza).']]
-                ], 422);
-            }
-        }
-
-        $rutaImagen = null;
-
-        try {
-            DB::beginTransaction();
-
-            // 5. Guardar la cabecera del pedido (Maestro)
-            $pedido = new \App\Models\Pedido();
-            $pedido->quote_request_id = $request->input('quote_request_id');
-            $pedido->cliente_nombre = $request->input('nombre_cliente', 'Cliente de Mostrador');
-            $pedido->correo_cliente = $request->input('correo_cliente');
-
-            $pedido->cantidad_total_bastones = (int) $request->input('cantidad_total_bastones');
-
-            // Desglose financiero
-            $pedido->costo_materiales = (float) $request->input('costo_materiales');
-            $pedido->costo_extras     = (float) $request->input('costo_extras');
-            $pedido->ganancia_fija    = (float) $request->input('ganancia_fija');
-            $pedido->costo_total      = (float) $request->input('costo_total');
-            $pedido->costo_unitario   = (float) $request->input('costo_unitario');
-
-            $pedido->estado = 'pendiente';
-            $pedido->save();
-
-            // GUARDAR IMAGEN (Modo Bastones)
-            if ($request->hasFile('imagen_referencia')) {
-                // Sube la imagen a storage/app/public/cotizaciones_referencias
-                $rutaImagen = $request->file('imagen_referencia')->store('cotizaciones_referencias', 'public');
-                $pedido->imagen_referencia = $rutaImagen;
-                $pedido->save();
-            }
-
-            // Si el pedido tiene un ID web asociado, actualizamos la tabla del cliente
-            if ($request->filled('quote_request_id')) {
-                $solicitudWeb = \App\Models\QuoteRequest::find($request->input('quote_request_id'));
-
-                if ($solicitudWeb) {
-                    $solicitudWeb->precio_final = (float) $request->input('costo_total');
-                    $solicitudWeb->estado = 'cotizado';
-                    $solicitudWeb->save();
-                }
-            }
-
-            // 6. Insertar cada material del carrito ya validado
-            foreach ($listaMateriales as $mat) {
-
-                $insumoIdFinal = $mat['insumo_id'] ?? null;
-                $nombreOriginal = trim($mat['nombre_material']);
-                $nombreMaterialLimpiado = mb_strtolower($nombreOriginal, 'UTF-8');
-
-                // Detectar si es la estructura base provista por el cliente ("Sin bastón")
-                $esSinBaston = str_contains($nombreMaterialLimpiado, 'sin bastón')
-                            || str_contains($nombreMaterialLimpiado, 'sin baston')
-                            || str_contains($nombreMaterialLimpiado, 'provista por cliente');
-
-                if ($esSinBaston) {
-                    // Forzamos insumo_id a NULL y costo $0 para que Kardex jamás lo toque
-                    $insumoIdFinal = null;
-                    $mat['subtotal_calculado'] = 0;
-
-                    // Estandarizamos el prefijo igual que en [COTI-RÁPIDA]
-                    if (!str_starts_with($nombreOriginal, '[SIN-BASTÓN]')) {
-                        $mat['nombre_material'] = '[SIN-BASTÓN] ' . $nombreOriginal;
-                    }
-                } elseif (empty($insumoIdFinal)) {
-                    // --- INICIO: LÓGICA DE RECONOCIMIENTO AUTOMÁTICO DE INSUMOS ---
-                    // Lógica para interceptar "Cinchos"
-                    if (str_contains($nombreMaterialLimpiado, 'cincho')) {
-                        $insumoDetectado = \App\Models\Insumo::where('categoria', 'cinchos')->whereNull('deleted_at')->first();
-                        if ($insumoDetectado) {
-                            $insumoIdFinal = $insumoDetectado->id;
-                        }
-                    }
-
-                    // Lógica para interceptar "Elástico"
-                    if (str_contains($nombreMaterialLimpiado, 'elástico') || str_contains($nombreMaterialLimpiado, 'elastico')) {
-                        $insumoDetectado = \App\Models\Insumo::where('categoria', 'elastico')->whereNull('deleted_at')->first();
-                        if ($insumoDetectado) {
-                            $insumoIdFinal = $insumoDetectado->id;
-                        }
-                    }
-                    // --- FIN: LÓGICA DE RECONOCIMIENTO ---
-                }
-
-                // Insertamos cada fila en la tabla de detalles
-                DB::table('pedido_materiales')->insert([
-                    'pedido_id'          => $pedido->id,
-                    'insumo_id'          => $insumoIdFinal,
-                    'nombre_material'    => $mat['nombre_material'],
-                    'cantidad_requerida' => $mat['cantidad_requerida'],
-                    'subtotal_calculado' => $mat['subtotal_calculado'],
-                    'created_at'         => now(),
-                    'updated_at'         => now(),
-                ]);
-            }
-
-            DB::commit();
-
-            // El Frontend espera response.id para inyectarlo en los botones PDF
-            return response()->json([
-                'success' => true,
-                'mensaje' => 'Pedido y lista de materiales guardados con éxito.',
-                'id'      => $pedido->id
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            if(method_exists($this, 'limpiarImagenHuerfana')){
-                $this->limpiarImagenHuerfana($rutaImagen);
-            }
-
-            Log::error('Error crítico en el servidor: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'mensaje' => config('app.debug')
-                    ? 'Error crítico en el servidor: ' . $e->getMessage()
-                    : 'Error crítico en el servidor. Por favor, intente más tarde.'
-            ], 500);
-        }
-    }
-
     // =======================================================
     // HELPER: resuelve la ruta ABSOLUTA de la imagen de referencia
     // (la usan la receta y la nota de venta)
@@ -589,49 +276,356 @@ class CotizadorController extends Controller
         return null;
     }
 
+    public function guardar(Request $request)
+    {
+        // =======================================================
+        // 1. EL BYPASS: MODO RÁPIDO (Manualidades, Lazos, Flores)
+        // =======================================================
+        if ($request->filled('modo_rapido') && ($request->modo_rapido == 'true' || $request->modo_rapido == '1')) {
+
+            $validadorRapido = \Illuminate\Support\Facades\Validator::make($request->all(), [
+                'nombre_cliente'    => 'required|string|max:255',
+                'correo_cliente'    => 'nullable|email|max:255',
+                'quote_request_id'  => 'nullable|integer|exists:quote_requests,id',
+                'costo_total'       => 'required|numeric|min:0.01|max:99999',
+                'concepto_rapido'   => 'required|string|max:255',
+                'detalles_rapido'   => 'nullable|string|max:1000',
+                'imagen_referencia' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:8192',
+            ]);
+
+            if ($validadorRapido->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'mensaje' => 'Revisa los campos del formulario.',
+                    'errors'  => $validadorRapido->errors()
+                ], 422);
+            }
+
+            $rutaImagen = null;
+
+            try {
+                DB::beginTransaction();
+
+                // A. Creamos el registro maestro del pedido
+                $pedido = new \App\Models\Pedido();
+                $pedido->quote_request_id = $request->input('quote_request_id');
+                $pedido->cliente_nombre   = $request->input('nombre_cliente');
+                $pedido->correo_cliente   = $request->input('correo_cliente');
+
+                // Estructura base para orden manual / manualidad
+                $pedido->cantidad_total_bastones = 1;
+                $pedido->costo_materiales = (float) $request->input('costo_total'); // Lo reflejamos como base para que no salga $0 en reportes
+                $pedido->costo_extras     = 0;
+                $pedido->ganancia_fija    = 0;
+                $pedido->costo_total      = (float) $request->input('costo_total');
+                $pedido->costo_unitario   = (float) $request->input('costo_total');
+                $pedido->estado           = 'pendiente';
+                $pedido->save();
+
+                // GUARDAR IMAGEN (Modo Rápido)
+                if ($request->hasFile('imagen_referencia')) {
+                    $rutaImagen = $request->file('imagen_referencia')->store('cotizaciones_referencias', 'public');
+                    $pedido->imagen_referencia = $rutaImagen;
+                    $pedido->save();
+                }
+
+                // B. Sincronización BTO
+                if ($request->filled('quote_request_id')) {
+                    $solicitudWeb = \App\Models\QuoteRequest::find($request->input('quote_request_id'));
+                    if ($solicitudWeb) {
+                        $solicitudWeb->precio_final = (float) $request->input('costo_total');
+                        $solicitudWeb->estado = 'cotizado';
+                        $solicitudWeb->save();
+                    }
+                }
+
+                // C. Guardamos el concepto como un único "material" con el tag identificador
+                $detalle = trim($request->input('concepto_rapido'));
+                if ($request->filled('detalles_rapido')) {
+                    // Usamos un salto de línea HTML (<br>) en lugar de un guion
+                    // nl2br convierte los "Enters" del textarea en <br> reales
+                    $textoDetalles = nl2br(htmlspecialchars(trim($request->input('detalles_rapido'))));
+                    $detalle .= '<br><small style="color: #7a7585;">' . $textoDetalles . '</small>';
+                }
+
+                DB::table('pedido_materiales')->insert([
+                    'pedido_id'          => $pedido->id,
+                    'insumo_id'          => null,
+                    'nombre_material'    => '[COTI-RÁPIDA] ' . $detalle,
+                    'cantidad_requerida' => 1,
+                    'subtotal_calculado' => (float) $request->input('costo_total'),
+                    'created_at'         => now(),
+                    'updated_at'         => now(),
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'mensaje' => 'Cotización rápida guardada con éxito.',
+                    'id'      => $pedido->id
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                if (method_exists($this, 'limpiarImagenHuerfana')) {
+                    $this->limpiarImagenHuerfana($rutaImagen);
+                }
+
+                Log::error('Error crítico en el servidor (Modo Rápido): ' . $e->getMessage());
+
+                return response()->json([
+                    'success' => false,
+                    'mensaje' => config('app.debug')
+                        ? 'Error crítico en el servidor: ' . $e->getMessage()
+                        : 'Error al procesar la solicitud. Intente nuevamente más tarde.'
+                ], 500);
+            }
+        }
+
+        // =======================================================
+        // 2. FLUJO NORMAL: MODO BASTONES (La calculadora pesada)
+        // =======================================================
+        $validadorBaston = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'quote_request_id'        => 'nullable|integer|exists:quote_requests,id',
+            'nombre_cliente'          => 'nullable|string|max:255',
+            'correo_cliente'          => 'nullable|email|max:255',
+            'cantidad_total_bastones' => 'required|integer|min:1|max:10000',
+            'costo_materiales'        => 'nullable|numeric|min:0|max:99999',
+            'costo_extras'            => 'nullable|numeric|min:0|max:99999',
+            'ganancia_fija'           => 'nullable|numeric|min:0|max:99999',
+            'costo_unitario'          => 'nullable|numeric|min:0|max:99999',
+            'costo_total'             => 'required|numeric|min:0.01|max:99999',
+            'materiales'              => 'required|string|max:200000',
+            'imagen_referencia'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+        ]);
+
+        if ($validadorBaston->fails()) {
+            return response()->json([
+                'success' => false,
+                'mensaje' => 'Error de validación en la estructura base.',
+                'errors'  => $validadorBaston->errors()
+            ], 422);
+        }
+
+        $listaMateriales = json_decode($request->input('materiales'), true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || empty($listaMateriales) || !is_array($listaMateriales)) {
+            return response()->json([
+                'success' => false,
+                'mensaje' => 'El detalle de materiales llegó vacío o corrupto.',
+                'errors'  => ['materiales' => ['El detalle de materiales llegó vacío o corrupto.']] 
+            ], 422);
+        }
+
+        if (count($listaMateriales) > 200) {
+            return response()->json([
+                'success' => false,
+                'mensaje' => 'El carrito tiene demasiadas líneas de materiales.',
+                'errors'  => ['materiales' => ['El carrito supera el límite de 200 líneas.']]
+            ], 422);
+        }
+
+        foreach ($listaMateriales as $mat) {
+            $v = \Illuminate\Support\Facades\Validator::make(is_array($mat) ? $mat : [], [
+                'nombre_material'    => 'required|string|max:255',
+                'cantidad_requerida' => 'required|numeric|between:-100000,100000',
+                'subtotal_calculado' => 'required|numeric|min:0|max:99999',
+                'insumo_id'          => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('insumos', 'id')->whereNull('deleted_at')],
+            ]);
+
+            if ($v->fails() || trim((string) ($mat['nombre_material'] ?? '')) === '') {
+                return response()->json([
+                    'success' => false,
+                    'mensaje' => 'Datos inválidos en el carrito.',
+                    'errors'  => ['carrito' => ['Uno de los materiales tiene datos inválidos o su stock ha sido eliminado.']]
+                ], 422);
+            }
+        }
+
+        foreach ($listaMateriales as $mat) {
+            $nombreCinta = mb_strtolower($mat['nombre_material'], 'UTF-8');
+
+            $esCintaSinTipo = empty($mat['insumo_id'])
+                && str_contains($nombreCinta, 'cinta')
+                && !str_contains($nombreCinta, 'satin')
+                && !str_contains($nombreCinta, 'satín')
+                && !str_contains($nombreCinta, 'gross')
+                && !str_contains($nombreCinta, 'garza');
+
+            if ($esCintaSinTipo) {
+                return response()->json([
+                    'success' => false,
+                    'mensaje' => 'Tipo de cinta inválido.',
+                    'errors'  => ['cinta' => ['El material "' . $mat['nombre_material'] . '" es una cinta nueva sin tipo (Satín, Gross o Garza).']]
+                ], 422);
+            }
+        }
+
+        $rutaImagen = null;
+
+        try {
+            DB::beginTransaction();
+
+            $pedido = new \App\Models\Pedido();
+            $pedido->quote_request_id        = $request->input('quote_request_id');
+            $pedido->cliente_nombre          = $request->input('nombre_cliente', 'Cliente de Mostrador');
+            $pedido->correo_cliente          = $request->input('correo_cliente');
+            $pedido->cantidad_total_bastones = (int) $request->input('cantidad_total_bastones');
+
+            // Desglose financiero exacto enviado por el frontend
+            $pedido->costo_materiales = (float) $request->input('costo_materiales');
+            $pedido->costo_extras     = (float) $request->input('costo_extras');
+            $pedido->ganancia_fija    = (float) $request->input('ganancia_fija');
+            $pedido->costo_total      = (float) $request->input('costo_total');
+            $pedido->costo_unitario   = (float) $request->input('costo_unitario');
+
+            $pedido->estado = 'pendiente';
+            $pedido->save();
+
+            if ($request->hasFile('imagen_referencia')) {
+                $rutaImagen = $request->file('imagen_referencia')->store('cotizaciones_referencias', 'public');
+                $pedido->imagen_referencia = $rutaImagen;
+                $pedido->save();
+            }
+
+            if ($request->filled('quote_request_id')) {
+                $solicitudWeb = \App\Models\QuoteRequest::find($request->input('quote_request_id'));
+                if ($solicitudWeb) {
+                    $solicitudWeb->precio_final = (float) $request->input('costo_total');
+                    $solicitudWeb->estado = 'cotizado';
+                    $solicitudWeb->save();
+                }
+            }
+
+            foreach ($listaMateriales as $mat) {
+                $insumoIdFinal = $mat['insumo_id'] ?? null;
+                $nombreOriginal = trim($mat['nombre_material']);
+                $nombreMaterialLimpiado = mb_strtolower($nombreOriginal, 'UTF-8');
+
+                // Detectar si es la estructura base provista por el cliente ("Sin bastón")
+                $esSinBaston = str_contains($nombreMaterialLimpiado, 'sin bastón')
+                            || str_contains($nombreMaterialLimpiado, 'sin baston')
+                            || str_contains($nombreMaterialLimpiado, 'provista por cliente');
+
+                // Detectar ítems que son de lana (Cuerpo o Cortina) pero vinieron con tag nuevo sin la palabra "lana"
+                // En cotizador.js el Cuerpo se guarda solo con el nombre del color (ej: "azul").
+                // Si no tiene insumo_id y no es ninguno de los otros módulos, sabemos que viene del selector de lana.
+                $esItemNoLana = $esSinBaston
+                    || str_contains($nombreMaterialLimpiado, 'base')
+                    || str_contains($nombreMaterialLimpiado, 'cincho')
+                    || str_contains($nombreMaterialLimpiado, 'elástico')
+                    || str_contains($nombreMaterialLimpiado, 'elastico')
+                    || str_contains($nombreMaterialLimpiado, 'cortina de fiesta')
+                    || str_contains($nombreMaterialLimpiado, 'lazo')
+                    || str_contains($nombreMaterialLimpiado, 'flor')
+                    || str_contains($nombreMaterialLimpiado, 'aplique')
+                    || str_contains($nombreMaterialLimpiado, 'diseño')
+                    || str_contains($nombreMaterialLimpiado, 'diseno');
+
+                if ($esSinBaston) {
+                    $insumoIdFinal = null;
+                    $mat['subtotal_calculado'] = 0;
+
+                    if (!str_starts_with($nombreOriginal, '[SIN-BASTÓN]')) {
+                        $mat['nombre_material'] = '[SIN-BASTÓN] ' . $nombreOriginal;
+                    }
+                } elseif (empty($insumoIdFinal)) {
+                    if (str_contains($nombreMaterialLimpiado, 'cincho')) {
+                        $insumoDetectado = \App\Models\Insumo::where('categoria', 'cinchos')->whereNull('deleted_at')->first();
+                        if ($insumoDetectado) $insumoIdFinal = $insumoDetectado->id;
+                    } elseif (str_contains($nombreMaterialLimpiado, 'elástico') || str_contains($nombreMaterialLimpiado, 'elastico')) {
+                        $insumoDetectado = \App\Models\Insumo::where('categoria', 'elastico')->whereNull('deleted_at')->first();
+                        if ($insumoDetectado) $insumoIdFinal = $insumoDetectado->id;
+                    } elseif (!$esItemNoLana && !str_contains($nombreMaterialLimpiado, 'lana')) {
+                        // Si era un color nuevo de lana (ej. "azul"), le anteponemos "Lana: " para que la receta sepa que se mide en gramos/madejas
+                        $mat['nombre_material'] = 'Lana: ' . $nombreOriginal;
+                    }
+                }
+
+                DB::table('pedido_materiales')->insert([
+                    'pedido_id'          => $pedido->id,
+                    'insumo_id'          => $insumoIdFinal,
+                    'nombre_material'    => $mat['nombre_material'],
+                    'cantidad_requerida' => abs((float) $mat['cantidad_requerida']), // Guardamos siempre positivo
+                    'subtotal_calculado' => (float) $mat['subtotal_calculado'],
+                    'created_at'         => now(),
+                    'updated_at'         => now(),
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'mensaje' => 'Pedido y lista de materiales guardados con éxito.',
+                'id'      => $pedido->id
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if (method_exists($this, 'limpiarImagenHuerfana')) {
+                $this->limpiarImagenHuerfana($rutaImagen);
+            }
+
+            Log::error('Error crítico en el servidor: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'mensaje' => config('app.debug')
+                    ? 'Error crítico en el servidor: ' . $e->getMessage()
+                    : 'Error crítico en el servidor. Por favor, intente más tarde.'
+            ], 500);
+        }
+    }
+
     // =======================================================
     // GENERACIÓN DE REPORTES PDF (On-the-Fly)
     // =======================================================
     public function generarPdfReceta($id)
     {
         $pedido = \App\Models\Pedido::with('materiales')->findOrFail($id);
-
-        // Traemos los ajustes de la BD
         $config = \App\Models\Ajuste::pluck('valor', 'llave');
 
-        $costoTotalMateriales     = 0;
         $costoDisenoPersonalizado = 0;
         $costoApliques            = 0;
         $costoRecargoBordado      = 0;
 
-        // --- Parámetros desde ajustes (con respaldo si falta la llave) ---
-        $cantBastones = $pedido->cantidad_total_bastones;
+        $cantBastones = max(1, (int) $pedido->cantidad_total_bastones);
 
-        $esPedidoGrande   = $cantBastones >= (int)($config['base_umbral_mayoreo'] ?? 12);
-        $esCortinaMayoreo = $cantBastones >= (int)($config['cortina_fiesta_umbral'] ?? 12);
+        // Detectar si este pedido es una Cotización Rápida (Manualidad / Encargo Especial)
+        $esCotizacionRapida = $pedido->materiales->count() === 1
+            && str_starts_with($pedido->materiales->first()->nombre_material, '[COTI-RÁPIDA]');
 
+        // Etiquetas dinámicas que puedes usar en tu Blade si quieres mostrar el título general
+        $tituloTipoPedido = $esCotizacionRapida ? 'Manualidades / Encargo Especial' : 'Bastones de Cachiporrera';
+        $unidadPedido     = $esCotizacionRapida ? 'encargo(s)' : 'bastones';
+
+        // Parámetros de conversión física para bodega
         $recargoBordadoUnitario = (float)($config['deco_lazo_nombre_mo'] ?? 0.70);
-        $precioAplique          = (float)($config['deco_apliques_precio'] ?? 0.50);
-
-        $gramosMadeja     = (float)($config['lana_gramos_madeja'] ?? 90);
-        $cortinasPaquete  = (float)($config['cortina_unidades_paquete'] ?? 4);
-        $metrosLazoSimple = (float)($config['deco_lazo_simple_m'] ?? 1.5);
-        $metrosFlor       = (float)($config['deco_flor_m'] ?? 1.0);
-
-        $preciosDiseno = [
-            'basico'     => (float)($config['deco_diseno_basico'] ?? 1.50),
-            'intermedio' => (float)($config['deco_diseno_intermedio'] ?? 2.00),
-            'premium'    => (float)($config['deco_diseno_premium'] ?? 3.00),
-        ];
+        $gramosMadeja           = (float)($config['lana_gramos_madeja'] ?? 90);
+        $cortinasPaquete        = (float)($config['cortina_unidades_paquete'] ?? 4);
+        $metrosLazoSimple       = (float)($config['deco_lazo_simple_m'] ?? 1.5);
+        $metrosFlor             = (float)($config['deco_flor_m'] ?? 1.0);
 
         foreach ($pedido->materiales as $mat) {
             $stockActual = 0;
-            $precioUnitario = 0;
-            $insumo = null;
+            $insumo      = null;
             $nombreLower = mb_strtolower($mat->nombre_material, 'UTF-8');
-            $esDiseno = str_contains($nombreLower, 'diseño') || str_contains($nombreLower, 'diseno');
 
-            if (!$esDiseno) {
+            // Clasificación de la fila
+            $esCotiRapida = str_starts_with($mat->nombre_material, '[COTI-RÁPIDA]');
+            $esSinBaston  = str_contains($nombreLower, '[sin-bastón]') || str_contains($nombreLower, 'sin bastón') || str_contains($nombreLower, 'sin baston');
+            $esDiseno     = str_contains($nombreLower, 'diseño') || str_contains($nombreLower, 'diseno');
+            $esAplique    = str_contains($nombreLower, 'aplique');
+
+            // Limpiamos el tag técnico si es cotización rápida para que se vea limpio en el PDF
+            if ($esCotiRapida) {
+                $mat->nombre_material = trim(str_replace('[COTI-RÁPIDA]', '', $mat->nombre_material));
+            }
+
+            // Solo buscamos stock en BD si es un insumo físico real de inventario
+            if (!$esDiseno && !$esSinBaston && !$esAplique && !$esCotiRapida) {
                 if ($mat->insumo_id) {
                     $insumo = \App\Models\Insumo::find($mat->insumo_id);
                 }
@@ -639,152 +633,135 @@ class CotizadorController extends Controller
                     $insumo = \App\Models\Insumo::where('nombre', $mat->nombre_material)->first();
                 }
                 if ($insumo) {
-                    $stockActual = $insumo->stock_actual;
+                    $stockActual = (float) $insumo->stock_actual;
                 }
             }
 
-            // Aplicamos abs() para eliminar signos negativos del frontend
-            $cantReq = abs((float) $mat->cantidad_requerida);
-            $stock   = (float) $stockActual;
+            // Detectamos si es lana (ya sea por su categoría en BD, por su nombre, o porque su cantidad en gramos es alta > 100 y no es otro ítem)
+            $esLana = str_contains($nombreLower, 'lana')
+                || ($insumo && $insumo->categoria === 'lana')
+                || (!$insumo && !$esDiseno && !$esSinBaston && !$esAplique && !$esCotiRapida
+                    && !str_contains($nombreLower, 'base') && !str_contains($nombreLower, 'cincho')
+                    && !str_contains($nombreLower, 'elástico') && !str_contains($nombreLower, 'elastico')
+                    && !str_contains($nombreLower, 'cortina') && !str_contains($nombreLower, 'lazo')
+                    && !str_contains($nombreLower, 'flor') && !str_contains($nombreLower, 'cinta'));
 
-            $diferencia = $cantReq - $stock;
-            $faltaComprarNumerico = $diferencia > 0 ? $diferencia : 0;
+            // Cantidad siempre positiva
+            $cantReq  = abs((float) $mat->cantidad_requerida);
+            $stock    = max(0, (float) $stockActual);
+            $subtotal = (float) $mat->subtotal_calculado; // <-- LEEMOS EL SUBTOTAL REAL GUARDADO, NO RECALCULAMOS
+
+            // Si NO descuenta inventario (Sin bastón, Diseño, Apliques, Coti Rápida), no falta comprar nada en Kardex
+            if ($esSinBaston || $esDiseno || $esAplique || $esCotiRapida) {
+                $faltaComprarNumerico = 0;
+            } else {
+                $diferencia = $cantReq - $stock;
+                $faltaComprarNumerico = $diferencia > 0 ? $diferencia : 0;
+            }
             $falta = (float) $faltaComprarNumerico;
 
-            // 1. OBTENCIÓN DEL PRECIO
-            if (!$esDiseno) {
-                if ($insumo && $insumo->costo_unitario > 0) {
-                    $precioUnitario = $insumo->costo_unitario;
-                } else {
-                    if (str_contains($nombreLower, 'base')) {
-                        if (str_contains($nombreLower, 'dorado')) {
-                            $precioUnitario = $esPedidoGrande
-                                ? (float)($config['base_dorado_mayoreo'] ?? 5.00)
-                                : (float)($config['base_dorado_normal'] ?? 5.50);
-                        } else {
-                            $precioUnitario = $esPedidoGrande
-                                ? (float)($config['base_plata_mayoreo'] ?? 4.50)
-                                : (float)($config['base_plata_normal'] ?? 5.00);
-                        }
-                    } elseif (str_contains($nombreLower, 'lana')) {
-                        $precioUnitario = (float)($config['pf_lana'] ?? 0.0127);
-                    } elseif (str_contains($nombreLower, 'garza')) {
-                        $precioUnitario = (float)($config['pf_cinta_garza'] ?? 0.11);
-                    } elseif (str_contains($nombreLower, 'satin') || str_contains($nombreLower, 'satín')) {
-                        $precioUnitario = (float)($config['pf_cinta_satin'] ?? 0.16);
-                    } elseif (str_contains($nombreLower, 'gross')) {
-                        $precioUnitario = (float)($config['pf_cinta_gross'] ?? 0.15);
-                    } elseif (str_contains($nombreLower, 'cortina')) {
-                        $precioUnitario = $esCortinaMayoreo
-                            ? (float)($config['pf_cortina_mayor'] ?? 0.50)
-                            : (float)($config['pf_cortina_menor'] ?? 1.00);
-                    } elseif (str_contains($nombreLower, 'elástico') || str_contains($nombreLower, 'elastico')) {
-                        $precioUnitario = (float)($config['pf_elastico'] ?? 0.09);
-                    } elseif (str_contains($nombreLower, 'cincho')) {
-                        $precioUnitario = (float)($config['pf_cinchos'] ?? 0.02);
-                    }
-                }
-            }
+            $mat->requerido_visual  = '';
+            $mat->stock_visual      = '';
+            $mat->falta_visual      = '';
+            $mat->es_diseno         = $esDiseno;
+            $mat->falta_comprar_num = $faltaComprarNumerico;
 
-            $mat->requerido_visual = '';
-            $mat->stock_visual = '';
-            $mat->falta_visual = '';
-            $mat->es_diseno = $esDiseno;
+            // --- 1. LÓGICA VISUAL DE BODEGA Y PRECIO UNITARIO ---
+            if ($esCotiRapida) {
+                $mat->precio_unitario_visual = "$" . number_format($subtotal, 2);
+                $mat->requerido_visual       = "1 encargo";
+                $mat->stock_visual           = "N/A";
+                $mat->falta_visual           = "0";
 
-            // --- LÓGICA VISUAL DE BODEGA ---
-            if (str_contains($nombreLower, 'flor') || str_contains($nombreLower, 'lazo')) {
-                $divisor = str_contains($nombreLower, 'lazo simple') ? $metrosLazoSimple : $metrosFlor;
-                $unidades = round($cantReq / $divisor);
-                $mat->requerido_visual = "{$unidades} unid. (" . number_format($cantReq, 1) . "m)";
-                $mat->stock_visual = number_format($stock, 1) . "m";
-                $mat->falta_visual = $falta > 0 ? number_format($falta, 1) . "m" : "0";
-            } elseif (str_contains($nombreLower, 'lana')) {
-                $madejasReq   = ceil($cantReq / $gramosMadeja);
-                $madejasFalta = ceil($falta / $gramosMadeja);
-                $mat->requerido_visual = "~{$madejasReq} madejas (" . round($cantReq) . "g)";
-                $mat->stock_visual = round($stock) . "g";
-                $mat->falta_visual = $falta > 0 ? "~{$madejasFalta} madejas (" . round($falta) . "g)" : "0";
-            } elseif (str_contains($nombreLower, 'cortina')) {
-                $paquetesReq   = ceil($cantReq / $cortinasPaquete);
-                $paquetesFalta = ceil($falta / $cortinasPaquete);
-                $mat->requerido_visual = "~{$paquetesReq} paquetes (" . round($cantReq) . " unid.)";
-                $mat->stock_visual = round($stock) . " unid.";
-                $mat->falta_visual = $falta > 0 ? "~{$paquetesFalta} paquetes (" . round($falta) . " unid.)" : "0";
-            } elseif (str_contains($nombreLower, 'elástico') || str_contains($nombreLower, 'elastico') || str_contains($nombreLower, 'cinta')) {
-                $mat->requerido_visual = $cantReq < 1 ? round($cantReq * 100) . " cm" : number_format($cantReq, 1) . " m";
-                $mat->stock_visual = $stock < 1 && $stock > 0 ? round($stock * 100) . " cm" : number_format($stock, 1) . " m";
-                $mat->falta_visual = $falta < 1 && $falta > 0 ? round($falta * 100) . " cm" : ($falta > 0 ? number_format($falta, 1) . " m" : "0");
+            } elseif ($esSinBaston) {
+                // RESUELVE PROBLEMA 1: El bastón del cliente cuesta $0.00 y no pide comprar
+                $mat->precio_unitario_visual = "$0.00";
+                $mat->requerido_visual       = round($cantReq) . " unid. (Cliente)";
+                $mat->stock_visual           = "N/A";
+                $mat->falta_visual           = "0";
+
             } elseif ($esDiseno) {
-                $mat->requerido_visual = "$" . number_format($cantReq, 2) . " extra";
-                $mat->stock_visual = "N/A";
-                $mat->falta_visual = "0";
-            } else {
-                $mat->requerido_visual = round($cantReq) . " unid.";
-                $mat->stock_visual = round($stock) . " unid.";
-                $mat->falta_visual = $falta > 0 ? round($falta) . " unid." : "0";
-            }
-
-            // 2. CÁLCULO FINANCIERO
-            $subtotal = 0;
-
-            if ($esDiseno) {
-                $precioDiseno = $preciosDiseno['basico'];
-                if (str_contains($nombreLower, 'intermedio')) $precioDiseno = $preciosDiseno['intermedio'];
-                if (str_contains($nombreLower, 'premium'))    $precioDiseno = $preciosDiseno['premium'];
-
-                $subtotal = $cantReq * $precioDiseno;
-
-                $mat->precio_unitario_visual = "N/A";
-                $mat->requerido_visual = "$" . number_format($subtotal, 2) . " extra";
-                $mat->stock_visual = "N/A";
-                $mat->falta_visual = "0";
-                $mat->falta_comprar_num = 0;
+                $precioUnitDiseno = $cantReq > 0 ? ($subtotal / $cantReq) : $subtotal;
+                $mat->precio_unitario_visual = "$" . number_format($precioUnitDiseno, 2);
+                $mat->requerido_visual       = round($cantReq) . " unid. (Mano de Obra)";
+                $mat->stock_visual           = "N/A";
+                $mat->falta_visual           = "0";
 
                 $costoDisenoPersonalizado += $subtotal;
 
-            } elseif (str_contains($nombreLower, 'aplique')) {
-                $precioUnitario = $precioAplique;
-                $subtotal = $cantReq * $precioUnitario;
-                $mat->precio_unitario_visual = "$" . number_format($precioUnitario, 2);
-                $mat->falta_comprar_num = $faltaComprarNumerico;
+            } elseif ($esAplique) {
+                $precioUnitAplique = $cantReq > 0 ? ($subtotal / $cantReq) : 0;
+                $mat->precio_unitario_visual = "$" . number_format($precioUnitAplique, 2);
+                $mat->requerido_visual       = round($cantReq) . " unid. (Manual)";
+                $mat->stock_visual           = "N/A";
+                $mat->falta_visual           = "0";
 
                 $costoApliques += $subtotal;
 
             } elseif (str_contains($nombreLower, 'lazo') && str_contains($nombreLower, 'nombre')) {
-                $recargoBordado = $recargoBordadoUnitario * $cantBastones;
-                $subtotalMaterial = $cantReq * $precioUnitario;
-                $subtotal = $subtotalMaterial + $recargoBordado;
+                $recargoBordado   = $recargoBordadoUnitario * $cantBastones;
+                $subtotalMaterial = max(0, $subtotal - $recargoBordado);
+                $precioUnitCinta  = $cantReq > 0 ? ($subtotalMaterial / $cantReq) : 0;
 
-                $mat->precio_unitario_visual = "$" . number_format($precioUnitario, 4);
-                $mat->falta_comprar_num = $faltaComprarNumerico;
-                // Texto plano: la vista usa {{ }} que escapa el HTML (<small> se vería literal)
-                $mat->requerido_visual .= " (+ $" . number_format($recargoBordado, 2) . " bordado)";
+                $unidades = round($cantReq / $metrosFlor);
+                $mat->precio_unitario_visual = "$" . number_format($precioUnitCinta, 4);
+                $mat->requerido_visual       = "{$unidades} unid. (" . number_format($cantReq, 1) . "m) (+ $" . number_format($recargoBordado, 2) . " bordado)";
+                $mat->stock_visual           = number_format($stock, 1) . "m";
+                $mat->falta_visual           = $falta > 0 ? number_format($falta, 1) . "m" : "0";
 
-                $costoTotalMateriales += $subtotalMaterial;
-                $costoRecargoBordado  += $recargoBordado;
+                $costoRecargoBordado += $recargoBordado;
 
             } else {
-                $subtotal = $cantReq * $precioUnitario;
+                // RESUELVE PROBLEMA 2 y 3: El precio unitario se deduce del subtotal real guardado
+                $precioUnitario = $cantReq > 0 ? ($subtotal / $cantReq) : 0;
                 $mat->precio_unitario_visual = "$" . number_format($precioUnitario, 4);
-                $mat->falta_comprar_num = $faltaComprarNumerico;
 
-                $costoTotalMateriales += $subtotal;
+                if (str_contains($nombreLower, 'flor') || str_contains($nombreLower, 'lazo')) {
+                    $divisor  = str_contains($nombreLower, 'lazo simple') ? $metrosLazoSimple : $metrosFlor;
+                    $unidades = round($cantReq / $divisor);
+                    $mat->requerido_visual = "{$unidades} unid. (" . number_format($cantReq, 1) . "m)";
+                    $mat->stock_visual     = number_format($stock, 1) . "m";
+                    $mat->falta_visual     = $falta > 0 ? number_format($falta, 1) . "m" : "0";
+
+                } elseif ($esLana) {
+                    // Sin signos negativos: usamos ~ para indicar aproximado de madejas positivas
+                    $madejasReq   = ceil($cantReq / $gramosMadeja);
+                    $madejasFalta = ceil($falta / $gramosMadeja);
+                    $mat->requerido_visual = "{$madejasReq} madejas (" . round($cantReq) . "g)";
+                    $mat->stock_visual     = round($stock) . "g";
+                    $mat->falta_visual     = $falta > 0 ? "{$madejasFalta} madejas (" . round($falta) . "g)" : "0";
+
+                } elseif (str_contains($nombreLower, 'cortina')) {
+                    $paquetesReq   = ceil($cantReq / $cortinasPaquete);
+                    $paquetesFalta = ceil($falta / $cortinasPaquete);
+                    $mat->requerido_visual = "{$paquetesReq} paquetes (" . round($cantReq) . " unid.)";
+                    $mat->stock_visual     = round($stock) . " unid.";
+                    $mat->falta_visual     = $falta > 0 ? "{$paquetesFalta} paquetes (" . round($falta) . " unid.)" : "0";
+
+                } elseif (str_contains($nombreLower, 'elástico') || str_contains($nombreLower, 'elastico') || str_contains($nombreLower, 'cinta')) {
+                    $mat->requerido_visual = $cantReq < 1 ? round($cantReq * 100) . " cm" : number_format($cantReq, 1) . " m";
+                    $mat->stock_visual     = $stock < 1 && $stock > 0 ? round($stock * 100) . " cm" : number_format($stock, 1) . " m";
+                    $mat->falta_visual     = $falta < 1 && $falta > 0 ? round($falta * 100) . " cm" : ($falta > 0 ? number_format($falta, 1) . " m" : "0");
+
+                } else {
+                    $mat->requerido_visual = round($cantReq) . " unid.";
+                    $mat->stock_visual     = round($stock) . " unid.";
+                    $mat->falta_visual     = $falta > 0 ? round($falta) . " unid." : "0";
+                }
             }
 
             $mat->subtotal_visual = "$" . number_format($subtotal, 2);
         }
 
-        // 3. MANO DE OBRA Y GRAN TOTAL (lectura directa de lo guardado en el pedido)
+        // --- 2. RESUMEN FINANCIERO (RESUELVE PROBLEMA 4: EL CENTAVO DE LA DISCORDIA) ---
+        // En `guardar()` el campo se guarda como `ganancia_fija`, pero antes leías `$pedido->costo_mano_obra` (que no existe y daba null).
+        // Al leer `$pedido->ganancia_fija`, toma exactamente los $60.00 que guardó el frontend sin multiplicar 99.99 * 0.60.
         $costoTotalMateriales = (float) $pedido->costo_materiales;
-
-        $costoManoObra = (float) ($pedido->costo_mano_obra ?? ($costoTotalMateriales * (float)($config['margen_ganancia'] ?? 0.60)));
-
+        $costoManoObra        = (float) ($pedido->ganancia_fija ?? ($costoTotalMateriales * (float)($config['margen_ganancia'] ?? 0.60)));
         $costoTotalProduccion = (float) $pedido->costo_total;
 
-        // 4. IMAGEN DE REFERENCIA (misma lógica que la nota de venta)
         $rutaImagenPdf = $this->resolverRutaImagenPedido($pedido);
 
-        // Mandamos a generar el PDF
         $pdf = Pdf::loadView('reportes.receta', compact(
             'pedido',
             'costoTotalMateriales',
@@ -793,7 +770,10 @@ class CotizadorController extends Controller
             'costoDisenoPersonalizado',
             'costoApliques',
             'costoRecargoBordado',
-            'rutaImagenPdf'
+            'rutaImagenPdf',
+            'esCotizacionRapida',
+            'tituloTipoPedido',
+            'unidadPedido'
         ));
 
         return $pdf->stream('Receta_Bodega_Pedido_' . $pedido->id . '.pdf');
@@ -801,42 +781,39 @@ class CotizadorController extends Controller
 
     public function generarPdfNota($id)
     {
-        // 1. Buscamos el pedido
         $pedido = Pedido::with('materiales')->findOrFail($id);
 
-        // 2. RASTREO DEL DUEÑO
         $dueno_id = $pedido->user_id;
         if (!$dueno_id && $pedido->quote_request_id) {
             $solicitudOriginal = \App\Models\QuoteRequest::find($pedido->quote_request_id);
             $dueno_id = $solicitudOriginal ? $solicitudOriginal->user_id : null;
         }
 
-        // 3. SEGURIDAD
-        // 'admin' y 'super_admin' pueden ver la nota de cualquier pedido del taller;
-        // cualquier otro usuario solo puede ver la suya (dueno_id === Auth::id()).
         $esStaffAdmin = in_array(Auth::user()->role, ['admin', 'super_admin']);
 
         if ($dueno_id != Auth::id() && !$esStaffAdmin) {
             abort(403, 'No tienes permiso para ver esta nota de venta.');
         }
 
-        // 4. DETECCIÓN INTELIGENTE DE COTIZACIÓN RÁPIDA
         $esCotizacionRapida = false;
+        $tituloTipoPedido   = 'Bastones de Cachiporrera';
 
-        // Si el pedido solo tiene 1 "material" y su nombre empieza con nuestro tag oculto
         if ($pedido->materiales->count() === 1 && str_starts_with($pedido->materiales->first()->nombre_material, '[COTI-RÁPIDA]')) {
             $esCotizacionRapida = true;
+            $tituloTipoPedido   = 'Manualidades / Encargo Especial';
 
-            // Limpiamos el texto para borrar el tag técnico antes de que llegue a la vista Blade
-            $nombreLimpio = str_replace('[COTI-RÁPIDA] ', '', $pedido->materiales->first()->nombre_material);
+            $nombreLimpio = trim(str_replace('[COTI-RÁPIDA]', '', $pedido->materiales->first()->nombre_material));
             $pedido->materiales->first()->nombre_material = $nombreLimpio;
         }
 
-        // 5. IMAGEN DE REFERENCIA (helper compartido con la receta)
         $rutaImagenPdf = $this->resolverRutaImagenPedido($pedido);
 
-        // 6. Generar el PDF
-        $pdf = Pdf::loadView('reportes.nota', compact('pedido', 'esCotizacionRapida', 'rutaImagenPdf'));
+        $pdf = Pdf::loadView('reportes.nota', compact(
+            'pedido',
+            'esCotizacionRapida',
+            'tituloTipoPedido',
+            'rutaImagenPdf'
+        ));
 
         return $pdf->stream('Nota_Venta_Pedido_' . $pedido->id . '.pdf');
     }

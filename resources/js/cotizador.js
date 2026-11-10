@@ -903,14 +903,18 @@ $(document).ready(function () {
             let totalApliques = cantApliques * cantidadBastones;
             let costoApliques = totalApliques * CONFIG_NEGOCIO.decoracion.apliques.precioUnitario;
 
-            costoTotalManoObra += costoApliques;
+            // ❌ ELIMINA O COMENTA ESTA LÍNEA:
+            // costoTotalManoObra += costoApliques; 
+
+            // ✅ AGREGA ESTA LÍNEA PARA QUE CUENTE COMO MATERIAL Y APLIQUE EL MARGEN:
+            costoTotalMateriales += costoApliques;
 
             filasHtml.push(`
                 <tr>
                     <td class="fw-bold text-dark">Detalles: Apliques</td>
                     <td class="text-muted small">${totalApliques} u. totales × $${CONFIG_NEGOCIO.decoracion.apliques.precioUnitario.toFixed(2)}</td>
                     <td class="fw-bold text-muted">$${costoApliques.toFixed(2)}</td>
-                    <td class="text-end"><span class="text-muted">Extra Fijo</span></td>
+                    <td class="text-end"><span class="text-muted">Material</span></td>
                 </tr>
             `);
 

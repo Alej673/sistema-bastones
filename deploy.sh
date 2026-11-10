@@ -64,5 +64,5 @@ echo "--> Reiniciando contenedores web y app..."
 docker restart arte_titival-app-1 arte_titival-web-1
 
 echo "=========================================="
-echo "  Despliegue completado con xito!       "
+echo "  Despliegue completado con Exito!       "
 echo "=========================================="
